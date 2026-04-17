@@ -1159,3 +1159,47 @@ INFO:resume-analyzer:{"request_id": "f572f940-0836-4317-b09e-eab6db2e6ab2", "met
 INFO:     127.0.0.1:53607 - "GET /api/user/profile HTTP/1.1" 200 OK
 INFO:resume-analyzer:{"request_id": "fa52831c-0d89-4ec4-8d8c-3d1bf5da4909", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 6.65}
 INFO:     127.0.0.1:53606 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "670f8011-95dc-40e5-8276-bedb84c3d5ba", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 13.08}
+INFO:     127.0.0.1:53613 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "79b4c6c2-ee0f-4134-a0df-ce8fbf85e486", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 16.74}
+INFO:     127.0.0.1:53612 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "8001c689-e0c0-4fd4-9170-462801c1ac6c", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 3.52}
+INFO:     127.0.0.1:53613 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "1b37adbb-fec9-480b-8de8-3e1f79827d96", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 4.15}
+INFO:     127.0.0.1:53612 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "8a3be385-e84b-4e90-8ba2-bc71b9e31b40", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 6.05}
+INFO:     127.0.0.1:53617 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "193be42c-434b-4527-ab63-a01a4d4012d6", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 13.11}
+INFO:     127.0.0.1:53616 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "9c1dcbfb-a7ab-4c23-99bb-950621b140f8", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 4.62}
+INFO:     127.0.0.1:53617 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "84963d0f-53d4-4650-9e08-1bed45f3a8bb", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 8.94}
+INFO:     127.0.0.1:53616 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "6926050e-6a93-4d36-ba01-e875d7bea9fd", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 2.85}
+INFO:     127.0.0.1:53622 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "7e340a9d-d81d-40fc-b691-d8a2e61bd995", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 3.88}
+INFO:     127.0.0.1:53622 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "72523821-f0f7-4437-9756-ac4b88decfed", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 6.03}
+INFO:     127.0.0.1:53622 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ec36e8b4-7651-4ad0-a262-328327dc36b2", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 8.28}
+INFO:     127.0.0.1:53624 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "584c6599-4d27-49d6-b872-b102c72ff0ab", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 7.26}
+INFO:     127.0.0.1:53622 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "e455f1b0-c372-41e2-8354-877ea7216009", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 6.28}
+INFO:     127.0.0.1:53624 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "3a0a3a48-c91e-44c5-899e-7d042f65e9cc", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 9.2}
+INFO:     127.0.0.1:53626 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ba4ea5c8-4cf0-4d3b-aefb-cd72240b076c", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 10.43}
+INFO:     127.0.0.1:53628 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "b59a687d-fd42-46d2-9d9d-28e7b443a7d3", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 10.58}
+INFO:     127.0.0.1:53626 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "02314037-f2f5-4a59-bbee-dcdbc5f2e32a", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 11.0}
+INFO:     127.0.0.1:53628 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "21c8988c-3482-4962-be27-ed95ae479764", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 13.29}
+INFO:     127.0.0.1:53630 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "e13a44b1-d742-475f-ba9a-14f341666001", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 12.61}
+INFO:     127.0.0.1:53633 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "89781161-0b09-4a4c-9031-ec5a4386e6a2", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 7.29}
+INFO:     127.0.0.1:53630 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "34f91314-f1c3-42a4-a46f-863c616bd916", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 7.45}
+INFO:     127.0.0.1:53633 - "GET /api/user/preferences HTTP/1.1" 200 OK
