@@ -23,6 +23,7 @@ const Login = () => {
         formData.append('password', password);
 
         try {
+            console.log('Attempting login to:', `${API_URL}/api/auth/login`);
             const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -30,6 +31,7 @@ const Login = () => {
             });
 
             const data = await res.json();
+            console.log('Login response:', res.status, data);
 
             if (res.ok) {
                 login(data.access_token, data.role, data.username, data.full_name);
@@ -39,7 +41,8 @@ const Login = () => {
                 setError(errorMsg);
             }
         } catch (err) {
-            const errorMsg = err.response?.data?.detail || 'Unable to connect to server. Please try again.';
+            console.error('Login error:', err);
+            const errorMsg = err.message || 'Unable to connect to server. Please try again.';
             setError(errorMsg);
         } finally {
             setLoading(false);
