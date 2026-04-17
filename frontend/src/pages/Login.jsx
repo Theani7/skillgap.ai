@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_URL } from '../services/env';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, Zap } from 'lucide-react';
@@ -22,7 +23,7 @@ const Login = () => {
         formData.append('password', password);
 
         try {
-            const res = await fetch('http://localhost:8000/api/auth/login', {
+            const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: formData.toString()

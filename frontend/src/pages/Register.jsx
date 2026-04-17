@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_URL } from '../services/env';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, UserPlus } from 'lucide-react';
 
@@ -18,7 +19,7 @@ const Register = () => {
         setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:8000/api/auth/register', {
+            const res = await fetch(`${API_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password, full_name: fullName })
