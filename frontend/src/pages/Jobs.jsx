@@ -80,10 +80,10 @@ const Jobs = () => {
 
   const handleStatusChange = async (appId, newStatus) => {
     try {
-      await api.put(`/api/jobs/applications/${appId}`, { status: newStatus });
+      await api.patch(`/api/jobs/applications/${appId}`, { status: newStatus });
       fetchApplications();
     } catch (err) {
-      console.error(err);
+      console.error('Status update error:', err);
     }
   };
 
