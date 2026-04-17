@@ -248,18 +248,52 @@ def rewrite_resume_with_gemini(resume_data: dict, target_role: str = None) -> di
 
 
 def generate_cover_letter_with_gemini(profile: dict, job_description: str, company: str, role: str) -> str:
-    prompt = f"""
-    You are an expert career coach. Generate a concise professional cover letter.
-    Company: {company}
-    Role: {role}
-    Candidate profile JSON: {json.dumps(profile)}
-    Job description: {job_description}
-    Constraints:
-    - 220-320 words
-    - Executive professional tone
-    - Mention measurable impact
-    - No markdown
-    """
+    name = profile.get('name', 'Candidate')
+    email = profile.get('email', '')
+    background = profile.get('background', '')
+    skills = profile.get('skills', '')
+    achievement = profile.get('achievement', '')
+    why_company = profile.get('why_company', '')
+    
+    if not role or len(str(role).strip()) < 4:
+        return "ERROR: Please provide a valid job title before generating."
+    
+    prompt = f"""You are an expert career coach and professional cover letter writer.
+
+Write a polished, personalized, and compelling cover letter using ONLY the information provided below. 
+
+STRICT RULES:
+- Never use filler phrases like "problem solving", "team player", or "passionate about"
+- Never leave placeholders, blanks, or template text in the output
+- Every sentence must add specific value — no fluff
+- Do not repeat the same point twice
+- Use a confident, professional, and human tone
+- Output ONLY the cover letter text, no explanations or commentary
+
+STRUCTURE (3 paragraphs):
+1. Opening — State the role and company, and make a strong first impression with a specific reason you're a great fit
+2. Middle — Highlight 2-3 relevant skills tied to the role, and include the achievement with impact
+3. Closing — Express enthusiasm for this specific company, and invite next steps confidently
+
+INPUT DATA:
+- Applicant Name: {name}
+- Email: {email}
+- Target Role: {role}
+- Company: {company}
+- Years of Experience / Background: {background}
+- Key Skills: {skills}
+- A Key Achievement (with metric if possible): {achievement}
+- Why this company: {why_company}
+- Job Description: {job_description}
+
+If the Target Role looks invalid or too short (under 4 characters), write:
+"ERROR: Please provide a valid job title before generating."
+
+If Job Description is provided, tailor the letter closely to the listed requirements.
+If Job Description is empty, write a strong general letter based on the role and company.
+
+Now write the cover letter:"""
+    
     try:
         response = client.models.generate_content(
             model='gemini-2.5-flash',

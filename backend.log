@@ -785,3 +785,38 @@ INFO:resume-analyzer:{"request_id": "ca5ce40e-e58e-4211-8566-2a093b4b8b12", "met
 INFO:     127.0.0.1:53490 - "GET /api/jobs/applications HTTP/1.1" 200 OK
 INFO:resume-analyzer:{"request_id": "dbb67303-4db0-41ea-913d-7bc835b2d6af", "method": "PUT", "path": "/api/jobs/applications/1", "status_code": 405, "elapsed_ms": 0.63}
 INFO:     127.0.0.1:53490 - "PUT /api/jobs/applications/1 HTTP/1.1" 405 Method Not Allowed
+INFO:resume-analyzer:{"request_id": "cef5a20e-4d59-446b-8ed6-ed002ea657a3", "method": "OPTIONS", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 3.85}
+INFO:     127.0.0.1:53507 - "OPTIONS /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "5300be5c-3231-4c5a-82ae-74f807af0efa", "method": "OPTIONS", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 6.72}
+INFO:     127.0.0.1:53508 - "OPTIONS /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ff445bc7-9af9-4baf-affa-c6154a627222", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 6.61}
+INFO:     127.0.0.1:53510 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "726a3f4f-e2cd-4d53-b02d-85b2d43bdcf8", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 1.84}
+INFO:     127.0.0.1:53510 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "52cc00e6-15c6-48ce-932b-35a576ab152e", "method": "OPTIONS", "path": "/api/jobs/applications/1", "status_code": 200, "elapsed_ms": 0.43}
+INFO:     127.0.0.1:53510 - "OPTIONS /api/jobs/applications/1 HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "1272f7ea-67d0-4c5d-b702-7eb400041377", "method": "PATCH", "path": "/api/jobs/applications/1", "status_code": 200, "elapsed_ms": 8.03}
+INFO:     127.0.0.1:53508 - "PATCH /api/jobs/applications/1 HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "1318190f-166e-4d87-a033-efb0e41a471c", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 2.74}
+INFO:     127.0.0.1:53508 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "d7f19782-1b0d-402e-814a-aef2cdcd590a", "method": "OPTIONS", "path": "/api/cover-letter/generate", "status_code": 200, "elapsed_ms": 0.9}
+INFO:     127.0.0.1:53512 - "OPTIONS /api/cover-letter/generate HTTP/1.1" 200 OK
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+INFO:httpx:HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+ERROR:resume-analyzer:Error during Gemini cover letter generation: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+INFO:resume-analyzer:{"request_id": "a456901c-42dc-4aa8-b018-c246a008ece9", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 200, "elapsed_ms": 8586.27}
+INFO:     127.0.0.1:53512 - "POST /api/cover-letter/generate HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'api/extractor.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9927]
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+INFO:     Started server process [10899]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
