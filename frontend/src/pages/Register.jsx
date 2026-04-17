@@ -30,10 +30,12 @@ const Register = () => {
             if (res.ok) {
                 navigate('/login');
             } else {
-                setError(data.detail || 'Registration failed');
+                const errorMsg = data.detail?.[0]?.msg || data.detail || 'Registration failed';
+                setError(errorMsg);
             }
         } catch (err) {
-            setError('Server error.');
+            const errorMsg = err.response?.data?.detail || 'Unable to connect to server. Please try again.';
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }

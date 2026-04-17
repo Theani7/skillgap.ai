@@ -539,3 +539,27 @@ INFO:     Finished server process [9871]
 INFO:     Started server process [9927]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+INFO:resume-analyzer:{"request_id": "82463b53-c90c-4450-9cde-2594177b85d8", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 289.68}
+INFO:     127.0.0.1:53297 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "13f311f9-eb4c-4f2e-b54c-a4d77eec2a91", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 294.8}
+INFO:     127.0.0.1:53297 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "3a9088f1-d7e3-406f-8ded-a378e8fd206f", "method": "POST", "path": "/api/auth/login", "status_code": 401, "elapsed_ms": 1.89}
+INFO:     127.0.0.1:53319 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:resume-analyzer:{"request_id": "90a31b3b-fa28-4764-99ac-3631408d3431", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 258.16}
+INFO:     127.0.0.1:53321 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "d3c7ab48-25aa-4a78-bd6c-e7fdf956cf1f", "method": "POST", "path": "/api/auth/login", "status_code": 401, "elapsed_ms": 253.26}
+INFO:     127.0.0.1:53325 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:resume-analyzer:{"request_id": "d6b6ef32-4775-4693-8edf-952fa9398cfc", "method": "POST", "path": "/api/auth/register", "status_code": 200, "elapsed_ms": 266.08}
+INFO:     127.0.0.1:53327 - "POST /api/auth/register HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ca97ad72-2397-4011-bc35-be7bac8819d9", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 255.12}
+INFO:     127.0.0.1:53329 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "380d820b-eb3f-400f-844b-029a9af34cf7", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 257.3}
+INFO:     127.0.0.1:53337 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "d33c0fb5-d31b-4d9f-bbfc-0221e5eb7b17", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 262.98}
+INFO:     127.0.0.1:53345 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "6645461c-e3ff-4184-95f4-13d81179171f", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 299.84}
+INFO:     127.0.0.1:53345 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ca859425-f90d-4084-bb47-7144d3189321", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 252.17}
+INFO:     127.0.0.1:53345 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "8a680239-72f9-475d-a633-7c23035b5dad", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 254.65}
+INFO:     127.0.0.1:53345 - "POST /api/auth/login HTTP/1.1" 200 OK
