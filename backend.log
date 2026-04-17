@@ -747,3 +747,41 @@ INFO:httpx:HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/m
 ERROR:resume-analyzer:Error during Gemini cover letter generation: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
 INFO:resume-analyzer:{"request_id": "42148f98-ef2d-4486-a547-381e87609aa8", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 200, "elapsed_ms": 4974.3}
 INFO:     127.0.0.1:53466 - "POST /api/cover-letter/generate HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "a01d4214-f24a-4dcc-82e9-d0921062293e", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 422, "elapsed_ms": 3.54}
+INFO:     127.0.0.1:53472 - "POST /api/cover-letter/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:resume-analyzer:{"request_id": "c965b3d8-1ebf-4752-a9b7-7d00284d187e", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 422, "elapsed_ms": 1.3}
+INFO:     127.0.0.1:53474 - "POST /api/cover-letter/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:resume-analyzer:{"request_id": "0a3689e2-3ba7-4d75-afe4-2672f0e0d7e3", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 422, "elapsed_ms": 3.1}
+INFO:     127.0.0.1:53474 - "POST /api/cover-letter/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:resume-analyzer:{"request_id": "0a58568e-6af9-48cd-80d8-f58d164dc436", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 422, "elapsed_ms": 2.14}
+INFO:     127.0.0.1:53474 - "POST /api/cover-letter/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:resume-analyzer:{"request_id": "ed04c1f7-32b2-4610-ae7f-3d3b5b340b0c", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 422, "elapsed_ms": 2.59}
+INFO:     127.0.0.1:53474 - "POST /api/cover-letter/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:resume-analyzer:{"request_id": "cbecbebc-062d-454f-8af1-085784810c8d", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 422, "elapsed_ms": 3.68}
+INFO:     127.0.0.1:53474 - "POST /api/cover-letter/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:resume-analyzer:{"request_id": "9571886c-8b21-4a70-91a0-79d41024e9d8", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 422, "elapsed_ms": 2.95}
+INFO:     127.0.0.1:53474 - "POST /api/cover-letter/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:resume-analyzer:{"request_id": "195cf34a-a2b4-43c3-bfd7-97f778e9a537", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 422, "elapsed_ms": 3.94}
+INFO:     127.0.0.1:53474 - "POST /api/cover-letter/generate HTTP/1.1" 422 Unprocessable Entity
+INFO:resume-analyzer:{"request_id": "5fe07e19-9f62-4eb0-84a3-1293dee618b0", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 1.97}
+INFO:     127.0.0.1:53476 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "923a6f8e-1a9a-468e-8260-5e84b4acdd2d", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 1.86}
+INFO:     127.0.0.1:53476 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "f0a24f61-bf58-4367-b858-e0a8463e83bd", "method": "PUT", "path": "/api/jobs/applications/1", "status_code": 405, "elapsed_ms": 0.56}
+INFO:     127.0.0.1:53476 - "PUT /api/jobs/applications/1 HTTP/1.1" 405 Method Not Allowed
+INFO:resume-analyzer:{"request_id": "11c1715d-8a44-4f58-a38d-4d3a204852e6", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 3.5}
+INFO:     127.0.0.1:53487 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "c4a7662a-8640-49d0-be9c-15055ba524ce", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 2.79}
+INFO:     127.0.0.1:53487 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "1902a311-9a0c-45a6-af52-59c72340bd14", "method": "PUT", "path": "/api/jobs/applications/1", "status_code": 405, "elapsed_ms": 0.82}
+INFO:     127.0.0.1:53487 - "PUT /api/jobs/applications/1 HTTP/1.1" 405 Method Not Allowed
+INFO:resume-analyzer:{"request_id": "4db1ea7d-ae2d-4d53-bdac-e8e456f92b6a", "method": "PUT", "path": "/api/jobs/applications/1", "status_code": 405, "elapsed_ms": 0.51}
+INFO:     127.0.0.1:53487 - "PUT /api/jobs/applications/1 HTTP/1.1" 405 Method Not Allowed
+INFO:resume-analyzer:{"request_id": "9f9512a7-517b-4e16-a3fd-a9fa7c535081", "method": "PUT", "path": "/api/jobs/applications/1", "status_code": 405, "elapsed_ms": 0.4}
+INFO:     127.0.0.1:53487 - "PUT /api/jobs/applications/1 HTTP/1.1" 405 Method Not Allowed
+INFO:resume-analyzer:{"request_id": "9aadac0b-4f28-4d36-aff5-2d36645b17b7", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 3.12}
+INFO:     127.0.0.1:53490 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ca5ce40e-e58e-4211-8566-2a093b4b8b12", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 2.07}
+INFO:     127.0.0.1:53490 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "dbb67303-4db0-41ea-913d-7bc835b2d6af", "method": "PUT", "path": "/api/jobs/applications/1", "status_code": 405, "elapsed_ms": 0.63}
+INFO:     127.0.0.1:53490 - "PUT /api/jobs/applications/1 HTTP/1.1" 405 Method Not Allowed
