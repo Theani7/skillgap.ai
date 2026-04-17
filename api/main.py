@@ -265,7 +265,6 @@ def register_user(user: UserRegister):
 @app.post("/api/auth/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Response = None):
     username = form_data.username
-    client_ip = request.client.host if request.client else "unknown"
 
     attempt_key = f"login:{username}"
     now = time.time()
