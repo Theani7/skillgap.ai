@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { Users, LayoutDashboard, MessageSquareText, Trash2, Server, Plus, BookOpen, ShieldAlert, Activity, TrendingUp, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -23,11 +23,11 @@ const Admin = () => {
         try {
             const config = { headers: { 'Authorization': `Bearer ${user.token}` } };
             const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes] = await Promise.all([
-                axios.get('http://localhost:8000/api/admin/users', config),
-                axios.get('http://localhost:8000/api/admin/feedback', config),
-                axios.get('http://localhost:8000/api/admin/registered-users', config),
-                axios.get('http://localhost:8000/api/admin/courses', config),
-                axios.get('http://localhost:8000/api/admin/analytics', config)
+                api.get('/api/admin/users', config),
+                api.get('/api/admin/feedback', config),
+                api.get('/api/admin/registered-users', config),
+                api.get('/api/admin/courses', config),
+                api.get('/api/admin/analytics', config)
             ]);
             setResumes(usersRes.data.users);
             setFeedback(feedbackRes.data.feedback);
@@ -50,7 +50,7 @@ const Admin = () => {
     const handleDeleteResume = async (id) => {
         if (!window.confirm("Delete this resume log?")) return;
         try {
-            await axios.delete(`http://localhost:8000/api/admin/users/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
+            await api.delete(`/api/admin/users/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setResumes(resumes.filter(u => u.ID !== id));
         } catch (err) { alert("Failed to delete log."); }
     };
@@ -58,7 +58,7 @@ const Admin = () => {
     const handleDeleteFeedback = async (id) => {
         if (!window.confirm("Delete this feedback?")) return;
         try {
-            await axios.delete(`http://localhost:8000/api/admin/feedback/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
+            await api.delete(`/api/admin/feedback/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setFeedback(feedback.filter(f => f.ID !== id));
         } catch (err) { alert("Failed to delete feedback."); }
     };
@@ -66,7 +66,7 @@ const Admin = () => {
     const handleDeleteRegisteredUser = async (id) => {
         if (!window.confirm("Permanently ban and delete this registered user?")) return;
         try {
-            await axios.delete(`http://localhost:8000/api/admin/registered-users/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
+            await api.delete(`/api/admin/registered-users/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setRegisteredUsers(registeredUsers.filter(u => u.id !== id));
         } catch (err) { alert("Failed to ban user."); }
     };
@@ -74,7 +74,7 @@ const Admin = () => {
     const handleAddCourse = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:8000/api/admin/courses', newCourse, { headers: { 'Authorization': `Bearer ${user.token}` } });
+            await api.post('/api/admin/courses', newCourse, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setNewCourse({ field: '', course_name: '', course_url: '' });
             fetchAdminData();
             alert("Course added successfully.");
@@ -84,7 +84,7 @@ const Admin = () => {
     const handleDeleteCourse = async (id) => {
         if (!window.confirm("Delete this course recommendation?")) return;
         try {
-            await axios.delete(`http://localhost:8000/api/admin/courses/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
+            await api.delete(`/api/admin/courses/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setCourses(courses.filter(c => c.id !== id));
         } catch (err) { alert("Failed to delete course."); }
     };
@@ -93,7 +93,7 @@ const Admin = () => {
         if (!window.confirm("Simulate a market shift updating the AI Target Role requirements?")) return;
         setScrapeStatus('Running Simulation...');
         try {
-            const res = await axios.post('http://localhost:8000/api/admin/trigger-scrape', {}, { headers: { 'Authorization': `Bearer ${user.token}` } });
+            const res = await api.post('/api/admin/trigger-scrape', {}, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setScrapeStatus(`Success: ${res.data.message} (${res.data.timestamp})`);
         } catch (err) { setScrapeStatus('Failed to trigger simulation.'); }
     };

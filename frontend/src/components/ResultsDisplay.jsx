@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../services/env';
 import { RefreshCcw, User, Mail, Phone, FileDigit, Briefcase, GraduationCap, PlayCircle, Lightbulb, Star, Send, RotateCw, Target, Award, BookOpen, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -34,7 +35,7 @@ const ResultsDisplay = ({ data, onReset }) => {
     useEffect(() => {
         const fetchScraperStatus = async () => {
             try {
-                const res = await fetch('http://localhost:8000/api/trends/status');
+                const res = await fetch(`${API_URL}/api/trends/status`);
                 if (res.ok) {
                     const result = await res.json();
                     setScraperStatus(result.last_scraped);
@@ -56,7 +57,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                 headers['Authorization'] = `Bearer ${user.token}`;
             }
 
-            const res = await fetch('http://localhost:8000/api/feedback', {
+            const res = await fetch(`${API_URL}/api/feedback`, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({

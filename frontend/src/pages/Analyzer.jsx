@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { motion } from 'framer-motion';
 import { UploadCloud, FileText, CheckCircle2, Sparkles, Briefcase, Loader2 } from 'lucide-react';
 import ResultsDisplay from '../components/ResultsDisplay';
@@ -20,9 +20,24 @@ const Home = () => {
         'Web Development',
         'Android Development',
         'IOS Development',
-        'UI-UX Development',
+        'UI/UX Design',
         'Quality Assurance',
-        'DevOps'
+        'DevOps',
+        'Cloud Engineering',
+        'Data Engineering',
+        'Machine Learning',
+        'Cybersecurity',
+        'Product Management',
+        'Business Analysis',
+        'Frontend Development',
+        'Backend Development',
+        'Full Stack Development',
+        'Mobile Development',
+        'Cloud Architecture',
+        'Software Engineering',
+        'Technical Writing',
+        'IT Support',
+        'Network Administration'
     ];
 
     const handleFileChange = (e) => {
@@ -72,7 +87,7 @@ const Home = () => {
                 headers['Authorization'] = `Bearer ${user.token}`;
             }
 
-            const response = await axios.post('http://localhost:8000/api/analyze', formData, { headers });
+            const response = await api.post('/api/analyze', formData, { headers });
             setResults(response.data);
         } catch (err) {
             console.error(err);

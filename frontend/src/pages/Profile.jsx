@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Activity, FileText, TrendingUp, Calendar, Target, Award, ArrowRight, UploadCloud, Mail, Phone, MapPin, Briefcase, Edit2, Save, X, Sparkles, Zap, Code2, Clock, AlertCircle } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
@@ -30,18 +30,18 @@ const Profile = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const historyRes = await axios.get('http://localhost:8000/api/user/history', {
+                const historyRes = await api.get('/api/user/history', {
                     headers: { 'Authorization': `Bearer ${user.token}` }
                 });
                 const sortedHistory = historyRes.data.history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                 setHistory(sortedHistory);
 
-                const prefRes = await axios.get('http://localhost:8000/api/user/preferences', {
+                const prefRes = await api.get('/api/user/preferences', {
                     headers: { 'Authorization': `Bearer ${user.token}` }
                 });
                 setPreferences(prefRes.data.preferences || {});
 
-                const profileRes = await axios.get('http://localhost:8000/api/user/profile', {
+                const profileRes = await api.get('/api/user/profile', {
                     headers: { 'Authorization': `Bearer ${user.token}` }
                 });
                 const profileDataRes = profileRes.data.profile || {};
@@ -111,7 +111,7 @@ const Profile = () => {
 
     const handleProfileSave = async () => {
         try {
-            await axios.put('http://localhost:8000/api/user/profile', profileData, {
+            await api.put('/api/user/profile', profileData, {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
             setEditingProfile(false);
