@@ -820,3 +820,290 @@ INFO:     Finished server process [9927]
 INFO:     Started server process [10899]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+INFO:resume-analyzer:{"request_id": "e3701265-0aa4-4bf8-96df-2e813dcb2c18", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 200, "elapsed_ms": 17.39}
+INFO:     127.0.0.1:53538 - "POST /api/cover-letter/generate HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "fc8197f2-41cf-4d86-bb97-143e70308306", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 200, "elapsed_ms": 2.51}
+INFO:     127.0.0.1:53538 - "POST /api/cover-letter/generate HTTP/1.1" 200 OK
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+INFO:httpx:HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+INFO:resume-analyzer:{"request_id": "8be7a159-6533-4c7f-b4d0-08ae6c123105", "method": "POST", "path": "/api/cover-letter/generate", "status_code": 200, "elapsed_ms": 19747.67}
+INFO:     127.0.0.1:53541 - "POST /api/cover-letter/generate HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ecf1a526-9a6d-43fe-893f-e88118b12eec", "method": "GET", "path": "/api/", "status_code": 404, "elapsed_ms": 0.55}
+INFO:     127.0.0.1:53545 - "GET /api/ HTTP/1.1" 404 Not Found
+INFO:resume-analyzer:{"request_id": "5de01248-1670-42da-bcf8-cba0bb8c5f1a", "method": "OPTIONS", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 0.76}
+INFO:     127.0.0.1:53551 - "OPTIONS /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "35a67ddf-5ef2-40cf-b6bf-1370f4e676c0", "method": "OPTIONS", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 3.52}
+INFO:     127.0.0.1:53552 - "OPTIONS /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "95902437-aae0-4922-8e3f-b1e1facf10cd", "method": "OPTIONS", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 5.05}
+INFO:     127.0.0.1:53554 - "OPTIONS /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "54c4d8a0-ebcc-4cbc-9da1-5808aff27fe2", "method": "OPTIONS", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 6.7}
+INFO:     127.0.0.1:53555 - "OPTIONS /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "1f7876a6-8239-453e-b41b-26275739a162", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 5.01}
+INFO:     127.0.0.1:53559 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "34c992a0-3b04-4999-b2ee-0b580be44ec8", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 6.34}
+INFO:     127.0.0.1:53557 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "7c711352-0463-446a-843b-f1cbc6e89024", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 2.45}
+INFO:     127.0.0.1:53559 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ee089afd-a222-4315-a047-68a3aa4b80ce", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 3.21}
+INFO:     127.0.0.1:53557 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "58881743-2a1a-4b1a-b332-b5b6365b8bd2", "method": "OPTIONS", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 0.47}
+INFO:     127.0.0.1:53557 - "OPTIONS /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "4cad0392-1304-4904-b7f8-1e115da1a884", "method": "OPTIONS", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 1.85}
+INFO:     127.0.0.1:53559 - "OPTIONS /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "8b791741-6463-431b-8cac-b046b32179cb", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 1.95}
+INFO:     127.0.0.1:53555 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "79947635-1db0-46a1-8342-44b7990d31c9", "method": "GET", "path": "/api/jobs/applications", "status_code": 200, "elapsed_ms": 1.9}
+INFO:     127.0.0.1:53555 - "GET /api/jobs/applications HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'api/job_hunt_services.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [10899]
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+Process SpawnProcess-14:
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+    return loop.run_until_complete(main)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/main.py", line 28, in <module>
+    from api.job_hunt_services import (
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/job_hunt_services.py", line 82
+    r'project manager', r'product manager', r'business analyst', qa engineer',
+                                                                    ^
+SyntaxError: invalid syntax
+WARNING:  StatReload detected changes in 'api/main.py'. Reloading...
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+Process SpawnProcess-15:
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+    return loop.run_until_complete(main)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/main.py", line 28, in <module>
+    from api.job_hunt_services import (
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/job_hunt_services.py", line 82
+    r'project manager', r'product manager', r'business analyst', qa engineer',
+                                                                    ^
+SyntaxError: invalid syntax
+WARNING:  StatReload detected changes in 'api/main.py'. Reloading...
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+Process SpawnProcess-16:
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+    return loop.run_until_complete(main)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/main.py", line 28, in <module>
+    from api.job_hunt_services import (
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/job_hunt_services.py", line 82
+    r'project manager', r'product manager', r'business analyst', qa engineer',
+                                                                    ^
+SyntaxError: invalid syntax
+WARNING:  StatReload detected changes in 'api/main.py'. Reloading...
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+Process SpawnProcess-17:
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+    return loop.run_until_complete(main)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/main.py", line 28, in <module>
+    from api.job_hunt_services import (
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/job_hunt_services.py", line 82
+    r'project manager', r'product manager', r'business analyst', qa engineer',
+                                                                    ^
+SyntaxError: invalid syntax
+WARNING:  StatReload detected changes in 'api/main.py'. Reloading...
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+Process SpawnProcess-18:
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+    return loop.run_until_complete(main)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/main.py", line 28, in <module>
+    from api.job_hunt_services import (
+  File "/Users/ani7/Downloads/AI-Resume-Analyzer/api/job_hunt_services.py", line 82
+    r'project manager', r'product manager', r'business analyst', qa engineer',
+                                                                    ^
+SyntaxError: invalid syntax
+WARNING:  StatReload detected changes in 'api/job_hunt_services.py'. Reloading...
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/ani7/Downloads/AI-Resume-Analyzer/venvapp/lib/python3.9/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+INFO:     Started server process [11154]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:resume-analyzer:{"request_id": "d63d5bed-bf44-4f2a-bb2d-4dccb2595b46", "method": "OPTIONS", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 13.01}
+INFO:     127.0.0.1:53563 - "OPTIONS /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "39b9cad1-241d-4ac7-8e56-2437ed0fd6ce", "method": "OPTIONS", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 15.83}
+INFO:     127.0.0.1:53564 - "OPTIONS /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "bb3b1b6f-4470-49ce-836b-0d6afd4db2eb", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 18.11}
+INFO:     127.0.0.1:53567 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "7b3a029a-8eff-4891-b5f3-7ac1683fb10d", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 22.66}
+INFO:     127.0.0.1:53568 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "799fab29-c5f5-4c24-91b8-9cf0ccef8244", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 23.75}
+INFO:     127.0.0.1:53572 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "719d2c02-66f9-4650-9b2a-daf9a1413b1b", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 24.59}
+INFO:     127.0.0.1:53573 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "b8d6ba74-e705-4ce2-85a7-522f72c5fda3", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 10.24}
+INFO:     127.0.0.1:53563 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "8e281534-8a0a-4222-a1c1-e69ff31e9b7a", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 3.76}
+INFO:     127.0.0.1:53563 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ce70d5b1-6ae3-471e-8adf-a60b783dad9e", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 1.39}
+INFO:     127.0.0.1:53573 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "138855f0-9e0e-41eb-9e24-06b217bb0b4e", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 2.34}
+INFO:     127.0.0.1:53573 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "e552278a-ae69-4bf5-9d99-ec686bdfa09d", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 2.54}
+INFO:     127.0.0.1:53563 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "347493b1-b134-46dc-a61a-a51d38faf1d7", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 1.43}
+INFO:     127.0.0.1:53563 - "GET /api/user/profile HTTP/1.1" 200 OK
