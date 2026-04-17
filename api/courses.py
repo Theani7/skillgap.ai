@@ -205,7 +205,7 @@ ROADMAPS = {
         {'step': 3, 'title': 'Data & Network', 'duration': '4 weeks', 'skills': ['CoreData', 'URLSession', 'JSON Parsing']},
         {'step': 4, 'title': 'Advanced iOS', 'duration': 'Ongoing', 'skills': ['Combine', 'App Store Connect', 'Performance']}
     ],
-    'UI-UX Development': [
+    'UI/UX Design': [
         {'step': 1, 'title': 'Design Fundamentals', 'duration': '2 weeks', 'skills': ['Color Theory', 'Typography', 'Layout']},
         {'step': 2, 'title': 'UX Research & Wireframing', 'duration': '4 weeks', 'skills': ['User Personas', 'Journey Mapping', 'Balsamiq', 'Sketch']},
         {'step': 3, 'title': 'High-Fidelity Prototyping', 'duration': '4 weeks', 'skills': ['Figma', 'Adobe XD', 'Interaction Design']},
