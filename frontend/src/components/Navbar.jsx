@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { LogOut, User as UserIcon, Zap, Sparkles, Briefcase, FileText, Settings, Moon, Sun } from 'lucide-react';
+import { LogOut, User as UserIcon, Zap, Sparkles, Briefcase, FileText, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
-    const { isDark, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -71,14 +69,6 @@ const Navbar = () => {
                                      <FileText size={16} />
                                      <span className="hidden sm:inline">Cover Letter</span>
                                  </Link>
-                                 <button
-                                     onClick={toggleTheme}
-                                     className="clay-btn clay-btn-ghost clay-btn-sm"
-                                     style={{ padding: '8px' }}
-                                     title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                                 >
-                                     {isDark ? <Sun size={16} /> : <Moon size={16} />}
-                                 </button>
                                  <Link
                                      to="/settings"
                                      className={`clay-nav-link ${isActiveLink('/settings') ? 'active' : ''}`}

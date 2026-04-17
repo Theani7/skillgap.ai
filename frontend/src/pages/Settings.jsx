@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { Settings as SettingsIcon, User, Bell, Palette, Target, MapPin, DollarSign, Clock, Save, X, Moon, Sun, LogOut } from 'lucide-react';
+import { Settings as SettingsIcon, User, Target, Save, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
   const { user, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,55 +140,6 @@ const Settings = () => {
             style={{ padding: 'var(--spacing-xl)' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-lg)' }}>
-              <Palette size={20} />
-              <h3 style={{ margin: 0 }}>Appearance</h3>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--spacing-md)', background: 'var(--clay-bg)', borderRadius: 'var(--radius-lg)' }}>
-              <div>
-                <p style={{ margin: 0, fontWeight: 600 }}>Dark Mode</p>
-                <p style={{ margin: '4px 0 0', color: 'var(--clay-muted)', fontSize: '0.9rem' }}>
-                  {isDark ? 'Currently using dark theme' : 'Currently using light theme'}
-                </p>
-              </div>
-              <button
-                onClick={toggleTheme}
-                className="clay-btn"
-                style={{
-                  width: '56px',
-                  height: '32px',
-                  borderRadius: '16px',
-                  padding: '4px',
-                  background: isDark ? 'var(--clay-accent)' : 'var(--clay-border)',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                <motion.div
-                  animate={{ x: isDark ? 24 : 0 }}
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  {isDark ? <Moon size={14} /> : <Sun size={14} />}
-                </motion.div>
-              </button>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="clay-card shadow-clay-card"
-            style={{ padding: 'var(--spacing-xl)' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-lg)' }}>
               <Target size={20} />
               <h3 style={{ margin: 0 }}>Career Preferences</h3>
             </div>
@@ -254,7 +203,7 @@ const Settings = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.2 }}
             className="clay-card shadow-clay-card"
             style={{ padding: 'var(--spacing-xl)' }}
           >
@@ -358,7 +307,7 @@ const Settings = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.3 }}
             style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end' }}
           >
             <button
