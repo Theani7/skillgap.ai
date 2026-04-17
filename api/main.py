@@ -30,6 +30,9 @@ from api.job_hunt_services import (
     generate_cover_letter_fallback,
     recommend_projects,
     get_translations,
+    parse_resume_fallback,
+    rewrite_resume_fallback,
+    generate_roadmap_fallback,
 )
 import json
 
@@ -347,7 +350,14 @@ async def analyze_resume(
 
     try:
         # Use our new Advanced Gemini Parsing Engine
-        resume_data = parse_resume_with_gemini(tmp_path, target_role)
+        try:
+            resume_data = parse_resume_with_gemini(tmp_path, target_role)
+        except Exception as e:
+            logger.warning(f"Gemini parse failed, using fallback: {e}")
+            # Fallback: extract text directly and use regex parser
+            with open(tmp_path, 'r', encoding='utf-8', errors='ignore') as f:
+                resume_text = f.read()
+            resume_data = parse_resume_fallback(resume_text, target_role)
         
         if not resume_data:
             raise HTTPException(status_code=500, detail="Failed to extract data from the resume")
@@ -749,7 +759,11 @@ def interview_copilot(payload: InterviewRequest, current_user: dict = Depends(ge
 
 @app.post("/api/rewrite-resume")
 def rewrite_resume(payload: RewriteRequest, current_user: dict = Depends(get_current_optional_user)):
-    rewritten = rewrite_resume_with_gemini(payload.resume_data, payload.target_role)
+    try:
+        rewritten = rewrite_resume_with_gemini(payload.resume_data, payload.target_role)
+    except Exception as e:
+        logger.warning(f"Gemini rewrite failed, using fallback: {e}")
+        rewritten = rewrite_resume_fallback(payload.resume_data, payload.target_role)
     if not rewritten:
         rewritten = rewrite_resume_bullets_fallback(payload.resume_data, payload.target_role or "General")
     return rewritten
@@ -828,7 +842,11 @@ def delete_application(application_id: int, current_user: dict = Depends(get_cur
 
 @app.post("/api/cover-letter/generate")
 def generate_cover_letter(payload: CoverLetterRequest, current_user: dict = Depends(get_current_optional_user)):
-    generated = generate_cover_letter_with_gemini(payload.profile, payload.job_description, payload.company, payload.role)
+    try:
+        generated = generate_cover_letter_with_gemini(payload.profile, payload.job_description, payload.company, payload.role)
+    except Exception as e:
+        logger.warning(f"Gemini cover letter failed, using fallback: {e}")
+        generated = ""
     if not generated:
         generated = generate_cover_letter_fallback(payload.profile, payload.job_description, payload.company, payload.role)
     return {"cover_letter": generated}
