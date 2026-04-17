@@ -22,9 +22,9 @@ const AppContent = () => {
 
   return (
     <div className="app-shell">
-      {!isLanding && <FloatingBlobs />}
+      {!isLanding && !isAuth && <FloatingBlobs />}
       
-      {!isAuth && <Navbar />}
+      {!isLanding && !isAuth && <Navbar />}
 
       <main className="main-content" style={{ paddingTop: isLanding ? '0' : '24px' }}>
         <Routes>

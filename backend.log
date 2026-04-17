@@ -1413,3 +1413,21 @@ INFO:resume-analyzer:{"request_id": "e2c37108-87a5-47b8-9a57-ccfd59bc738e", "met
 INFO:     127.0.0.1:53766 - "GET /api/user/preferences HTTP/1.1" 200 OK
 INFO:resume-analyzer:{"request_id": "ce817a01-fda6-46f2-a2e9-e7a79f1b62ce", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 2.16}
 INFO:     127.0.0.1:53769 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "e364fb4d-7a85-4b7d-b146-3c4ae86d0da7", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 283.64}
+INFO:     127.0.0.1:53818 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "8296c673-dbc3-4b10-83e0-af4b25ff3db1", "method": "OPTIONS", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 0.36}
+INFO:     127.0.0.1:53818 - "OPTIONS /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "097c91a1-62d4-4da8-95eb-a224de59f9f6", "method": "OPTIONS", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 0.9}
+INFO:     127.0.0.1:53821 - "OPTIONS /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "fb200fab-ee2b-4923-8387-b023903abdea", "method": "OPTIONS", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 1.93}
+INFO:     127.0.0.1:53823 - "OPTIONS /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "13d2ddcd-015c-4c0c-9768-1b362a4bdbd1", "method": "OPTIONS", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 3.01}
+INFO:     127.0.0.1:53824 - "OPTIONS /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "2eed93c6-62f1-4dfd-bee2-db27704b9b24", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 3.44}
+INFO:     127.0.0.1:53818 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "c6cac251-060a-4a30-8207-72ad2521e06a", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 2.64}
+INFO:     127.0.0.1:53826 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "391e9786-ea3f-4438-a8a2-1a2c35432a2a", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 1.91}
+INFO:     127.0.0.1:53818 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "b0f977e8-3ecb-4ea1-9318-c85c75a6b59a", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 2.58}
+INFO:     127.0.0.1:53826 - "GET /api/user/preferences HTTP/1.1" 200 OK

@@ -52,17 +52,20 @@ const Register = () => {
                 <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-2xl)' }}>
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)' }}>
-                        <div
-                            className="clay-icon clay-icon-pink"
-                            style={{
-                                width: '72px',
-                                height: '72px',
-                                borderRadius: 'var(--radius-lg)',
-                                margin: '0 auto var(--spacing-md)'
-                            }}
-                        >
-                            <UserPlus size={32} />
-                        </div>
+                        <Link to="/" style={{ display: 'inline-block', textDecoration: 'none' }}>
+                            <div
+                                className="clay-icon clay-icon-pink"
+                                style={{
+                                    width: '72px',
+                                    height: '72px',
+                                    borderRadius: 'var(--radius-lg)',
+                                    margin: '0 auto var(--spacing-md)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <UserPlus size={32} />
+                            </div>
+                        </Link>
                         <h2 style={{ fontSize: '1.75rem', marginBottom: 'var(--spacing-xs)' }}>Create Account</h2>
                         <p style={{ color: 'var(--clay-muted)', margin: 0 }}>Start your career transformation</p>
                     </div>
