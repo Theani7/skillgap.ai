@@ -1393,3 +1393,23 @@ INFO:resume-analyzer:{"request_id": "442019c5-5de1-490d-97e1-fa0695e84086", "met
 INFO:     127.0.0.1:53744 - "GET /api/user/preferences HTTP/1.1" 200 OK
 INFO:resume-analyzer:{"request_id": "8f66ecd5-5a2e-45b1-a3d5-6fe0f733cb37", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 2.68}
 INFO:     127.0.0.1:53748 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "82d739ce-8df9-4ad6-811d-9e4e09fd91c0", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 10.45}
+INFO:     127.0.0.1:53759 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "b9b94299-5048-4cf8-af02-3100d74b222d", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 13.39}
+INFO:     127.0.0.1:53760 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "c0832fe2-0e30-4ad1-8d5b-756215813d0c", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 20.55}
+INFO:     127.0.0.1:53758 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "0769669d-3910-4d85-b769-2163de7fb0cb", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 7.15}
+INFO:     127.0.0.1:53759 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "5e1bc902-2f6d-4638-ae96-2a1841790e83", "method": "GET", "path": "/api/user/history", "status_code": 200, "elapsed_ms": 8.79}
+INFO:     127.0.0.1:53760 - "GET /api/user/history HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "07ea2bae-f7fc-4e6c-b4c0-b3ab4eedb95f", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 8.87}
+INFO:     127.0.0.1:53762 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "3d68d568-4617-483c-805e-97da380dec2a", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 2.43}
+INFO:     127.0.0.1:53766 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "40c64bdc-de70-4933-8882-99f5fde94f6e", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 3.41}
+INFO:     127.0.0.1:53767 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "e2c37108-87a5-47b8-9a57-ccfd59bc738e", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 1.6}
+INFO:     127.0.0.1:53766 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "ce817a01-fda6-46f2-a2e9-e7a79f1b62ce", "method": "GET", "path": "/api/user/profile", "status_code": 200, "elapsed_ms": 2.16}
+INFO:     127.0.0.1:53769 - "GET /api/user/profile HTTP/1.1" 200 OK
