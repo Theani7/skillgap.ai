@@ -35,10 +35,12 @@ const Login = () => {
                 login(data.access_token, data.role, data.username, data.full_name);
                 navigate('/app');
             } else {
-                setError(data.detail || 'Login failed');
+                const errorMsg = data.detail?.[0]?.msg || data.detail || 'Login failed';
+                setError(errorMsg);
             }
         } catch (err) {
-            setError('Server error.');
+            const errorMsg = err.response?.data?.detail || 'Unable to connect to server. Please try again.';
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
