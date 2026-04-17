@@ -360,6 +360,7 @@ async def get_current_user_info(request: Request):
     from api.auth import get_current_user_from_cookie
     try:
         user = await get_current_user_from_cookie(request)
+        user_dict = dict(user)
         return {
             "username": user["username"],
             "role": user["role"],
