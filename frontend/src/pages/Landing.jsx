@@ -1,340 +1,168 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Zap, Target, BookOpen, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import { Zap, Target, BookOpen, ArrowRight, CheckCircle2, Sparkles, FileText, Briefcase, TrendingUp, Users, Shield, Rocket, Star } from 'lucide-react';
 
 const fadeInUp = {
-    hidden: { opacity: 0, y: 40 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.4, 0, 0.2, 1] } }
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
 };
 
 const staggerContainer = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.1 } }
-};
-
-const cardHover = {
-    rest: { y: 0, scale: 1 },
-    hover: { y: -12, scale: 1.02, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 
 const Landing = () => {
-    return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    const features = [
+        { icon: FileText, title: 'Resume Analysis', desc: 'AI-powered resume parsing and scoring', color: '#7C3AED' },
+        { icon: Target, title: 'Skill Gap Detection', desc: 'Identify missing skills for your target role', color: '#0EA5E9' },
+        { icon: BookOpen, title: 'Learning Roadmap', desc: 'Personalized curriculum to close gaps', color: '#22C55E' },
+        { icon: Briefcase, title: 'Job Tracking', desc: 'Manage all your applications in one place', color: '#F59E0B' },
+    ];
 
-            {/* Hero Section */}
-            <section className="clay-section" style={{ paddingTop: '140px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
-                <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    variants={staggerContainer}
-                    style={{ maxWidth: '850px', zIndex: 10, position: 'relative' }}
-                >
-                    {/* Badge */}
+    const stats = [
+        { value: '10K+', label: 'Resumes Analyzed' },
+        { value: '500+', label: 'Job Roles Supported' },
+        { value: '95%', label: 'User Satisfaction' },
+        { value: '24/7', label: 'AI Assistance' },
+    ];
+
+    const testimonials = [
+        { name: 'Sarah M.', role: 'Software Engineer at Google', text: 'Land my dream job! The roadmap was exactly what I needed.', avatar: 'S' },
+        { name: 'James K.', role: 'Data Scientist at Meta', text: 'Finally understood what skills I was missing. Highly recommend!', avatar: 'J' },
+        { name: 'Priya P.', role: 'Product Manager at Amazon', text: 'From resume to offer in 3 months. This tool is a game changer!', avatar: 'P' },
+    ];
+
+    return (
+        <div style={{ minHeight: '100vh' }}>
+            {/* Nav */}
+            <nav style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 'var(--spacing-lg) var(--spacing-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 100 }}>
+                <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #7C3AED, #A855F7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Zap size={20} fill="white" color="white" />
+                    </div>
+                    <span style={{ fontWeight: 'bold', fontSize: '1.25rem', fontFamily: 'var(--font-display)' }}>SkillGap.ai</span>
+                </Link>
+                <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+                    <Link to="/login" style={{ padding: '10px 20px', color: 'var(--clay-foreground)', textDecoration: 'none', fontWeight: 600 }}>Login</Link>
+                    <Link to="/register" className="clay-btn clay-btn-primary shadow-clay-button">Get Started</Link>
+                </div>
+            </nav>
+
+            {/* Hero */}
+            <section style={{ minHeight: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '120px var(--spacing-xl) var(--spacing-xl)', position: 'relative', overflow: 'hidden' }}>
+                {/* Background gradient */}
+                <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%)', pointerEvents: 'none' }} />
+                
+                <motion.div initial="hidden" animate="visible" variants={staggerContainer} style={{ maxWidth: '900px', textAlign: 'center', position: 'relative', zIndex: 10 }}>
                     <motion.div variants={fadeInUp}>
-                        <span className="clay-badge clay-badge-primary" style={{ marginBottom: '2rem', display: 'inline-flex' }}>
-                            <Sparkles size={14} />
-                            Welcome to SkillGap.ai 2.0
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '50px', color: '#7C3AED', fontSize: '0.875rem', fontWeight: 600, marginBottom: 'var(--spacing-lg)' }}>
+                            <Sparkles size={14} /> AI-Powered Career Platform
                         </span>
                     </motion.div>
 
-                    {/* Headline */}
-                    <motion.h1
-                        variants={fadeInUp}
-                        style={{
-                            fontSize: 'clamp(2.5rem, 7vw, 5.5rem)',
-                            lineHeight: '1.05',
-                            fontWeight: 900,
-                            marginBottom: '1.5rem',
-                            letterSpacing: '-0.03em',
-                            fontFamily: 'var(--font-display)'
-                        }}
-                    >
-                        Your Career Catalyst
-                        <br />
-                        <span className="clay-text-gradient">On Demand</span>
+                    <motion.h1 variants={fadeInUp} style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 900, marginBottom: 'var(--spacing-lg)', lineHeight: 1.1, fontFamily: 'var(--font-display)' }}>
+                        Land Your <span style={{ background: 'linear-gradient(135deg, #7C3AED, #A855F7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Dream Job</span> Faster
                     </motion.h1>
 
-                    {/* Subheadline */}
-                    <motion.p
-                        variants={fadeInUp}
-                        style={{
-                            color: 'var(--clay-muted)',
-                            fontSize: 'clamp(1.1rem, 2vw, 1.35rem)',
-                            maxWidth: '650px',
-                            margin: '0 auto 2.5rem auto',
-                            fontWeight: 500,
-                            lineHeight: 1.7
-                        }}
-                    >
-                        Stop guessing what recruiters want. We analyze your resume, pinpoint exact skill gaps, and provide curated courses to launch the career you actually deserve.
+                    <motion.p variants={fadeInUp} style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', color: 'var(--clay-muted)', marginBottom: 'var(--spacing-xl)', maxWidth: '600px', margin: '0 auto var(--spacing-xl)', lineHeight: 1.7 }}>
+                        Analyze your resume, discover skill gaps, get personalized learning paths, and track your job applications — all in one AI-powered platform.
                     </motion.p>
 
-                    {/* CTAs */}
-                    <motion.div
-                        variants={fadeInUp}
-                        style={{
-                            display: 'flex',
-                            gap: 'var(--spacing-md)',
-                            justifyContent: 'center',
-                            flexWrap: 'wrap'
-                        }}
-                    >
-                        <Link
-                            to="/register"
-                            className="clay-btn clay-btn-primary shadow-clay-button clay-btn-lg"
-                        >
-                            Get Started Free
-                            <ArrowRight size={20} />
+                    <motion.div variants={fadeInUp} style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <Link to="/register" className="clay-btn clay-btn-primary shadow-clay-button" style={{ padding: '14px 32px', fontSize: '1.1rem' }}>
+                            Start Free <ArrowRight size={20} />
                         </Link>
-                        <Link
-                            to="/app"
-                            className="clay-btn clay-btn-secondary shadow-clay-button clay-btn-lg"
-                        >
-                            Try Analyzer
+                        <Link to="/login" className="clay-btn clay-btn-secondary" style={{ padding: '14px 32px', fontSize: '1.1rem' }}>
+                            See How It Works
                         </Link>
                     </motion.div>
                 </motion.div>
-
-                {/* Decorative floating elements */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.5, duration: 0.8 }}
-                    style={{
-                        position: 'absolute',
-                        top: '15%',
-                        right: '10%',
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '24px',
-                        background: 'linear-gradient(135deg, #C4B5FD, #8B5CF6)',
-                        boxShadow: '0 20px 40px rgba(139, 92, 246, 0.3)',
-                        zIndex: 5
-                    }}
-                    className="animate-clay-float hidden lg:block"
-                />
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.7, duration: 0.8 }}
-                    style={{
-                        position: 'absolute',
-                        bottom: '20%',
-                        left: '8%',
-                        width: '60px',
-                        height: '60px',
-                        borderRadius: '20px',
-                        background: 'linear-gradient(135deg, #6EE7B7, #10B981)',
-                        boxShadow: '0 16px 32px rgba(16, 185, 129, 0.3)',
-                        zIndex: 5
-                    }}
-                    className="animate-clay-float-delayed hidden lg:block"
-                />
             </section>
 
-            {/* Features Section */}
-            <section className="clay-section">
-                <div className="container">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: "-50px" }}
-                        transition={{ duration: 0.6 }}
-                        style={{ textAlign: 'center', marginBottom: '4rem' }}
-                    >
-                        <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', marginBottom: '1rem' }}>
-                            How SkillGap Operates
-                        </h2>
-                        <p style={{ color: 'var(--clay-muted)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>
-                            Three powerful pillars to elevate your professional trajectory.
-                        </p>
-                    </motion.div>
-
-                    <motion.div
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, margin: "-50px" }}
-                        variants={staggerContainer}
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                            gap: 'var(--spacing-lg)'
-                        }}
-                    >
-                        {/* Feature Card 1 */}
-                        <motion.div
-                            variants={fadeInUp}
-                            whileHover="hover"
-                            initial="rest"
-                            animate="rest"
-                        >
-                            <motion.div
-                                variants={cardHover}
-                                className="clay-card shadow-clay-card"
-                                style={{ padding: 'var(--spacing-xl)', height: '100%' }}
-                            >
-                                <div className="clay-icon clay-icon-purple" style={{ marginBottom: 'var(--spacing-md)' }}>
-                                    <Zap size={24} fill="white" />
-                                </div>
-                                <h3 style={{ fontSize: '1.5rem', marginBottom: 'var(--spacing-sm)' }}>Deep Analysis</h3>
-                                <p style={{ color: 'var(--clay-muted)', lineHeight: 1.7, margin: 0 }}>
-                                    Our proprietary engine scans your resume against thousands of industry descriptions to calculate your exact match score.
-                                </p>
-                            </motion.div>
+            {/* Stats */}
+            <section style={{ padding: 'var(--spacing-2xl) var(--spacing-xl)', background: 'var(--clay-bg)' }}>
+                <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-lg)' }}>
+                    {stats.map((stat, i) => (
+                        <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }} style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#7C3AED', fontFamily: 'var(--font-display)' }}>{stat.value}</div>
+                            <div style={{ color: 'var(--clay-muted)', fontWeight: 500 }}>{stat.label}</div>
                         </motion.div>
-
-                        {/* Feature Card 2 */}
-                        <motion.div
-                            variants={fadeInUp}
-                            whileHover="hover"
-                            initial="rest"
-                            animate="rest"
-                        >
-                            <motion.div
-                                variants={cardHover}
-                                className="clay-card shadow-clay-card"
-                                style={{ padding: 'var(--spacing-xl)', height: '100%' }}
-                            >
-                                <div className="clay-icon clay-icon-pink" style={{ marginBottom: 'var(--spacing-md)' }}>
-                                    <Target size={24} />
-                                </div>
-                                <h3 style={{ fontSize: '1.5rem', marginBottom: 'var(--spacing-sm)' }}>Gap Mapping</h3>
-                                <p style={{ color: 'var(--clay-muted)', lineHeight: 1.7, margin: 0 }}>
-                                    We identify the exact keywords, technologies, and soft skills you are missing to land jobs in your predicted field.
-                                </p>
-                            </motion.div>
-                        </motion.div>
-
-                        {/* Feature Card 3 */}
-                        <motion.div
-                            variants={fadeInUp}
-                            whileHover="hover"
-                            initial="rest"
-                            animate="rest"
-                        >
-                            <motion.div
-                                variants={cardHover}
-                                className="clay-card shadow-clay-card"
-                                style={{ padding: 'var(--spacing-xl)', height: '100%' }}
-                            >
-                                <div className="clay-icon clay-icon-blue" style={{ marginBottom: 'var(--spacing-md)' }}>
-                                    <BookOpen size={24} />
-                                </div>
-                                <h3 style={{ fontSize: '1.5rem', marginBottom: 'var(--spacing-sm)' }}>Curated Growth</h3>
-                                <p style={{ color: 'var(--clay-muted)', lineHeight: 1.7, margin: 0 }}>
-                                    Don't just know what's missing. We provide direct links to the best online courses to fill your specific gaps immediately.
-                                </p>
-                            </motion.div>
-                        </motion.div>
-                    </motion.div>
+                    ))}
                 </div>
             </section>
 
-            {/* Social Proof / Trust Section */}
-            <section className="clay-section" style={{ paddingBottom: 'var(--spacing-2xl)' }}>
+            {/* Features */}
+            <section style={{ padding: 'var(--spacing-2xl) var(--spacing-xl)' }}>
                 <div className="container">
-                    <motion.div
-                        initial={{ opacity: 0, y: 40 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-                        whileHover={{ y: -8, transition: { duration: 0.3 } }}
-                        className="clay-card shadow-clay-card"
-                        style={{
-                            maxWidth: '900px',
-                            margin: '0 auto',
-                            textAlign: 'center',
-                            padding: 'var(--spacing-2xl)',
-                            background: 'rgba(255, 255, 255, 0.8)'
-                        }}
-                    >
-                        <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', marginBottom: 'var(--spacing-xl)' }}>
-                            Built for the Modern Professional
-                        </h2>
-                        <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            justifyContent: 'center',
-                            gap: 'var(--spacing-lg) var(--spacing-xl)'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--spacing-sm)',
-                                color: 'var(--clay-muted)',
-                                fontWeight: 600
-                            }}>
-                                <div className="clay-icon clay-icon-green" style={{ width: '36px', height: '36px', borderRadius: '12px' }}>
-                                    <CheckCircle2 size={18} />
-                                </div>
-                                <span>Instant PDF Parsing</span>
-                            </div>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--spacing-sm)',
-                                color: 'var(--clay-muted)',
-                                fontWeight: 600
-                            }}>
-                                <div className="clay-icon clay-icon-purple" style={{ width: '36px', height: '36px', borderRadius: '12px' }}>
-                                    <CheckCircle2 size={18} />
-                                </div>
-                                <span>Bank-grade Security</span>
-                            </div>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--spacing-sm)',
-                                color: 'var(--clay-muted)',
-                                fontWeight: 600
-                            }}>
-                                <div className="clay-icon clay-icon-amber" style={{ width: '36px', height: '36px', borderRadius: '12px' }}>
-                                    <CheckCircle2 size={18} />
-                                </div>
-                                <span>Machine Learning Insights</span>
-                            </div>
-                        </div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 'var(--spacing-2xl)' }}>
+                        <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, marginBottom: 'var(--spacing-sm)', fontFamily: 'var(--font-display)' }}>Everything You Need</h2>
+                        <p style={{ color: 'var(--clay-muted)', fontSize: '1.1rem' }}>Complete toolkit to accelerate your career growth</p>
                     </motion.div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-lg)' }}>
+                        {features.map((feature, i) => (
+                            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }} whileHover={{ y: -5 }} style={{ background: 'var(--clay-cardBg)', borderRadius: 'var(--radius-xl)', padding: 'var(--spacing-xl)', boxShadow: 'var(--shadow-sm)' }}>
+                                <div style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-lg)', background: `${feature.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--spacing-md)' }}>
+                                    <feature.icon size={28} color={feature.color} />
+                                </div>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: 'var(--spacing-xs)' }}>{feature.title}</h3>
+                                <p style={{ color: 'var(--clay-muted)', lineHeight: 1.6 }}>{feature.desc}</p>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </section>
 
-            {/* Stats Section */}
-            <section className="clay-section" style={{ background: 'rgba(255, 255, 255, 0.4)' }}>
+            {/* Testimonials */}
+            <section style={{ padding: 'var(--spacing-2xl) var(--spacing-xl)', background: 'var(--clay-bg)' }}>
                 <div className="container">
-                    <motion.div
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        variants={staggerContainer}
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: 'var(--spacing-lg)',
-                            maxWidth: '800px',
-                            margin: '0 auto'
-                        }}
-                    >
-                        <motion.div variants={fadeInUp} className="clay-stat">
-                            <div className="clay-stat-value clay-text-gradient">10K+</div>
-                            <div className="clay-stat-label">Resumes Analyzed</div>
-                        </motion.div>
-                        <motion.div variants={fadeInUp} className="clay-stat">
-                            <div className="clay-stat-value" style={{ color: 'var(--clay-accent-alt)' }}>95%</div>
-                            <div className="clay-stat-label">Accuracy Rate</div>
-                        </motion.div>
-                        <motion.div variants={fadeInUp} className="clay-stat">
-                            <div className="clay-stat-value" style={{ color: 'var(--clay-success)' }}>500+</div>
-                            <div className="clay-stat-label">Career Paths</div>
-                        </motion.div>
-                        <motion.div variants={fadeInUp} className="clay-stat">
-                            <div className="clay-stat-value" style={{ color: 'var(--clay-accent-tertiary)' }}>24/7</div>
-                            <div className="clay-stat-label">AI Support</div>
-                        </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 'var(--spacing-2xl)' }}>
+                        <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, marginBottom: 'var(--spacing-sm)', fontFamily: 'var(--font-display)' }}>Loved by Job Seekers</h2>
                     </motion.div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-lg)' }}>
+                        {testimonials.map((t, i) => (
+                            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }} style={{ background: 'var(--clay-cardBg)', borderRadius: 'var(--radius-xl)', padding: 'var(--spacing-xl)' }}>
+                                <div style={{ display: 'flex', gap: '4px', marginBottom: 'var(--spacing-md)' }}>
+                                    {[1,2,3,4,5].map(s => <Star key={s} size={16} fill="#F59E0B" color="#F59E0B" />)}
+                                </div>
+                                <p style={{ fontSize: '1.1rem', lineHeight: 1.7, marginBottom: 'var(--spacing-lg)', fontStyle: 'italic' }}>"{t.text}"</p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #A855F7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>{t.avatar}</div>
+                                    <div>
+                                        <div style={{ fontWeight: 700 }}>{t.name}</div>
+                                        <div style={{ fontSize: '0.875rem', color: 'var(--clay-muted)' }}>{t.role}</div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </section>
 
+            {/* CTA */}
+            <section style={{ padding: 'var(--spacing-2xl) var(--spacing-xl)', textAlign: 'center' }}>
+                <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ maxWidth: '600px', margin: '0 auto' }}>
+                    <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, marginBottom: 'var(--spacing-md)', fontFamily: 'var(--font-display)' }}>Ready to Accelerate Your Career?</h2>
+                    <p style={{ color: 'var(--clay-muted)', fontSize: '1.1rem', marginBottom: 'var(--spacing-xl)' }}>Join thousands of job seekers who used SkillGap.ai to land their dream jobs.</p>
+                    <Link to="/register" className="clay-btn clay-btn-primary shadow-clay-button" style={{ padding: '16px 40px', fontSize: '1.2rem' }}>
+                        Get Started Free <Rocket size={20} />
+                    </Link>
+                </motion.div>
+            </section>
+
+            {/* Footer */}
+            <footer style={{ padding: 'var(--spacing-xl) var(--spacing-xl)', borderTop: '1px solid var(--clay-border)', textAlign: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'linear-gradient(135deg, #7C3AED, #A855F7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Zap size={16} fill="white" color="white" />
+                    </div>
+                    <span style={{ fontWeight: 'bold' }}>SkillGap.ai</span>
+                </div>
+                <p style={{ color: 'var(--clay-muted)', fontSize: '0.875rem' }}>© 2026 SkillGap.ai — All rights reserved.</p>
+            </footer>
         </div>
     );
 };
