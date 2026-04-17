@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Activity, FileText, TrendingUp, Award, ArrowRight, UploadCloud, Mail, MapPin, Sparkles, Clock, Target, Briefcase, CheckCircle, XCircle, AlertCircle, Calendar, ExternalLink } from 'lucide-react';
+import { User, Activity, FileText, TrendingUp, Award, ArrowRight, UploadCloud, Mail, MapPin, Sparkles, Clock, Target, Briefcase, AlertCircle, Calendar, DollarSign, Timer } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -14,26 +14,35 @@ const Profile = () => {
     const [selectedResult, setSelectedResult] = useState(null);
     const [profileData, setProfileData] = useState({
         full_name: '',
-        email: user?.email || '',
-        phone: '',
         location: '',
+    });
+    const [preferences, setPreferences] = useState({
+        target_role: '',
+        timeline_months: 6,
+        preferred_location: '',
+        salary_target: 0,
     });
 
     useEffect(() => {
         const fetchData = async () => {
             if (!user?.token) return;
             try {
-                const [historyRes, profileRes] = await Promise.all([
+                const [historyRes, profileRes, prefRes] = await Promise.all([
                     api.get('/api/user/history'),
-                    api.get('/api/user/profile')
+                    api.get('/api/user/profile'),
+                    api.get('/api/user/preferences')
                 ]);
                 const sorted = (historyRes.data.history || []).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                 setHistory(sorted);
                 setProfileData({
                     full_name: profileRes.data.profile?.full_name || user?.full_name || user?.username || '',
-                    email: user?.email || '',
-                    phone: profileRes.data.profile?.phone || '',
                     location: profileRes.data.profile?.location || '',
+                });
+                setPreferences({
+                    target_role: prefRes.data.preferences?.target_role || '',
+                    timeline_months: prefRes.data.preferences?.timeline_months || 6,
+                    preferred_location: prefRes.data.preferences?.preferred_location || '',
+                    salary_target: prefRes.data.preferences?.salary_target || 0,
                 });
             } catch (err) {
                 console.error(err);
@@ -78,7 +87,6 @@ const Profile = () => {
     return (
         <motion.div className="clay-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ minHeight: 'calc(100vh - 200px)', padding: 'var(--spacing-xl) 0' }}>
             <div className="container">
-                {/* Header */}
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 'var(--spacing-2xl)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
@@ -96,6 +104,24 @@ const Profile = () => {
                         </div>
                     </div>
                 </motion.div>
+
+                {/* User Info from Settings */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xl)' }}>
+                    {[
+                        { icon: Target, label: 'Target Role', value: preferences.target_role || 'Not set' },
+                        { icon: MapPin, label: 'Location', value: preferences.preferred_location || profileData.location || 'Not set' },
+                        { icon: Timer, label: 'Timeline', value: `${preferences.timeline_months} months` },
+                        { icon: DollarSign, label: 'Salary Target', value: preferences.salary_target ? `$${preferences.salary_target.toLocaleString()}` : 'Not set' },
+                    ].map((item, i) => (
+                        <div key={i} style={{ background: 'var(--clay-bg)', padding: 'var(--spacing-md)', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                            <item.icon size={16} color="#7C3AED" />
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--clay-muted)' }}>{item.label}</div>
+                                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{item.value}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
 
                 {/* Stats Cards */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-2xl)' }}>
