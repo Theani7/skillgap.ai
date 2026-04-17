@@ -1431,3 +1431,12 @@ INFO:resume-analyzer:{"request_id": "391e9786-ea3f-4438-a8a2-1a2c35432a2a", "met
 INFO:     127.0.0.1:53818 - "GET /api/user/profile HTTP/1.1" 200 OK
 INFO:resume-analyzer:{"request_id": "b0f977e8-3ecb-4ea1-9318-c85c75a6b59a", "method": "GET", "path": "/api/user/preferences", "status_code": 200, "elapsed_ms": 2.58}
 INFO:     127.0.0.1:53826 - "GET /api/user/preferences HTTP/1.1" 200 OK
+INFO:resume-analyzer:{"request_id": "be8581b3-bc38-4f99-938d-8e7375ea9005", "method": "POST", "path": "/api/auth/login", "status_code": 401, "elapsed_ms": 256.12}
+INFO:     127.0.0.1:53910 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:resume-analyzer:{"request_id": "83e1abaa-5f96-418c-ba38-2f591818b771", "method": "POST", "path": "/api/auth/login", "status_code": 200, "elapsed_ms": 285.27}
+INFO:     127.0.0.1:53910 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11154]
+INFO:     Stopping reloader process [7785]
