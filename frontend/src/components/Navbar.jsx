@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User as UserIcon, Zap, Sparkles } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { LogOut, User as UserIcon, Zap, Sparkles, Briefcase, FileText, Settings, Moon, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
+    const { isDark, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -46,40 +48,69 @@ const Navbar = () => {
                         alignItems: 'center',
                         gap: 'var(--spacing-sm)'
                     }}>
-                        {user ? (
-                            <>
-                                <Link
-                                    to="/app"
-                                    className={`clay-nav-link ${isActiveLink('/app') ? 'active' : ''}`}
-                                >
-                                    <Sparkles size={16} />
-                                    <span className="hidden sm:inline">Analyzer</span>
-                                </Link>
-                                {user.role === 'admin' ? (
-                                    <Link
-                                        to="/admin"
-                                        className={`clay-nav-link ${isActiveLink('/admin') ? 'active' : ''}`}
-                                    >
-                                        Admin Hub
-                                    </Link>
-                                ) : (
-                                    <Link
-                                        to="/profile"
-                                        className={`clay-nav-link ${isActiveLink('/profile') ? 'active' : ''}`}
-                                    >
-                                        <UserIcon size={16} />
-                                        <span className="hidden sm:inline">Dashboard</span>
-                                    </Link>
-                                )}
-                                <button
-                                    onClick={() => setShowLogoutConfirm(true)}
-                                    className="clay-btn clay-btn-ghost clay-btn-sm"
-                                    style={{ marginLeft: 'var(--spacing-sm)' }}
-                                >
-                                    <LogOut size={16} />
-                                    <span className="hidden sm:inline">Logout</span>
-                                </button>
-                            </>
+{user ? (
+                             <>
+                                 <Link
+                                     to="/app"
+                                     className={`clay-nav-link ${isActiveLink('/app') ? 'active' : ''}`}
+                                 >
+                                     <Sparkles size={16} />
+                                     <span className="hidden sm:inline">Analyzer</span>
+                                 </Link>
+                                 <Link
+                                     to="/jobs"
+                                     className={`clay-nav-link ${isActiveLink('/jobs') ? 'active' : ''}`}
+                                 >
+                                     <Briefcase size={16} />
+                                     <span className="hidden sm:inline">Jobs</span>
+                                 </Link>
+                                 <Link
+                                     to="/cover-letter"
+                                     className={`clay-nav-link ${isActiveLink('/cover-letter') ? 'active' : ''}`}
+                                 >
+                                     <FileText size={16} />
+                                     <span className="hidden sm:inline">Cover Letter</span>
+                                 </Link>
+                                 <button
+                                     onClick={toggleTheme}
+                                     className="clay-btn clay-btn-ghost clay-btn-sm"
+                                     style={{ padding: '8px' }}
+                                     title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                                 >
+                                     {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                                 </button>
+                                 <Link
+                                     to="/settings"
+                                     className={`clay-nav-link ${isActiveLink('/settings') ? 'active' : ''}`}
+                                 >
+                                     <Settings size={16} />
+                                     <span className="hidden sm:inline">Settings</span>
+                                 </Link>
+                                 {user.role === 'admin' ? (
+                                     <Link
+                                         to="/admin"
+                                         className={`clay-nav-link ${isActiveLink('/admin') ? 'active' : ''}`}
+                                     >
+                                         Admin Hub
+                                     </Link>
+                                 ) : (
+                                     <Link
+                                         to="/profile"
+                                         className={`clay-nav-link ${isActiveLink('/profile') ? 'active' : ''}`}
+                                     >
+                                         <UserIcon size={16} />
+                                         <span className="hidden sm:inline">Dashboard</span>
+                                     </Link>
+                                 )}
+                                 <button
+                                     onClick={() => setShowLogoutConfirm(true)}
+                                     className="clay-btn clay-btn-ghost clay-btn-sm"
+                                     style={{ marginLeft: 'var(--spacing-sm)' }}
+                                 >
+                                     <LogOut size={16} />
+                                     <span className="hidden sm:inline">Logout</span>
+                                 </button>
+                             </>
                         ) : (
                             <>
                                 <Link

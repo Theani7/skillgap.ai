@@ -4,7 +4,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;900&family=Source+Sans+Pro:wght@200;300;400;600;700;900&display=swap');
 
 /* === DESIGN TOKENS === */
-:root {
+:root, [data-theme="light"] {
   /* === TYPOGRAPHY === */
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -634,4 +634,105 @@ body {
   .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* === DARK THEME === */
+[data-theme="dark"] {
+  /* Background - Deep Charcoal */
+  --color-bg-primary: #0d0d12;
+  --color-bg-secondary: #16161d;
+  --color-bg-tertiary: #1e1e28;
+  
+  /* Primary - Soft Blue */
+  --color-primary-50: #1a1e2e;
+  --color-primary-100: #252d42;
+  --color-primary-200: #333d56;
+  --color-primary-300: #4a5d7a;
+  --color-primary-400: #6b82a3;
+  --color-primary-500: #8fa0c4;
+  --color-primary-600: #adb9dc;
+  --color-primary-700: #c7d2ed;
+  --color-primary-800: #dbe2f5;
+  --color-primary-900: #eceafc;
+  --color-primary-950: #f5f3fc;
+  
+  /* Accent - Warm Coral */
+  --color-accent-50: #2a1a14;
+  --color-accent-100: #3d261c;
+  --color-accent-200: #553628;
+  --color-accent-300: #7a4a36;
+  --color-accent-400: #a66248;
+  --color-accent-500: #d08060;
+  --color-accent-600: #e09a7e;
+  --color-accent-700: #f0b4a0;
+  --color-accent-800: #f7cec4;
+  --color-accent-900: #fce4dc;
+  --color-accent-950: #fef0ec;
+  
+  /* Text */
+  --color-text-primary: #eceaf4;
+  --color-text-secondary: #b8b2c8;
+  --color-text-tertiary: #8580a0;
+  --color-text-quaternary: #5a5470;
+  --color-text-inverse: #0d0d12;
+  
+  /* Semantic */
+  --color-success: #4caf50;
+  --color-warning: #f0a030;
+  --color-error: #ef5350;
+  --color-info: var(--color-primary-400);
+  
+  /* Borders */
+  --color-border-light: #2a2840;
+  --color-border-medium: #3d3858;
+  --color-border-strong: #524a70;
+  
+  /* Shadows - Dark Mode */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Dark Mode Component Tweaks */
+[data-theme="dark"] .card {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .input {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border-medium);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background-color: transparent;
+  border-color: var(--color-primary-600);
+  color: var(--color-primary-300);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background-color: var(--color-primary-800);
+  border-color: var(--color-primary-400);
+}
+
+[data-theme="dark"] .clay-bg {
+  background: var(--color-bg-secondary);
+}
+
+[data-theme="dark"] .clay-upload:not(.drag-over) {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-medium);
+}
+
+[data-theme="dark"] .clay-table th,
+[data-theme="dark"] .clay-table td {
+  border-bottom-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .clay-table th {
+  background: var(--color-bg-tertiary);
 }
