@@ -4,10 +4,12 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.log
+backend.log
 
 # Node.js
 node_modules/
-npm-debug.log
+npm-debug.log*
 yarn-error.log
 
 # Database
@@ -22,7 +24,14 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+.env.*
 
 # Build folders
 dist/
 build/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
