@@ -356,7 +356,7 @@ def logout(response: Response):
 
 
 @app.get("/api/auth/me")
-def get_current_user_info(request: Request):
+async def get_current_user_info(request: Request):
     from api.auth import get_current_user_from_cookie
     try:
         user = await get_current_user_from_cookie(request)
