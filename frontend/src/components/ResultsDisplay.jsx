@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../services/env';
-import { RefreshCcw, User, Mail, Phone, FileDigit, Briefcase, GraduationCap, PlayCircle, Lightbulb, Star, Send, RotateCw, Target, Award, BookOpen, TrendingUp } from 'lucide-react';
+import { RefreshCcw, User, Mail, Phone, FileDigit, Briefcase, GraduationCap, PlayCircle, Lightbulb, Star, Send, RotateCw, Target, Award, BookOpen, TrendingUp, Share2, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Roadmap from './Roadmap';
@@ -101,6 +101,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                             <p style={{ margin: 0, fontSize: '0.95rem' }}>Your personalized roadmap is ready</p>
                         </div>
                     </div>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
                     <button
                         className="clay-btn clay-btn-secondary shadow-clay-button"
                         onClick={onReset}
@@ -109,6 +110,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                         <RefreshCcw size={18} />
                         Analyze Another
                     </button>
+                </div>
                 </motion.div>
 
                 <motion.div
