@@ -32,6 +32,18 @@ const ResultsDisplay = ({ data, onReset }) => {
     const [scraperStatus, setScraperStatus] = useState(null);
     const { user } = useAuth();
 
+    const extractVideoId = (url) => {
+        if (!url) return null;
+        const patterns = [
+            /(?:youtube\.com\/embed\/|youtu\.be\/|youtube\.com\/v\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+        ];
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match) return match[1];
+        }
+        return null;
+    };
+
     useEffect(() => {
         const fetchScraperStatus = async () => {
             try {
@@ -444,7 +456,8 @@ const ResultsDisplay = ({ data, onReset }) => {
                             <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
                                 {videos.resume && videos.resume.length > 0 ? (
                                     videos.resume.slice(0, 2).map((url, i) => {
-                                        const vidId = url.split('youtu.be/')[1] || url.split('v=')[1];
+                                        const vidId = extractVideoId(url);
+                                        if (!vidId) return null;
                                         return (
                                             <div key={i} style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                                                 <iframe
@@ -468,7 +481,8 @@ const ResultsDisplay = ({ data, onReset }) => {
                             <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
                                 {videos.interview && videos.interview.length > 0 ? (
                                     videos.interview.slice(0, 2).map((url, i) => {
-                                        const vidId = url.split('youtu.be/')[1] || url.split('v=')[1];
+                                        const vidId = extractVideoId(url);
+                                        if (!vidId) return null;
                                         return (
                                             <div key={i} style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                                                 <iframe

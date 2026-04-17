@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Depends, Form, HTTPException, status, Request
+from fastapi import FastAPI, File, UploadFile, Depends, Form, HTTPException, status, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
@@ -11,11 +11,12 @@ import uuid
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
+import re
 
 from api.database import get_db_connection
 from api.extractor import parse_resume_with_gemini, rewrite_resume_with_gemini, generate_cover_letter_with_gemini
 from api.courses import ds_course, web_course, android_course, ios_course, uiux_course
-from api.auth import get_password_hash, verify_password, create_access_token, create_refresh_token, decode_token, get_current_user, get_current_admin, get_current_optional_user
+from api.auth import get_password_hash, verify_password, create_access_token, create_refresh_token, decode_token, get_current_user, get_current_admin, get_current_optional_user, get_current_user_from_cookie, COOKIE_NAME
 from api.scraper import simulate_trend_update, get_scraper_status
 from api.market_data import get_market_trends_for_role
 from api.career_services import (
@@ -42,14 +43,30 @@ logging.basicConfig(level=logging.INFO)
 RATE_BUCKET = {}
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
 
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_LOCKOUT_MINUTES = 15
+FAILED_LOGIN_ATTEMPTS = {}
+
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+
 # Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "Cookie"],
 )
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+    return response
 
 class Feedback(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
@@ -246,14 +263,34 @@ def register_user(user: UserRegister):
     return {"message": "User registered successfully"}
 
 @app.post("/api/auth/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Response, request: Request):
+    username = form_data.username
+    client_ip = request.client.host if request.client else "unknown"
+
+    attempt_key = f"login:{username}"
+    now = time.time()
+
+    if attempt_key in FAILED_LOGIN_ATTEMPTS:
+        attempts, first_attempt, locked_until = FAILED_LOGIN_ATTEMPTS[attempt_key]
+        if locked_until and now < locked_until:
+            remaining = int(locked_until - now)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Too many failed attempts. Try again in {remaining} seconds."
+            )
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (form_data.username,))
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
     conn.close()
-    
+
     if not user or not verify_password(form_data.password, user["hashed_password"]):
+        attempts = FAILED_LOGIN_ATTEMPTS.get(attempt_key, [0, 0, 0])[0] + 1
+        if attempts >= MAX_LOGIN_ATTEMPTS:
+            FAILED_LOGIN_ATTEMPTS[attempt_key] = [attempts, now, now + (LOGIN_LOCKOUT_MINUTES * 60)]
+        else:
+            FAILED_LOGIN_ATTEMPTS[attempt_key] = [attempts, now, None]
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -261,6 +298,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         )
         
     user_dict = dict(user)
+
+    if attempt_key in FAILED_LOGIN_ATTEMPTS:
+        del FAILED_LOGIN_ATTEMPTS[attempt_key]
+
     access_token_expires = timedelta(minutes=60*24*7) # 7 days
     access_token = create_access_token(
         data={"sub": user_dict["username"], "role": user_dict["role"]}, expires_delta=access_token_expires
@@ -275,10 +316,21 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     )
     conn.commit()
     conn.close()
+
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=60 * 60 * 24 * 7,
+        path="/"
+    )
+
     return {
-        "access_token": access_token, 
+        "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer", 
+        "token_type": "bearer",
         "role": user_dict["role"],
         "full_name": user_dict.get("full_name", user_dict["username"]),
         "username": user_dict["username"]
@@ -298,8 +350,28 @@ def health_check():
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat() + "Z"}
 
 
+@app.post("/api/auth/logout")
+def logout(response: Response):
+    response.delete_cookie(key=COOKIE_NAME, path="/")
+    return {"message": "Logged out successfully"}
+
+
+@app.get("/api/auth/me")
+def get_current_user_info(request: Request):
+    from api.auth import get_current_user_from_cookie
+    try:
+        user = await get_current_user_from_cookie(request)
+        return {
+            "username": user["username"],
+            "role": user["role"],
+            "full_name": user.get("full_name", user["username"]),
+        }
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+
 @app.post("/api/auth/refresh")
-def refresh_access_token(payload: RefreshTokenRequest):
+def refresh_access_token(payload: RefreshTokenRequest, response: Response = None):
     try:
         decoded = decode_token(payload.refresh_token)
         if decoded.get("type") != "refresh":
@@ -328,11 +400,25 @@ def refresh_access_token(payload: RefreshTokenRequest):
         expires_delta=timedelta(minutes=60 * 24 * 7),
     )
     conn.close()
+
+    if response:
+        response.set_cookie(
+            key=COOKIE_NAME,
+            value=new_access_token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=60 * 60 * 24 * 7,
+            path="/"
+        )
+
     return {"access_token": new_access_token, "token_type": "bearer"}
+
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 @app.post("/api/analyze")
 async def analyze_resume(
-    file: UploadFile = File(...), 
+    file: UploadFile = File(...),
     target_role: str = Form(None),
     current_user: dict = Depends(get_current_optional_user)
 ):
@@ -340,11 +426,14 @@ async def analyze_resume(
     is_docx = file.filename.lower().endswith('.docx')
     if not (is_pdf or is_docx):
         raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported")
+
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
     
     # Save file temporarily to disk
     ext = ".pdf" if is_pdf else ".docx"
     with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
-        contents = await file.read()
         tmp.write(contents)
         tmp_path = tmp.name
 
@@ -492,7 +581,8 @@ async def analyze_resume(
             conn.commit()
         except Exception as db_error:
             conn.rollback()
-            raise HTTPException(status_code=500, detail=f"Database error: {str(db_error)}")
+            logger.error(f"Database error during analysis: {db_error}")
+            raise HTTPException(status_code=500, detail="An error occurred processing your resume.")
         finally:
             conn.close()
 
