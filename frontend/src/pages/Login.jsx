@@ -60,17 +60,20 @@ const Login = () => {
                 <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-2xl)' }}>
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)' }}>
-                        <div
-                            className="clay-icon clay-icon-purple"
-                            style={{
-                                width: '72px',
-                                height: '72px',
-                                borderRadius: 'var(--radius-lg)',
-                                margin: '0 auto var(--spacing-md)'
-                            }}
-                        >
-                            <Zap size={32} fill="white" />
-                        </div>
+                        <Link to="/" style={{ display: 'inline-block', textDecoration: 'none' }}>
+                            <div
+                                className="clay-icon clay-icon-purple"
+                                style={{
+                                    width: '72px',
+                                    height: '72px',
+                                    borderRadius: 'var(--radius-lg)',
+                                    margin: '0 auto var(--spacing-md)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <Zap size={32} fill="white" />
+                            </div>
+                        </Link>
                         <h2 style={{ fontSize: '1.75rem', marginBottom: 'var(--spacing-xs)' }}>Welcome Back</h2>
                         <p style={{ color: 'var(--clay-muted)', margin: 0 }}>Sign in to continue your journey</p>
                     </div>
