@@ -263,7 +263,7 @@ def register_user(user: UserRegister):
     return {"message": "User registered successfully"}
 
 @app.post("/api/auth/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Response, request: Request):
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), response: Response):
     username = form_data.username
     client_ip = request.client.host if request.client else "unknown"
 
