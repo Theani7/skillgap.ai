@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -79,6 +79,7 @@ const Settings = () => {
     try {
       await api.put('/api/user/profile', profileData);
       await api.put('/api/user/preferences', preferences);
+      updateUser({ full_name: profileData.full_name });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {

@@ -13,7 +13,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [selectedResult, setSelectedResult] = useState(null);
     const [profileData, setProfileData] = useState({
-        full_name: user?.full_name || '',
+        full_name: '',
         email: user?.email || '',
         phone: '',
         location: '',
@@ -30,7 +30,7 @@ const Profile = () => {
                 const sorted = (historyRes.data.history || []).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                 setHistory(sorted);
                 setProfileData({
-                    full_name: profileRes.data.profile?.full_name || user?.full_name || '',
+                    full_name: profileRes.data.profile?.full_name || user?.full_name || user?.username || '',
                     email: user?.email || '',
                     phone: profileRes.data.profile?.phone || '',
                     location: profileRes.data.profile?.location || '',

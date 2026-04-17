@@ -9,7 +9,6 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Load token from local storage on startup
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
         const username = localStorage.getItem('username');
@@ -29,6 +28,16 @@ export const AuthProvider = ({ children }) => {
         setUser({ token, role, username, full_name });
     };
 
+    const updateUser = (updates) => {
+        if (updates.full_name) {
+            localStorage.setItem('full_name', updates.full_name);
+        }
+        if (updates.username) {
+            localStorage.setItem('username', updates.username);
+        }
+        setUser(prev => ({ ...prev, ...updates }));
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
@@ -38,7 +47,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );
