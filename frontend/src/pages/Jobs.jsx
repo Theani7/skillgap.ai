@@ -31,7 +31,7 @@ const Jobs = () => {
   });
 
   useEffect(() => {
-    if (user && user.token) {
+    if (user) {
       fetchApplications();
     }
   }, [user]);
