@@ -4,10 +4,20 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+api.interceptors.request.use((config) => {
+  const user = localStorage.getItem('user');
+  if (user) {
+    const parsed = JSON.parse(user);
+    if (parsed.token) {
+      config.headers.Authorization = `Bearer ${parsed.token}`;
+    }
+  }
+  return config;
 });
 
 api.interceptors.response.use(

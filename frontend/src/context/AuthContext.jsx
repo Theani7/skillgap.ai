@@ -6,7 +6,10 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem('user');
+        return saved ? JSON.parse(saved) : null;
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -21,6 +24,7 @@ export const AuthProvider = ({ children }) => {
                 });
             } catch (err) {
                 setUser(null);
+                localStorage.removeItem('user');
             }
             setLoading(false);
         };
@@ -28,19 +32,25 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = (token, role, username, full_name) => {
-        setUser({ token, role, username, full_name });
+        const userData = { token, role, username, full_name };
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
     };
 
     const updateUser = (updates) => {
-        setUser(prev => ({ ...prev, ...updates }));
+        setUser(prev => {
+            const updated = { ...prev, ...updates };
+            localStorage.setItem('user', JSON.stringify(updated));
+            return updated;
+        });
     };
 
     const logout = async () => {
         try {
             await api.post('/api/auth/logout');
-        } catch (err) {
-        }
+        } catch (err) {}
         setUser(null);
+        localStorage.removeItem('user');
     };
 
     return (
