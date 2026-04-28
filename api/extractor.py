@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+import google.generativeai as genai
+from google.generativeai import types
 from PyPDF2 import PdfReader
 import docx
 import json
@@ -15,7 +15,8 @@ if not api_key:
     logger.error("GEMINI_API_KEY is not set in environment variables")
     raise ValueError("GEMINI_API_KEY environment variable is required")
 
-client = genai.Client(api_key=api_key)
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Extracts raw text from a PDF file."""
@@ -151,10 +152,9 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
     }
 
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
                 response_mime_type="application/json",
                 response_schema=response_schema,
                 temperature=0.1,
@@ -226,10 +226,10 @@ def rewrite_resume_with_gemini(resume_data: dict, target_role: str = None) -> di
         "required": ["target_role", "rewritten_bullets"]
     }
     try:
-        response = client.models.generate_content(
+        response = model.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
-            config=types.GenerateContentConfig(
+            generation_config=genai.types.GenerationConfig(
                 response_mime_type="application/json",
                 response_schema=response_schema,
                 temperature=0.2,
@@ -295,10 +295,10 @@ If Job Description is empty, write a strong general letter based on the role and
 Now write the cover letter:"""
     
     try:
-        response = client.models.generate_content(
+        response = model.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
-            config=types.GenerateContentConfig(
+            generation_config=genai.types.GenerationConfig(
                 temperature=0.2,
             ),
         )
