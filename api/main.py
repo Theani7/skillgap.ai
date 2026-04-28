@@ -441,14 +441,22 @@ async def analyze_resume(
         # Use our new Advanced Gemini Parsing Engine
         try:
             resume_data = parse_resume_with_gemini(tmp_path, target_role)
+            logger.info(f"Gemini parse success for {tmp_path}")
         except Exception as e:
             logger.warning(f"Gemini parse failed, using fallback: {e}")
             # Fallback: extract text directly and use regex parser
-            with open(tmp_path, 'r', encoding='utf-8', errors='ignore') as f:
-                resume_text = f.read()
-            resume_data = parse_resume_fallback(resume_text, target_role)
+            try:
+                raw_text = extract_text_from_pdf(tmp_path)
+            except Exception as texterr:
+                logger.error(f"PDF text extraction failed: {texterr}")
+                raw_text = ""
+            if raw_text:
+                resume_data = parse_resume_fallback(resume_text, target_role)
+            else:
+                resume_data = {}
         
         if not resume_data:
+            logger.error(f"Both Gemini and fallback parsing failed - empty result for {tmp_path}")
             raise HTTPException(status_code=500, detail="Failed to extract data from the resume")
         
         # Explainable scoring with evidence
