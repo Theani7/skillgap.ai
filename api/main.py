@@ -431,13 +431,15 @@ async def analyze_resume(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
     
-    # Save file temporarily to disk
-    ext = ".pdf" if is_pdf else ".docx"
-    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
-        tmp.write(contents)
-        tmp_path = tmp.name
+# Save file temporarily to disk
+        ext = ".pdf" if is_pdf else ".docx"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+            tmp.write(contents)
+            tmp_path = tmp.name
 
-    try:
+        logger.info(f"File saved to {tmp_path}, size: {len(contents)} bytes, ext: {ext}")
+
+        try:
         # Use our new Advanced Gemini Parsing Engine
         try:
             resume_data = parse_resume_with_gemini(tmp_path, target_role)

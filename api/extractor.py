@@ -11,6 +11,7 @@ logger = logging.getLogger("resume-analyzer")
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY", "").strip()
+logger.info(f"GEMINI_API_KEY present: {bool(api_key)}, length: {len(api_key)}")
 if not api_key:
     logger.error("GEMINI_API_KEY is not set in environment variables")
     raise ValueError("GEMINI_API_KEY environment variable is required")
