@@ -3,8 +3,8 @@ services:
     name: skillgap-ai-backend
     env: python
     plan: free
-    buildCommand: "pip install --no-cache-dir --force-reinstall -r api/requirements.txt"
-    startCommand: "python run.py"
+    buildCommand: "pip install --no-cache-dir -r api/requirements.txt"
+    startCommand: "uvicorn api.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
