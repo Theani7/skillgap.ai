@@ -2,7 +2,14 @@ import sqlite3
 import os
 from contextlib import contextmanager
 
-DB_FILE = os.getenv("DB_FILE", os.path.join(os.path.dirname(os.path.dirname(__file__)), "cv.db"))
+db_path = os.getenv("DB_FILE")
+if not db_path:
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cv.db")
+    if not os.path.exists(os.path.dirname(db_path)):
+        db_dir = os.path.dirname(os.path.abspath(__file__))
+        os.makedirs(db_dir, exist_ok=True)
+        db_path = os.path.join(db_dir, "cv.db")
+DB_FILE = db_path
 
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE)
