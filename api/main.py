@@ -14,7 +14,7 @@ from typing import Optional
 import re
 
 from api.database import get_db_connection
-from api.extractor import parse_resume_with_gemini, rewrite_resume_with_gemini, generate_cover_letter_with_gemini
+from api.extractor import parse_resume_with_gemini, rewrite_resume_with_gemini, generate_cover_letter_with_gemini, extract_text_from_pdf
 from api.courses import ds_course, web_course, android_course, ios_course, uiux_course
 from api.auth import get_password_hash, verify_password, create_access_token, create_refresh_token, decode_token, get_current_user, get_current_admin, get_current_optional_user, get_current_user_from_cookie, COOKIE_NAME
 from api.scraper import simulate_trend_update, get_scraper_status
