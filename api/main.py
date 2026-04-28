@@ -440,32 +440,32 @@ async def analyze_resume(
         logger.info(f"File saved to {tmp_path}, size: {len(contents)} bytes, ext: {ext}")
 
         try:
-        # Use our new Advanced Gemini Parsing Engine
-        try:
-            resume_data = parse_resume_with_gemini(tmp_path, target_role)
-            logger.info(f"Gemini parse success for {tmp_path}")
-        except Exception as e:
-            logger.warning(f"Gemini parse failed, using fallback: {e}")
-            # Fallback: extract text directly and use regex parser
+            # Use our new Advanced Gemini Parsing Engine
             try:
-                raw_text = extract_text_from_pdf(tmp_path)
-                logger.info(f"PDF text extraction length: {len(raw_text)}")
-            except Exception as texterr:
-                logger.error(f"PDF text extraction failed: {texterr}")
-                raw_text = ""
-            if raw_text:
+                resume_data = parse_resume_with_gemini(tmp_path, target_role)
+                logger.info(f"Gemini parse success for {tmp_path}")
+            except Exception as e:
+                logger.warning(f"Gemini parse failed, using fallback: {e}")
+                # Fallback: extract text directly and use regex parser
                 try:
-                    resume_data = parse_resume_fallback(resume_text, target_role)
-                    logger.info(f"Fallback parse success")
-                except Exception as fallerr:
-                    logger.error(f"Fallback parse failed: {fallerr}")
+                    raw_text = extract_text_from_pdf(tmp_path)
+                    logger.info(f"PDF text extraction length: {len(raw_text)}")
+                except Exception as texterr:
+                    logger.error(f"PDF text extraction failed: {texterr}")
+                    raw_text = ""
+                if raw_text:
+                    try:
+                        resume_data = parse_resume_fallback(resume_text, target_role)
+                        logger.info(f"Fallback parse success")
+                    except Exception as fallerr:
+                        logger.error(f"Fallback parse failed: {fallerr}")
+                        resume_data = {}
+                else:
                     resume_data = {}
-            else:
-                resume_data = {}
         
-        if not resume_data:
-            logger.error(f"Both Gemini and fallback parsing failed - empty result for {tmp_path}")
-            raise HTTPException(status_code=500, detail="Failed to extract data from the resume")
+if not resume_data:
+                logger.error(f"Both Gemini and fallback parsing failed - empty result for {tmp_path}")
+                raise HTTPException(status_code=500, detail="Failed to extract data from the resume")
         
         # Explainable scoring with evidence
         resume_score, feedback_msgs, score_breakdown = compute_resume_score_breakdown(resume_data)
