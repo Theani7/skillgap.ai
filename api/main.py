@@ -447,11 +447,17 @@ async def analyze_resume(
             # Fallback: extract text directly and use regex parser
             try:
                 raw_text = extract_text_from_pdf(tmp_path)
+                logger.info(f"PDF text extraction length: {len(raw_text)}")
             except Exception as texterr:
                 logger.error(f"PDF text extraction failed: {texterr}")
                 raw_text = ""
             if raw_text:
-                resume_data = parse_resume_fallback(resume_text, target_role)
+                try:
+                    resume_data = parse_resume_fallback(resume_text, target_role)
+                    logger.info(f"Fallback parse success")
+                except Exception as fallerr:
+                    logger.error(f"Fallback parse failed: {fallerr}")
+                    resume_data = {}
             else:
                 resume_data = {}
         
