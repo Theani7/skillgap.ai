@@ -130,6 +130,17 @@
   --breakpoint-md: 768px;
   --breakpoint-lg: 1280px;
   --breakpoint-xl: 1440px;
+
+  /* === BORDER RADIUS MAPPING === */
+  --radius-none: var(--border-radius-none);
+  --radius-sm: var(--border-radius-sm);
+  --radius-base: var(--border-radius-base);
+  --radius-md: var(--border-radius-md);
+  --radius-lg: var(--border-radius-lg);
+  --radius-xl: var(--border-radius-xl);
+  --radius-2xl: var(--border-radius-2xl);
+  --radius-3xl: var(--border-radius-3xl);
+  --radius-full: var(--border-radius-full);
 }
 
 /* === UTILITY CLASSES === */
