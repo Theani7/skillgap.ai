@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Users, LayoutDashboard, MessageSquareText, Trash2, Server, Plus, BookOpen, ShieldAlert, Activity, TrendingUp, UserCheck } from 'lucide-react';
+import { Users, LayoutDashboard, MessageSquareText, Trash2, Server, Plus, BookOpen, ShieldAlert, Activity, TrendingUp, UserCheck, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 
@@ -99,9 +99,9 @@ const Admin = () => {
     };
 
     if (loading) return (
-        <div className="clay-loader" style={{ minHeight: '100vh' }}>
-            <div className="clay-spinner" style={{ width: '64px', height: '64px' }} />
-            <p style={{ color: 'var(--clay-accent)', fontWeight: 700, fontFamily: 'var(--font-display)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-secondary">
+            <div className="animate-spin w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full mb-4" />
+            <p className="text-secondary font-medium uppercase tracking-wider text-sm">
                 Loading Admin Hub...
             </p>
         </div>
@@ -116,39 +116,42 @@ const Admin = () => {
 
     return (
         <motion.div
-            className="clay-section"
+            className="py-12 px-4 min-h-screen"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ minHeight: '100vh' }}
         >
-            <div className="container">
+            <div className="container mx-auto max-w-[1000px]">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    style={{ marginBottom: 'var(--spacing-xl)' }}
+                    className="mb-12"
                 >
-                    <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                        <div className="clay-icon clay-icon-purple" style={{ width: '52px', height: '52px' }}>
-                            <Server size={24} />
+                    <h1 className="text-3xl font-bold m-0 flex items-center gap-4">
+                        <div className="p-3 bg-primary-50 rounded-xl text-primary-600 border border-primary-100">
+                            <Server size={28} />
                         </div>
                         Admin Control Panel
                     </h1>
+                    <p className="text-secondary mt-2 ml-[72px]">System monitoring and content management</p>
                 </motion.div>
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    style={{ display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xl)', flexWrap: 'wrap', borderBottom: '2px solid rgba(124, 58, 237, 0.1)', paddingBottom: 'var(--spacing-md)' }}
+                    className="flex gap-2 mb-12 border-b border-neutral-200 pb-4 overflow-x-auto"
                 >
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`clay-btn ${activeTab === tab.id ? 'clay-btn-primary' : 'clay-btn-secondary'}`}
-                            style={{ gap: 'var(--spacing-sm)' }}
+                            className={`btn flex items-center gap-2 px-6 py-2 rounded-full transition-all ${
+                                activeTab === tab.id 
+                                ? 'bg-primary-600 text-white shadow-md' 
+                                : 'bg-transparent text-secondary hover:bg-neutral-100'
+                            }`}
                         >
-                            <tab.icon size={16} />
+                            <tab.icon size={18} />
                             {tab.label}
                         </button>
                     ))}
@@ -158,82 +161,76 @@ const Admin = () => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xl)' }}
+                        className="flex flex-col gap-8"
                     >
-                        <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-xl)', background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(124, 58, 237, 0.02))' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', margin: '0 0 var(--spacing-lg) 0', fontSize: '1.2rem' }}>
-                                <div className="clay-icon clay-icon-purple" style={{ width: '40px', height: '40px' }}>
-                                    <Activity size={18} />
-                                </div>
+                        <div className="card p-8 bg-gradient-to-br from-primary-50/50 to-transparent">
+                            <h3 className="flex items-center gap-2 m-0 mb-8 text-lg font-bold">
+                                <Activity size={20} className="text-primary-600" />
                                 Market Intelligence
                             </h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 'var(--spacing-lg)' }}>
-                                <div style={{ padding: 'var(--spacing-md)', background: 'rgba(255,255,255,0.6)', borderRadius: 'var(--radius-lg)' }}>
-                                    <p style={{ color: 'var(--clay-muted)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.06em', fontWeight: 700, marginBottom: 'var(--spacing-xs)' }}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="p-6 bg-white rounded-xl border border-neutral-200">
+                                    <p className="text-secondary uppercase text-[10px] font-bold tracking-widest mb-2">
                                         Most Sought-After Role
                                     </p>
-                                    <h2 style={{ margin: 0, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--clay-accent)' }}>
+                                    <h2 className="m-0 text-2xl text-primary-600 font-bold">
                                         {analytics.most_sought_role || 'N/A'}
                                     </h2>
                                 </div>
-                                <div style={{ padding: 'var(--spacing-md)', background: 'rgba(255,255,255,0.6)', borderRadius: 'var(--radius-lg)' }}>
-                                    <p style={{ color: 'var(--clay-muted)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.06em', fontWeight: 700, marginBottom: 'var(--spacing-xs)' }}>
+                                <div className="p-6 bg-white rounded-xl border border-neutral-200">
+                                    <p className="text-secondary uppercase text-[10px] font-bold tracking-widest mb-2">
                                         Top Missing Skill Overall
                                     </p>
-                                    <h2 style={{ margin: 0, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--clay-accent-alt)' }}>
+                                    <h2 className="m-0 text-2xl text-secondary-500 font-bold">
                                         {analytics.most_common_missing_skill || 'N/A'}
                                     </h2>
                                 </div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 'var(--spacing-lg)' }}>
-                            <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-lg)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                                    <div className="clay-icon clay-icon-blue" style={{ width: '48px', height: '48px' }}>
-                                        <Users size={22} />
-                                    </div>
-                                    <div>
-                                        <p style={{ color: 'var(--clay-muted)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                                            Total Analyzed
-                                        </p>
-                                        <h2 style={{ fontSize: '2.5rem', margin: 0, color: 'var(--clay-foreground)' }}>{resumes.length}</h2>
-                                    </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="card p-8 flex items-center gap-6">
+                                <div className="p-4 bg-primary-50 rounded-xl text-primary-600 border border-primary-100">
+                                    <Users size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-secondary uppercase text-[10px] font-bold tracking-widest mb-1">
+                                        Total Analyzed
+                                    </p>
+                                    <h2 className="text-4xl m-0 font-bold text-primary">{resumes.length}</h2>
                                 </div>
                             </div>
-                            <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-lg)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                                    <div className="clay-icon clay-icon-pink" style={{ width: '48px', height: '48px' }}>
-                                        <UserCheck size={22} />
-                                    </div>
-                                    <div>
-                                        <p style={{ color: 'var(--clay-muted)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                                            Registered Users
-                                        </p>
-                                        <h2 style={{ fontSize: '2.5rem', margin: 0, color: 'var(--clay-foreground)' }}>{registeredUsers.length}</h2>
-                                    </div>
+                            <div className="card p-8 flex items-center gap-6">
+                                <div className="p-4 bg-secondary-50 rounded-xl text-secondary-600 border border-secondary-100">
+                                    <UserCheck size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-secondary uppercase text-[10px] font-bold tracking-widest mb-1">
+                                        Registered Users
+                                    </p>
+                                    <h2 className="text-4xl m-0 font-bold text-primary">{registeredUsers.length}</h2>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-xl)', border: '1px solid rgba(124, 58, 237, 0.15)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                                    <div className="clay-icon clay-icon-green" style={{ width: '48px', height: '48px' }}>
-                                        <TrendingUp size={22} />
+                        <div className="card p-8 border border-primary-100 bg-primary-50/30">
+                            <div className="flex items-center justify-between flex-wrap gap-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-4 bg-white rounded-xl text-success-600 border border-neutral-200 shadow-sm">
+                                        <TrendingUp size={24} />
                                     </div>
                                     <div>
-                                        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Simulated AI Market Scraper</h3>
-                                        <p style={{ margin: 0, color: 'var(--clay-muted)', fontSize: '0.9rem' }}>Force a simulated market shift.</p>
+                                        <h3 className="m-0 text-lg font-bold">Simulated AI Market Scraper</h3>
+                                        <p className="m-0 text-secondary text-sm">Force a simulated market shift to update requirements.</p>
                                     </div>
                                 </div>
-                                <button onClick={handleTriggerScrape} className="clay-btn clay-btn-primary shadow-clay-button">
+                                <button onClick={handleTriggerScrape} className="btn btn-primary px-8">
                                     Simulate 1-Year Shift
                                 </button>
                             </div>
                             {scrapeStatus && (
-                                <p style={{ marginTop: 'var(--spacing-md)', color: 'var(--clay-success)', fontWeight: 600 }}>
-                                    {scrapeStatus}
+                                <p className="mt-4 text-success font-semibold flex items-center gap-2">
+                                    <CheckCircle size={16} /> {scrapeStatus}
                                 </p>
                             )}
                         </div>
@@ -244,41 +241,45 @@ const Admin = () => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xl)' }}
+                        className="flex flex-col gap-8"
                     >
-                        <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-xl)' }}>
-                            <h3 style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                                <div className="clay-icon clay-icon-purple" style={{ width: '40px', height: '40px' }}>
-                                    <ShieldAlert size={18} />
+                        <div className="card overflow-hidden">
+                            <div className="p-8 border-b border-neutral-100 flex items-center gap-3">
+                                <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
+                                    <ShieldAlert size={20} />
                                 </div>
-                                Registered Accounts
-                            </h3>
-                            <div className="clay-table-container">
-                                <table className="clay-table">
+                                <h3 className="m-0 text-lg font-bold">Registered Accounts</h3>
+                            </div>
+                            <div className="overflow-auto">
+                                <table className="w-full text-left border-none" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Username</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                            <th style={{ textAlign: 'right' }}>Actions</th>
+                                        <tr className="bg-secondary text-[10px] uppercase tracking-widest text-secondary font-bold">
+                                            <th className="px-8 py-4 border-b border-neutral-200">ID</th>
+                                            <th className="px-8 py-4 border-b border-neutral-200">Username</th>
+                                            <th className="px-8 py-4 border-b border-neutral-200">Email</th>
+                                            <th className="px-8 py-4 border-b border-neutral-200">Role</th>
+                                            <th className="px-8 py-4 border-b border-neutral-200 text-right">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="text-sm">
                                         {registeredUsers.map(u => (
-                                            <tr key={u.id}>
-                                                <td style={{ fontWeight: 700 }}>#{u.id}</td>
-                                                <td>{u.username}</td>
-                                                <td>{u.email}</td>
-                                                <td><span className="clay-badge clay-badge-primary">{u.role}</span></td>
-                                                <td style={{ textAlign: 'right' }}>
+                                            <tr key={u.id} className="hover:bg-secondary transition">
+                                                <td className="px-8 py-4 border-b border-neutral-100 text-xs text-secondary">#{u.id}</td>
+                                                <td className="px-8 py-4 border-b border-neutral-100 font-medium">{u.username}</td>
+                                                <td className="px-8 py-4 border-b border-neutral-100 text-secondary">{u.email}</td>
+                                                <td className="px-8 py-4 border-b border-neutral-100">
+                                                    <span className="px-2 py-1 bg-primary-50 text-primary-600 rounded text-[10px] font-bold uppercase tracking-wider">
+                                                        {u.role}
+                                                    </span>
+                                                </td>
+                                                <td className="px-8 py-4 border-b border-neutral-100 text-right">
                                                     {u.username !== 'admin' && (
                                                         <button
                                                             onClick={() => handleDeleteRegisteredUser(u.id)}
-                                                            className="clay-btn clay-btn-secondary"
-                                                            style={{ padding: '6px 12px', fontSize: '0.8rem', height: 'auto' }}
+                                                            className="btn btn-ghost p-2 hover:text-error-600"
+                                                            style={{ minHeight: 'auto' }}
                                                         >
-                                                            <Trash2 size={14} />
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     )}
                                                 </td>
@@ -289,37 +290,42 @@ const Admin = () => {
                             </div>
                         </div>
 
-                        <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-xl)' }}>
-                            <h3 style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                                <div className="clay-icon clay-icon-blue" style={{ width: '40px', height: '40px' }}>
-                                    <Users size={18} />
+                        <div className="card overflow-hidden">
+                            <div className="p-8 border-b border-neutral-100 flex items-center gap-3">
+                                <div className="p-2 bg-accent-100 rounded-lg text-accent">
+                                    <Users size={20} />
                                 </div>
-                                Anonymous Upload Logs
-                            </h3>
-                            <div className="clay-table-container">
-                                <table className="clay-table">
+                                <h3 className="m-0 text-lg font-bold">Anonymous Upload Logs</h3>
+                            </div>
+                            <div className="overflow-auto">
+                                <table className="w-full text-left border-none" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Email</th>
-                                            <th>Target Role</th>
-                                            <th>Field</th>
-                                            <th style={{ textAlign: 'right' }}>Actions</th>
+                                        <tr className="bg-secondary text-[10px] uppercase tracking-widest text-secondary font-bold">
+                                            <th className="px-8 py-4 border-b border-neutral-200">ID</th>
+                                            <th className="px-8 py-4 border-b border-neutral-200">Email</th>
+                                            <th className="px-8 py-4 border-b border-neutral-200">Target Role</th>
+                                            <th className="px-8 py-4 border-b border-neutral-200">Field</th>
+                                            <th className="px-8 py-4 border-b border-neutral-200 text-right">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="text-sm">
                                         {resumes.slice(0, 15).map(u => (
-                                            <tr key={u.ID}>
-                                                <td style={{ color: 'var(--clay-muted)' }}>#{u.ID}</td>
-                                                <td>{u.Email_ID}</td>
-                                                <td>{u.target_role || 'Unknown'}</td>
-                                                <td><span className="clay-badge" style={{ background: 'rgba(124, 58, 237, 0.1)', color: 'var(--clay-accent)' }}>{u.Predicted_Field}</span></td>
-                                                <td style={{ textAlign: 'right' }}>
+                                            <tr key={u.ID} className="hover:bg-secondary transition">
+                                                <td className="px-8 py-4 border-b border-neutral-100 text-xs text-secondary">#{u.ID}</td>
+                                                <td className="px-8 py-4 border-b border-neutral-100 font-medium">{u.Email_ID}</td>
+                                                <td className="px-8 py-4 border-b border-neutral-100 text-secondary">{u.target_role || 'Unknown'}</td>
+                                                <td className="px-8 py-4 border-b border-neutral-100">
+                                                    <span className="px-2 py-1 bg-accent-100 text-accent rounded text-[10px] font-bold uppercase tracking-wider">
+                                                        {u.Predicted_Field}
+                                                    </span>
+                                                </td>
+                                                <td className="px-8 py-4 border-b border-neutral-100 text-right">
                                                     <button
                                                         onClick={() => handleDeleteResume(u.ID)}
-                                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                                                        className="btn btn-ghost p-2 hover:text-error-600"
+                                                        style={{ minHeight: 'auto' }}
                                                     >
-                                                        <Trash2 size={18} color="var(--clay-muted)" />
+                                                        <Trash2 size={16} />
                                                     </button>
                                                 </td>
                                             </tr>
@@ -335,85 +341,83 @@ const Admin = () => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        style={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 'var(--spacing-xl)' }}
+                        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
                     >
-                        <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-xl)' }}>
-                            <h3 style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                                <div className="clay-icon clay-icon-green" style={{ width: '40px', height: '40px' }}>
-                                    <Plus size={18} />
-                                </div>
+                        <div className="card p-8 h-auto">
+                            <h3 className="m-0 mb-8 flex items-center gap-2 text-lg font-bold">
+                                <Plus size={20} className="text-success-600" /> 
                                 Add New Course
                             </h3>
-                            <form onSubmit={handleAddCourse} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                            <form onSubmit={handleAddCourse} className="flex flex-col gap-6">
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: 'var(--spacing-xs)', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>
+                                    <label className="block mb-2 text-[10px] font-bold uppercase tracking-widest text-secondary">
                                         Target Field
                                     </label>
                                     <input
                                         type="text"
-                                        className="clay-input"
+                                        className="input h-12"
                                         value={newCourse.field}
                                         onChange={e => setNewCourse({ ...newCourse, field: e.target.value })}
                                         required
                                         placeholder="e.g., Data Science, Web Development"
-                                        style={{ height: '48px' }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: 'var(--spacing-xs)', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>
+                                    <label className="block mb-2 text-[10px] font-bold uppercase tracking-widest text-secondary">
                                         Course Title
                                     </label>
                                     <input
                                         type="text"
-                                        className="clay-input"
+                                        className="input h-12"
                                         value={newCourse.course_name}
                                         onChange={e => setNewCourse({ ...newCourse, course_name: e.target.value })}
                                         required
-                                        style={{ height: '48px' }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: 'var(--spacing-xs)', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>
+                                    <label className="block mb-2 text-[10px] font-bold uppercase tracking-widest text-secondary">
                                         Course URL
                                     </label>
                                     <input
                                         type="url"
-                                        className="clay-input"
+                                        className="input h-12"
                                         value={newCourse.course_url}
                                         onChange={e => setNewCourse({ ...newCourse, course_url: e.target.value })}
                                         required
-                                        style={{ height: '48px' }}
                                     />
                                 </div>
-                                <button type="submit" className="clay-btn clay-btn-primary shadow-clay-button">
-                                    <Plus size={16} />
+                                <button type="submit" className="btn btn-primary w-full flex items-center justify-center gap-2">
+                                    <Plus size={18} />
                                     Add Course
                                 </button>
                             </form>
                         </div>
 
-                        <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-xl)', maxHeight: '600px', overflowY: 'auto' }}>
-                            <h3 style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                                <div className="clay-icon clay-icon-purple" style={{ width: '40px', height: '40px' }}>
-                                    <BookOpen size={18} />
+                        <div className="card flex flex-col overflow-hidden max-h-[600px]">
+                            <div className="p-8 border-b border-neutral-100 flex items-center gap-3">
+                                <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
+                                    <BookOpen size={20} />
                                 </div>
-                                Course Database
-                            </h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                                <h3 className="m-0 text-lg font-bold">Course Database</h3>
+                            </div>
+                            <div className="flex-1 overflow-auto p-8 flex flex-col gap-4 bg-secondary">
                                 {courses.map(c => (
-                                    <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: 'var(--spacing-md)', background: 'rgba(255,255,255,0.5)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--clay-accent)' }}>
-                                        <div style={{ flex: 1 }}>
-                                            <span className="clay-badge clay-badge-primary" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>{c.field}</span>
-                                            <h4 style={{ margin: '4px 0', fontSize: '0.95rem' }}>{c.course_name}</h4>
-                                            <a href={c.course_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--clay-accent)' }}>
-                                                {c.course_url.length > 45 ? c.course_url.substring(0, 45) + '...' : c.course_url}
+                                    <div key={c.id} className="p-6 bg-white rounded-xl border border-neutral-200 flex justify-between items-start gap-4 hover:shadow transition">
+                                        <div className="flex-1" style={{ minWidth: 0 }}>
+                                            <span className="inline-block px-2 py-1 bg-primary-50 text-primary-600 rounded text-[10px] font-bold uppercase tracking-wider mb-2">
+                                                {c.field}
+                                            </span>
+                                            <h4 className="m-0 text-base font-bold mb-1" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.course_name}</h4>
+                                            <a href={c.course_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 hover:text-primary-700 block" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {c.course_url}
                                             </a>
                                         </div>
                                         <button
                                             onClick={() => handleDeleteCourse(c.id)}
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                                            className="btn btn-ghost p-2 hover:text-error-600"
+                                            style={{ minHeight: 'auto' }}
                                         >
-                                            <Trash2 size={18} color="var(--clay-muted)" />
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 ))}
@@ -426,45 +430,45 @@ const Admin = () => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="clay-card shadow-clay-card"
-                        style={{ padding: 'var(--spacing-xl)' }}
+                        className="card overflow-hidden"
                     >
-                        <h3 style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                            <div className="clay-icon clay-icon-blue" style={{ width: '40px', height: '40px' }}>
-                                <MessageSquareText size={18} />
+                        <div className="p-8 border-b border-neutral-100 flex items-center gap-3">
+                            <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
+                                <MessageSquareText size={20} />
                             </div>
-                            Feedback Logs
-                        </h3>
-                        <div className="clay-table-container">
-                            <table className="clay-table">
+                            <h3 className="m-0 text-lg font-bold">Feedback Logs</h3>
+                        </div>
+                        <div className="overflow-auto">
+                            <table className="w-full text-left border-none" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
-                                    <tr>
-                                        <th>Reviewer</th>
-                                        <th>Rating</th>
-                                        <th>Comments</th>
-                                        <th>Date</th>
-                                        <th style={{ textAlign: 'right' }}>Actions</th>
+                                    <tr className="bg-secondary text-[10px] uppercase tracking-widest text-secondary font-bold">
+                                        <th className="px-8 py-4 border-b border-neutral-200">Reviewer</th>
+                                        <th className="px-8 py-4 border-b border-neutral-200">Rating</th>
+                                        <th className="px-8 py-4 border-b border-neutral-200">Comments</th>
+                                        <th className="px-8 py-4 border-b border-neutral-200">Date</th>
+                                        <th className="px-8 py-4 border-b border-neutral-200 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="text-sm">
                                     {feedback.map(f => (
-                                        <tr key={f.ID}>
-                                            <td>{f.feed_name}</td>
-                                            <td>
-                                                <div style={{ display: 'flex', gap: '2px' }}>
+                                        <tr key={f.ID} className="hover:bg-secondary transition">
+                                            <td className="px-8 py-4 border-b border-neutral-100 font-medium">{f.feed_name}</td>
+                                            <td className="px-8 py-4 border-b border-neutral-100">
+                                                <div className="flex gap-0.5">
                                                     {[...Array(5)].map((_, i) => (
-                                                        <span key={i} style={{ color: i < parseInt(f.feed_score) ? 'var(--clay-warning)' : 'var(--clay-muted)' }}>★</span>
+                                                        <span key={i} className={`text-lg ${i < parseInt(f.feed_score) ? 'text-warning' : 'text-quaternary'}`}>★</span>
                                                     ))}
                                                 </div>
                                             </td>
-                                            <td style={{ maxWidth: '300px' }}>"{f.comments}"</td>
-                                            <td>{f.Timestamp.split(' ')[0]}</td>
-                                            <td style={{ textAlign: 'right' }}>
+                                            <td className="px-8 py-4 border-b border-neutral-100 text-secondary italic">"{f.comments}"</td>
+                                            <td className="px-8 py-4 border-b border-neutral-100 text-secondary">{f.Timestamp.split(' ')[0]}</td>
+                                            <td className="px-8 py-4 border-b border-neutral-100 text-right">
                                                 <button
                                                     onClick={() => handleDeleteFeedback(f.ID)}
-                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                                                    className="btn btn-ghost p-2 hover:text-error-600"
+                                                    style={{ minHeight: 'auto' }}
                                                 >
-                                                    <Trash2 size={18} color="var(--clay-muted)" />
+                                                    <Trash2 size={16} />
                                                 </button>
                                             </td>
                                         </tr>

@@ -204,16 +204,40 @@ const Settings = () => {
         {/* Logout Confirmation Modal */}
         <AnimatePresence>
           {showLogoutConfirm && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: 'var(--spacing-lg)' }} onClick={() => setShowLogoutConfirm(false)}>
-              <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} style={{ background: 'var(--clay-cardBgSolid)', borderRadius: 'var(--radius-2xl)', padding: 'var(--spacing-xl)', maxWidth: '400px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto var(--spacing-lg)' }}>
-                  <AlertTriangle size={32} color="#EF4444" />
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="fixed inset-0 bg-black/50 flex items-center justify-center p-6"
+              style={{ zIndex: 'var(--z-modal-backdrop)', backgroundColor: 'rgba(0,0,0,0.5)' }}
+              onClick={() => setShowLogoutConfirm(false)}
+            >
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                exit={{ scale: 0.95, opacity: 0 }} 
+                className="bg-primary rounded-2xl p-8 max-w-[400px] w-full text-center shadow-xl border border-neutral-200"
+                style={{ zIndex: 'var(--z-modal)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="w-16 h-16 rounded-full bg-error-50 flex items-center justify-center mx-auto mb-6">
+                  <AlertTriangle size={32} className="text-error-600" />
                 </div>
-                <h2 style={{ margin: '0 0 var(--spacing-sm)', fontSize: '1.5rem' }}>Logout?</h2>
-                <p style={{ color: 'var(--clay-muted)', marginBottom: 'var(--spacing-xl)' }}>Are you sure you want to logout?</p>
-                <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-                  <button onClick={() => setShowLogoutConfirm(false)} className="clay-btn clay-btn-secondary" style={{ flex: 1 }}>Cancel</button>
-                  <button onClick={handleLogout} className="clay-btn" style={{ flex: 1, background: 'linear-gradient(135deg, #EF4444, #DC2626)', color: 'white' }}>Logout</button>
+                <h2 className="text-2xl font-bold mb-2 text-primary">Logout?</h2>
+                <p className="text-secondary mb-8">Are you sure you want to logout? You'll need to sign in again to access your profile.</p>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => setShowLogoutConfirm(false)} 
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleLogout} 
+                    className="btn flex-1 bg-error-600 text-white hover:bg-error-700 border-none"
+                  >
+                    Logout
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
