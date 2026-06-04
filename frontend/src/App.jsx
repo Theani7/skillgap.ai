@@ -4,7 +4,6 @@ import './App.css';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import FloatingBlobs from './components/FloatingBlobs';
 import Landing from './pages/Landing';
 import Analyzer from './pages/Analyzer';
 import Admin from './pages/Admin';
@@ -23,7 +22,6 @@ const AppContent = () => {
 
   return (
     <div className="app-shell">
-      {!isLanding && !isAuth && <FloatingBlobs />}
       
       {!isLanding && !isAuth && <Navbar />}
 
@@ -65,7 +63,7 @@ const AppContent = () => {
         </Routes>
       </main>
 
-      {!isAuth && <Footer />}
+      {!isLanding && !isAuth && <Footer />}
     </div>
   );
 };
