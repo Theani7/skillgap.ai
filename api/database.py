@@ -1,51 +1,55 @@
 import sqlite3
 import os
+import time
 from contextlib import contextmanager
 from sqlalchemy import create_engine, event
-from sqlalchemy.pool import QueuePool
 
-db_path = os.getenv("DB_FILE")
-if not db_path:
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cv.db")
-    if not os.path.exists(os.path.dirname(db_path)):
-        db_dir = os.path.dirname(os.path.abspath(__file__))
-        os.makedirs(db_dir, exist_ok=True)
-        db_path = os.path.join(db_dir, "cv.db")
-DB_FILE = db_path
-
-# Create a SQLAlchemy engine for connection pooling
-engine = create_engine(
-    f"sqlite:///{DB_FILE}",
-    poolclass=QueuePool,
-    pool_size=10,
-    max_overflow=20,
-    connect_args={"check_same_thread": False}
+DB_FILE = os.getenv("DB_FILE") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "cv.db"
 )
 
+engine = create_engine(
+    f"sqlite:///{DB_FILE}",
+    connect_args={"check_same_thread": False},
+)
+
+
 @event.listens_for(engine, "connect")
-def set_sqlite_row_factory(dbapi_connection, connection_record):
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
     dbapi_connection.row_factory = sqlite3.Row
 
+
 def get_db_connection():
-    # Maintain compatibility with sqlite3.Row and raw cursor usage
-    # The event listener above ensures row_factory is set
     return engine.raw_connection()
+
 
 @contextmanager
 def get_db():
-    """Context manager for database connections with automatic cleanup."""
     conn = get_db_connection()
     try:
         yield conn
     finally:
         conn.close()
 
+
+def _ensure_column(cursor, table: str, col: str, typedef: str) -> None:
+    cursor.execute(f"PRAGMA table_info({table})")
+    existing = {row[1] for row in cursor.fetchall()}
+    if col not in existing:
+        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}")
+
+
 def init_db():
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_data (
                 ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,20 +62,20 @@ def init_db():
                 city varchar(50) NULL,
                 state varchar(50) NULL,
                 country varchar(50) NULL,
-                act_name varchar(50) NOT NULL,
-                act_mail varchar(50) NOT NULL,
-                act_mob varchar(20) NOT NULL,
+                act_name varchar(255) NOT NULL DEFAULT '',
+                act_mail varchar(255) NOT NULL DEFAULT '',
+                act_mob varchar(50) NOT NULL DEFAULT '',
                 Name varchar(500) NOT NULL,
                 Email_ID VARCHAR(500) NOT NULL,
                 resume_score VARCHAR(8) NOT NULL,
                 Timestamp VARCHAR(50) NOT NULL,
                 Page_no VARCHAR(5) NOT NULL,
-                Predicted_Field BLOB NOT NULL,
-                User_level BLOB NOT NULL,
-                Actual_skills BLOB NOT NULL,
-                Recommended_skills BLOB NOT NULL,
-                Recommended_courses BLOB NOT NULL,
-                pdf_name varchar(50) NOT NULL,
+                Predicted_Field TEXT NOT NULL DEFAULT '',
+                User_level TEXT NOT NULL DEFAULT '',
+                Actual_skills TEXT NOT NULL DEFAULT '',
+                Recommended_skills TEXT NOT NULL DEFAULT '',
+                Recommended_courses TEXT NOT NULL DEFAULT '',
+                pdf_name varchar(255) NOT NULL,
                 target_role VARCHAR(200) DEFAULT 'Unknown',
                 missing_skills TEXT DEFAULT '',
                 user_id INTEGER DEFAULT -1,
@@ -83,13 +87,13 @@ def init_db():
             CREATE TABLE IF NOT EXISTS user_feedback (
                 ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 feed_name varchar(50) NOT NULL,
-                feed_email VARCHAR(50) NOT NULL,
-                feed_score VARCHAR(5) NOT NULL,
-                comments VARCHAR(100) NULL,
+                feed_email VARCHAR(120) NOT NULL,
+                feed_score INTEGER NOT NULL CHECK(feed_score BETWEEN 1 AND 5),
+                comments VARCHAR(2000) NULL,
                 Timestamp VARCHAR(50) NOT NULL
             )
         ''')
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS courses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,7 +103,7 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,7 +111,8 @@ def init_db():
                 email VARCHAR(120) UNIQUE NOT NULL,
                 full_name VARCHAR(100) DEFAULT 'User',
                 hashed_password VARCHAR(255) NOT NULL,
-                role text NOT NULL CHECK(role IN ('admin', 'user'))
+                role text NOT NULL CHECK(role IN ('admin', 'user')),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
 
@@ -122,7 +127,7 @@ def init_db():
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS refresh_tokens (
-                token VARCHAR(1200) PRIMARY KEY,
+                token VARCHAR(64) PRIMARY KEY,
                 user_id INTEGER NOT NULL,
                 expires_at INTEGER NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -147,10 +152,19 @@ def init_db():
                 role VARCHAR(200) NOT NULL,
                 status VARCHAR(40) NOT NULL DEFAULT 'applied',
                 follow_up_date VARCHAR(30) DEFAULT NULL,
+                location VARCHAR(200) DEFAULT '',
+                salary VARCHAR(80) DEFAULT '',
+                url VARCHAR(500) DEFAULT '',
                 notes TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        for col, typedef in [
+            ('location', "VARCHAR(200) DEFAULT ''"),
+            ('salary', "VARCHAR(80) DEFAULT ''"),
+            ('url', "VARCHAR(500) DEFAULT ''"),
+        ]:
+            _ensure_column(cursor, 'job_applications', col, typedef)
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_profiles (
@@ -172,7 +186,7 @@ def init_db():
                 user_id INTEGER PRIMARY KEY,
                 target_role VARCHAR(200) DEFAULT '',
                 timeline_months INTEGER DEFAULT 6,
-                preferred_location VARCHAR(120) DEFAULT '',
+                preferred_location VARCHAR(200) DEFAULT '',
                 salary_target INTEGER DEFAULT 0,
                 locale VARCHAR(20) DEFAULT 'en',
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -227,12 +241,15 @@ def init_db():
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS analysis_cache (
-                content_hash VARCHAR(64) PRIMARY KEY,
-                target_role VARCHAR(200),
+                content_hash VARCHAR(64) NOT NULL,
+                target_role VARCHAR(200) NOT NULL DEFAULT '',
                 result_json TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at INTEGER,
+                PRIMARY KEY (content_hash, target_role)
             )
         ''')
+        _ensure_column(cursor, 'analysis_cache', 'expires_at', 'INTEGER')
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS rate_limits (
@@ -241,6 +258,7 @@ def init_db():
                 updated_at INTEGER NOT NULL
             )
         ''')
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_rate_limits_updated ON rate_limits(updated_at)")
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS login_attempts (
@@ -250,30 +268,36 @@ def init_db():
                 locked_until INTEGER DEFAULT 0
             )
         ''')
-        
-        cursor.execute("SELECT id FROM users WHERE username = 'admin'")
-        if cursor.fetchone() is None:
-            from api.security import get_password_hash
-            default_hashed = get_password_hash("admin123")
-            cursor.execute('''
-                INSERT INTO users (username, email, full_name, hashed_password, role)
-                VALUES (?, ?, ?, ?, ?)
-            ''', ("admin", "admin@analyzer.com", "System Admin", default_hashed, "admin"))
-        
-        conn.commit()
+
+        if os.getenv("SEED_DEMO", "0") == "1":
+            cursor.execute("SELECT id FROM users WHERE username = 'admin'")
+            if cursor.fetchone() is None:
+                from api.security import get_password_hash
+                default_hashed = get_password_hash("admin123")
+                cursor.execute('''
+                    INSERT INTO users (username, email, full_name, hashed_password, role)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', ("admin", "admin@analyzer.com", "System Admin", default_hashed, "admin"))
 
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_user_id ON user_data(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_timestamp ON user_data(Timestamp)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_predicted_field ON user_data(Predicted_Field)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_shared_reports_token ON shared_reports(token)")
+
+        cursor.execute("DELETE FROM analysis_cache WHERE expires_at IS NOT NULL AND expires_at < ?",
+                       (int(time.time()),))
+        cursor.execute("DELETE FROM rate_limits WHERE updated_at < ?", (int(time.time() // 60) - 5,))
+
         conn.commit()
-    except Exception as e:
+    except Exception:
         if conn:
             conn.rollback()
-        raise e
+        raise
     finally:
         if conn:
             conn.close()
+
 
 init_db()

@@ -1,50 +1,80 @@
-import React from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Component } from 'react';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
 
-export class ErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
 
-    static getDerivedStateFromError(error) {
-        return { hasError: true, error };
-    }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
 
-    componentDidCatch(error, errorInfo) {
-        console.error('ErrorBoundary caught:', error, errorInfo);
-    }
+  componentDidCatch(error, info) {
+    console.error('ErrorBoundary caught:', error, info);
+  }
 
-    handleRetry = () => {
-        this.setState({ hasError: false, error: null });
-    };
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+    if (this.props.onReset) this.props.onReset();
+  };
 
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div className="min-h-screen flex items-center justify-center p-12 bg-secondary">
-                    <div className="text-center max-w-[400px]">
-                        <div className="w-20 h-20 mx-auto mb-6 bg-error-50 rounded-full flex items-center justify-center">
-                            <AlertTriangle size={36} className="text-error-600" />
-                        </div>
-                        <h2 className="text-2xl font-bold mb-4 text-primary">
-                            Something went wrong
-                        </h2>
-                        <p className="text-secondary mb-8">
-                            {this.state.error?.message || 'An unexpected error occurred'}
-                        </p>
-                        <button
-                            onClick={this.handleRetry}
-                            className="btn btn-primary shadow-md inline-flex items-center gap-2"
-                        >
-                            <RefreshCw size={18} />
-                            Try Again
-                        </button>
-                    </div>
-                </div>
-            );
-        }
+  render() {
+    if (!this.state.hasError) return this.props.children;
 
-        return this.props.children;
-    }
+    return (
+      <div style={{
+        minHeight: '60vh',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '40px 16px',
+      }}>
+        <div className="card" style={{
+          maxWidth: '480px', width: '100%', padding: '32px', textAlign: 'center',
+        }}>
+          <div style={{
+            width: '56px', height: '56px', borderRadius: '50%',
+            background: 'var(--color-error-light)', color: 'var(--color-error)',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: '16px',
+          }}>
+            <AlertTriangle size={26} />
+          </div>
+          <h2 style={{
+            fontSize: '20px', fontWeight: 'var(--font-bold)',
+            color: 'var(--color-text)', margin: '0 0 8px',
+          }}>
+            Something went wrong
+          </h2>
+          <p style={{
+            fontSize: '14px', color: 'var(--color-text-muted)',
+            lineHeight: 1.6, margin: '0 0 20px',
+          }}>
+            We hit an unexpected error rendering this view. Your analysis is still safe — try again or start over.
+          </p>
+          {this.state.error?.message && (
+            <p style={{
+              fontSize: '12px', color: 'var(--color-text-light)',
+              fontFamily: 'monospace', padding: '10px',
+              background: 'var(--color-bg)', borderRadius: 'var(--radius-md)',
+              margin: '0 0 20px', textAlign: 'left',
+              wordBreak: 'break-word',
+            }}>
+              {this.state.error.message}
+            </p>
+          )}
+          <button
+            onClick={this.handleReset}
+            className="btn btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <RotateCcw size={14} />
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 }
+
+export default ErrorBoundary;

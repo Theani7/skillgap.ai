@@ -1,118 +1,35 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 
-const shimmer = {
-    animate: {
-        backgroundPosition: ['200% 0', '-200% 0'],
-    },
-    transition: {
-        duration: 1.5,
-        repeat: Infinity,
-        ease: 'linear',
-    },
-};
-
-export const SkeletonCard = ({ height = '200px', width = '100%' }) => (
-    <div
-        style={{
-            height,
-            width,
-            borderRadius: 'var(--radius-lg)',
-            background: 'linear-gradient(90deg, rgba(124, 58, 237, 0.08) 25%, rgba(124, 58, 237, 0.15) 50%, rgba(124, 58, 237, 0.08) 75%)',
-            backgroundSize: '200% 100%',
-            ...shimmer,
-        }}
+const PageLoader = () => (
+  <div
+    role="status"
+    aria-label="Loading"
+    style={{
+      minHeight: '60vh',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', gap: '14px',
+      padding: '40px 16px',
+    }}
+  >
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+      style={{
+        width: '36px', height: '36px',
+        borderRadius: '50%',
+        border: '3px solid var(--indigo-100)',
+        borderTopColor: 'var(--color-primary)',
+      }}
     />
+    <p style={{
+      fontSize: '13px', fontWeight: 'var(--font-semibold)',
+      color: 'var(--color-text-muted)',
+      textTransform: 'uppercase', letterSpacing: '0.08em',
+      margin: 0,
+    }}>
+      Loading...
+    </p>
+  </div>
 );
 
-export const SkeletonText = ({ width = '100%', height = '16px', lines = 1 }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {[...Array(lines)].map((_, i) => (
-            <div
-                key={i}
-                style={{
-                    height,
-                    width: i === lines - 1 && width !== '100%' ? width : '100%',
-                    borderRadius: '4px',
-                    background: 'linear-gradient(90deg, rgba(124, 58, 237, 0.08) 25%, rgba(124, 58, 237, 0.15) 50%, rgba(124, 58, 237, 0.08) 75%)',
-                    backgroundSize: '200% 100%',
-                    ...shimmer,
-                }}
-            />
-        ))}
-    </div>
-);
-
-export const SkeletonAvatar = ({ size = '64px' }) => (
-    <div
-        style={{
-            width: size,
-            height: size,
-            borderRadius: '50%',
-            background: 'linear-gradient(90deg, rgba(124, 58, 237, 0.08) 25%, rgba(124, 58, 237, 0.15) 50%, rgba(124, 58, 237, 0.08) 75%)',
-            backgroundSize: '200% 100%',
-            ...shimmer,
-        }}
-    />
-);
-
-export const SkeletonButton = ({ width = '120px', height = '48px' }) => (
-    <div
-        style={{
-            width,
-            height,
-            borderRadius: 'var(--radius-lg)',
-            background: 'linear-gradient(90deg, rgba(124, 58, 237, 0.08) 25%, rgba(124, 58, 237, 0.15) 50%, rgba(124, 58, 237, 0.08) 75%)',
-            backgroundSize: '200% 100%',
-            ...shimmer,
-        }}
-    />
-);
-
-export const SkeletonTable = ({ rows = 5, cols = 4 }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '12px' }}>
-            {[...Array(cols)].map((_, i) => (
-                <SkeletonText key={i} width="80%" height="14px" />
-            ))}
-        </div>
-        {[...Array(rows)].map((_, rowIdx) => (
-            <div key={rowIdx} style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '12px' }}>
-                {[...Array(cols)].map((_, colIdx) => (
-                    <SkeletonText key={colIdx} height="20px" />
-                ))}
-            </div>
-        ))}
-    </div>
-);
-
-export const SkeletonChart = ({ height = '300px' }) => (
-    <div
-        style={{
-            height,
-            width: '100%',
-            borderRadius: 'var(--radius-lg)',
-            background: 'linear-gradient(90deg, rgba(124, 58, 237, 0.08) 25%, rgba(124, 58, 237, 0.15) 50%, rgba(124, 58, 237, 0.08) 75%)',
-            backgroundSize: '200% 100%',
-            ...shimmer,
-        }}
-    />
-);
-
-export const PageLoader = () => (
-    <div
-        style={{
-            minHeight: 'calc(100vh - 200px)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 'var(--space-4)'
-        }}
-    >
-        <div className="animate-spin w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full mb-4" />
-        <p className="text-primary-600 font-bold uppercase tracking-widest text-sm">
-            Loading...
-        </p>
-    </div>
-);
+export default PageLoader;

@@ -1,81 +1,105 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import './App.css';
-import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import Landing from './pages/Landing';
-import Analyzer from './pages/Analyzer';
-import Admin from './pages/Admin';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Profile from './pages/Profile';
-import Jobs from './pages/Jobs';
-import CoverLetter from './pages/CoverLetter';
-import Settings from './pages/Settings';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import PublicTopBar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+import PageLoader from './components/Skeleton';
 
-const AppContent = () => {
+const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Analyzer = lazy(() => import('./pages/Analyzer'));
+const Jobs = lazy(() => import('./pages/Jobs'));
+const CoverLetter = lazy(() => import('./pages/CoverLetter'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Admin = lazy(() => import('./pages/Admin'));
+
+const withBoundary = (node) => <ErrorBoundary>{node}</ErrorBoundary>;
+
+const PUBLIC_PATHS = ['/', '/login', '/register'];
+
+const Layout = () => {
   const location = useLocation();
-  const isLanding = location.pathname === '/';
-  const isAuth = location.pathname === '/login' || location.pathname === '/register';
+  const { user, loading } = useAuth();
+  const isPublic = PUBLIC_PATHS.includes(location.pathname);
+
+  if (loading && !isPublic) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
+        <PageLoader />
+      </div>
+    );
+  }
+
+  if (isPublic) {
+    return (
+      <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <PublicTopBar />
+        <main style={{ flex: 1, width: '100%' }}>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={withBoundary(<Landing />)} />
+              <Route path="/login" element={withBoundary(<Login />)} />
+              <Route path="/register" element={withBoundary(<Register />)} />
+            </Routes>
+          </Suspense>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="app-shell">
-      
-      {!isLanding && !isAuth && <Navbar />}
-
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/app" element={
-            <ProtectedRoute>
-              <Analyzer />
-            </ProtectedRoute>
-          } />
-          <Route path="/jobs" element={
-            <ProtectedRoute>
-              <Jobs />
-            </ProtectedRoute>
-          } />
-          <Route path="/cover-letter" element={
-            <ProtectedRoute>
-              <CoverLetter />
-            </ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <Admin />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-        </Routes>
+    <div
+      className="app-shell"
+      style={{
+        minHeight: '100vh', display: 'flex',
+        flexDirection: 'row', alignItems: 'stretch',
+        background: 'var(--color-bg)',
+      }}
+    >
+      {user ? <Sidebar /> : <Navigate to="/login" replace />}
+      <main
+        style={{
+          flex: 1, minWidth: 0,
+          padding: '32px 32px 64px',
+          background: 'var(--color-bg)',
+        }}
+        className="app-main"
+      >
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/app" element={<ProtectedRoute>{withBoundary(<Analyzer />)}</ProtectedRoute>} />
+            <Route path="/jobs" element={<ProtectedRoute>{withBoundary(<Jobs />)}</ProtectedRoute>} />
+            <Route path="/cover-letter" element={<ProtectedRoute>{withBoundary(<CoverLetter />)}</ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute>{withBoundary(<Settings />)}</ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute>{withBoundary(<Profile />)}</ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/app" replace />} />
+          </Routes>
+        </Suspense>
       </main>
 
-      {!isLanding && !isAuth && <Footer />}
+      <style>{`
+        @media (max-width: 1023px) {
+          .app-main { padding: 64px 20px 48px !important; }
+        }
+        @media (max-width: 480px) {
+          .app-main { padding: 56px 16px 40px !important; }
+        }
+      `}</style>
     </div>
   );
 };
 
-function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </AuthProvider>
-  );
-}
+const App = () => (
+  <AuthProvider>
+    <BrowserRouter>
+      <Layout />
+    </BrowserRouter>
+  </AuthProvider>
+);
 
 export default App;
