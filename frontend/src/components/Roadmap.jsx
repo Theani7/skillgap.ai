@@ -18,78 +18,70 @@ const RoadmapStep = ({ step, index, isLast }) => {
 
     return (
         <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.15 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
             style={{
                 position: 'relative',
-                marginBottom: isLast ? 0 : 'var(--spacing-xl)',
-                paddingLeft: 'var(--spacing-xl)'
+                marginBottom: isLast ? 0 : 'var(--space-6)',
+                paddingLeft: 'var(--space-8)'
             }}
         >
             <div style={{
                 position: 'absolute',
-                left: '-12px',
-                top: '4px',
-                background: 'var(--clay-cardBg)',
+                left: '-5px',
+                top: '6px',
+                background: 'var(--color-white)',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 zIndex: 2,
                 cursor: 'pointer',
-                width: '32px',
-                height: '32px'
-            }} onClick={() => setIsExpanded(!isExpanded)}>
-                {completedTasks.size > 0 && step.action_items && completedTasks.size === step.action_items.length ? (
-                    <CheckCircle2 size={24} color="var(--clay-success)" fill="rgba(16, 185, 129, 0.15)" />
-                ) : index === 0 ? (
-                    <Target size={22} color="var(--clay-accent)" fill="rgba(124, 58, 237, 0.1)" />
-                ) : (
-                    <CircleDashed size={22} color="var(--clay-muted)" />
-                )}
-            </div>
+                width: '12px',
+                height: '12px',
+                border: completedTasks.size > 0 && step.action_items && completedTasks.size === step.action_items.length 
+                    ? '2px solid var(--color-success-500)' 
+                    : '2px solid var(--color-primary-500)'
+            }} onClick={() => setIsExpanded(!isExpanded)} />
 
-            <motion.div
+            <div
                 style={{
-                    background: isExpanded ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.6)',
-                    backdropFilter: 'blur(10px)',
-                    border: isExpanded ? '1px solid rgba(124, 58, 237, 0.2)' : '1px solid rgba(124, 58, 237, 0.08)',
-                    borderRadius: 'var(--radius-xl)',
-                    padding: 'var(--spacing-lg)',
-                    transition: 'all 0.3s ease',
-                    boxShadow: isExpanded ? '0 8px 24px rgba(124, 58, 237, 0.12)' : '0 4px 12px rgba(160, 150, 180, 0.15)',
-                    cursor: 'pointer'
+                    background: 'var(--color-white)',
+                    border: '1px solid var(--color-neutral-200)',
+                    borderRadius: 'var(--border-radius-lg)',
+                    padding: 'var(--space-4)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
                 }}
                 onClick={() => setIsExpanded(!isExpanded)}
-                whileHover={{ scale: 1.01 }}
             >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
                     <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--clay-accent)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary-600)', fontWeight: 600, textTransform: 'uppercase' }}>
                                 Phase {step.step}
                             </span>
                             {step.action_items && (
-                                <span style={{ fontSize: '0.8rem', color: 'var(--clay-muted)' }}>
+                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-neutral-400)' }}>
                                     {completedTasks.size} / {step.action_items.length} Tasks
                                 </span>
                             )}
                         </div>
-                        <h4 style={{ fontSize: '1.15rem', margin: 'var(--spacing-xs) 0 0 0', color: 'var(--clay-foreground)' }}>
+                        <h4 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, margin: 'var(--space-1) 0 0 0', color: 'var(--color-neutral-900)' }}>
                             {step.title}
                         </h4>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--clay-muted)', background: 'rgba(124, 58, 237, 0.08)', padding: '6px 12px', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Clock size={14} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-neutral-500)', background: 'var(--color-neutral-50)', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--border-radius-md)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={12} />
                             {step.duration}
                         </span>
                         {isExpanded ? (
-                            <ChevronUp size={20} color="var(--clay-muted)" />
+                            <ChevronUp size={18} color="var(--color-neutral-400)" />
                         ) : (
-                            <ChevronDown size={20} color="var(--clay-muted)" />
+                            <ChevronDown size={18} color="var(--color-neutral-400)" />
                         )}
                     </div>
                 </div>
@@ -100,17 +92,24 @@ const RoadmapStep = ({ step, index, isLast }) => {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
+                            transition={{ duration: 0.2 }}
                             style={{ overflow: 'hidden' }}
                         >
-                            <div style={{ marginTop: 'var(--spacing-lg)', borderTop: '1px solid rgba(124, 58, 237, 0.1)', paddingTop: 'var(--spacing-lg)' }}>
-                                <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                                    <h5 style={{ fontSize: '0.85rem', color: 'var(--clay-muted)', marginBottom: 'var(--spacing-sm)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                            <div style={{ marginTop: 'var(--space-4)', borderTop: '1px solid var(--color-neutral-100)', paddingTop: 'var(--space-4)' }}>
+                                <div style={{ marginBottom: 'var(--space-4)' }}>
+                                    <h5 style={{ fontSize: 'var(--text-xs)', color: 'var(--color-neutral-400)', marginBottom: 'var(--space-2)', textTransform: 'uppercase', fontWeight: 600 }}>
                                         Target Skills
                                     </h5>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
                                         {step.skills && step.skills.map((skill, i) => (
-                                            <span key={i} className="clay-badge clay-badge-primary" style={{ fontSize: '0.85rem' }}>
+                                            <span key={i} style={{ 
+                                                fontSize: 'var(--text-xs)', 
+                                                background: 'var(--color-neutral-100)', 
+                                                color: 'var(--color-neutral-700)', 
+                                                padding: 'var(--space-1) var(--space-2)', 
+                                                borderRadius: 'var(--border-radius-md)',
+                                                fontWeight: 500
+                                            }}>
                                                 {skill}
                                             </span>
                                         ))}
@@ -119,10 +118,10 @@ const RoadmapStep = ({ step, index, isLast }) => {
 
                                 {step.action_items && step.action_items.length > 0 && (
                                     <div>
-                                        <h5 style={{ fontSize: '0.85rem', color: 'var(--clay-muted)', marginBottom: 'var(--spacing-sm)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                                        <h5 style={{ fontSize: 'var(--text-xs)', color: 'var(--color-neutral-400)', marginBottom: 'var(--space-2)', textTransform: 'uppercase', fontWeight: 600 }}>
                                             Action Items
                                         </h5>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                                             {step.action_items.map((action, i) => {
                                                 const isDone = completedTasks.has(i);
                                                 return (
@@ -131,13 +130,13 @@ const RoadmapStep = ({ step, index, isLast }) => {
                                                         style={{
                                                             display: 'flex',
                                                             alignItems: 'flex-start',
-                                                            gap: 'var(--spacing-sm)',
-                                                            background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(124, 58, 237, 0.04)',
-                                                            padding: 'var(--spacing-sm) var(--spacing-md)',
-                                                            borderRadius: 'var(--radius-md)',
+                                                            gap: 'var(--space-2)',
+                                                            background: isDone ? 'var(--color-success-50)' : 'var(--color-neutral-50)',
+                                                            padding: 'var(--space-2) var(--space-3)',
+                                                            borderRadius: 'var(--border-radius-md)',
                                                             cursor: 'pointer',
                                                             transition: 'all 0.2s',
-                                                            border: isDone ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid transparent'
+                                                            border: isDone ? '1px solid var(--color-success-100)' : '1px solid var(--color-neutral-100)'
                                                         }}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -146,16 +145,16 @@ const RoadmapStep = ({ step, index, isLast }) => {
                                                     >
                                                         <div style={{ marginTop: '2px' }}>
                                                             {isDone ? (
-                                                                <CheckSquare size={18} color="var(--clay-success)" />
+                                                                <CheckSquare size={16} color="var(--color-success-600)" />
                                                             ) : (
-                                                                <Square size={18} color="var(--clay-muted)" />
+                                                                <Square size={16} color="var(--color-neutral-300)" />
                                                             )}
                                                         </div>
                                                         <span style={{
-                                                            fontSize: '0.95rem',
-                                                            color: isDone ? 'var(--clay-muted)' : 'var(--clay-foreground)',
+                                                            fontSize: 'var(--text-sm)',
+                                                            color: isDone ? 'var(--color-neutral-400)' : 'var(--color-neutral-700)',
                                                             textDecoration: isDone ? 'line-through' : 'none',
-                                                            lineHeight: '1.5'
+                                                            lineHeight: '1.4'
                                                         }}>
                                                             {action}
                                                         </span>
@@ -169,7 +168,7 @@ const RoadmapStep = ({ step, index, isLast }) => {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </motion.div>
+            </div>
         </motion.div>
     );
 };
@@ -179,35 +178,40 @@ const Roadmap = ({ path }) => {
 
     return (
         <motion.div
-            className="clay-card shadow-clay-card"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            style={{ marginTop: 'var(--spacing-xl)', marginBottom: 'var(--spacing-xl)', padding: 'var(--spacing-xl)' }}
+            style={{ 
+                marginTop: 'var(--space-8)', 
+                marginBottom: 'var(--space-8)', 
+                padding: 'var(--space-6)',
+                border: '1px solid var(--color-neutral-200)',
+                borderRadius: 'var(--border-radius-lg)',
+                background: 'var(--color-white)'
+            }}
         >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-md)' }}>
-                <div className="clay-icon clay-icon-purple" style={{ width: '48px', height: '48px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+                <div style={{ color: 'var(--color-primary-500)' }}>
                     <FastForward size={22} />
                 </div>
                 <div>
-                    <h3 style={{ fontSize: '1.4rem', margin: 0 }}>AI Career Roadmap</h3>
-                    <p style={{ margin: 0, color: 'var(--clay-muted)', fontSize: '0.9rem' }}>Personalized learning path</p>
+                    <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--color-neutral-900)', margin: 0 }}>AI Career Roadmap</h3>
+                    <p style={{ margin: 0, color: 'var(--color-neutral-500)', fontSize: 'var(--text-sm)' }}>Personalized learning path</p>
                 </div>
             </div>
 
-            <p style={{ color: 'var(--clay-muted)', marginBottom: 'var(--spacing-xl)', lineHeight: '1.7' }}>
-                This is a <strong>dynamically generated, personalized learning path</strong> created by Gemini based on your resume and target role. Complete the action items to build missing skills.
+            <p style={{ color: 'var(--color-neutral-600)', marginBottom: 'var(--space-8)', fontSize: 'var(--text-sm)', lineHeight: '1.6' }}>
+                This is a dynamically generated, personalized learning path created based on your resume and target role. Complete the action items to build missing skills.
             </p>
 
-            <div style={{ position: 'relative', paddingLeft: 'var(--spacing-lg)' }}>
+            <div style={{ position: 'relative' }}>
                 <div style={{
                     position: 'absolute',
-                    left: '3px',
-                    top: '24px',
-                    bottom: '24px',
-                    width: '3px',
-                    background: 'linear-gradient(to bottom, var(--clay-accent), var(--clay-accent-light))',
-                    borderRadius: '3px',
+                    left: '0',
+                    top: '12px',
+                    bottom: '12px',
+                    width: '2px',
+                    background: 'var(--color-neutral-100)',
                     zIndex: 1
                 }} />
 
