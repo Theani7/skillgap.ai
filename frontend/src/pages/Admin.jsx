@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { Users, LayoutDashboard, MessageSquareText, Trash2, Server, Plus, BookOpen, ShieldAlert, Activity, TrendingUp, UserCheck, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +18,7 @@ const Admin = () => {
     const [scrapeStatus, setScrapeStatus] = useState('');
     const [newCourse, setNewCourse] = useState({ field: '', course_name: '', course_url: '' });
 
-    const fetchAdminData = async () => {
+    const fetchAdminData = useCallback(async () => {
         setLoading(true);
         try {
             const config = { headers: { 'Authorization': `Bearer ${user.token}` } };
@@ -34,25 +34,25 @@ const Admin = () => {
             setRegisteredUsers(regUsersRes.data.users);
             setCourses(coursesRes.data.courses);
             setAnalytics(analyticsRes.data);
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            console.error(_err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [user.token]);
 
     useEffect(() => {
         if (user && user.token) {
             fetchAdminData();
         }
-    }, [user]);
+    }, [user, fetchAdminData]);
 
     const handleDeleteResume = async (id) => {
         if (!window.confirm("Delete this resume log?")) return;
         try {
             await api.delete(`/api/admin/users/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setResumes(resumes.filter(u => u.ID !== id));
-        } catch (err) { alert("Failed to delete log."); }
+        } catch (_err) { alert("Failed to delete log."); }
     };
 
     const handleDeleteFeedback = async (id) => {
@@ -60,7 +60,7 @@ const Admin = () => {
         try {
             await api.delete(`/api/admin/feedback/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setFeedback(feedback.filter(f => f.ID !== id));
-        } catch (err) { alert("Failed to delete feedback."); }
+        } catch (_err) { alert("Failed to delete feedback."); }
     };
 
     const handleDeleteRegisteredUser = async (id) => {
@@ -68,7 +68,7 @@ const Admin = () => {
         try {
             await api.delete(`/api/admin/registered-users/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setRegisteredUsers(registeredUsers.filter(u => u.id !== id));
-        } catch (err) { alert("Failed to ban user."); }
+        } catch (_err) { alert("Failed to ban user."); }
     };
 
     const handleAddCourse = async (e) => {
@@ -78,7 +78,7 @@ const Admin = () => {
             setNewCourse({ field: '', course_name: '', course_url: '' });
             fetchAdminData();
             alert("Course added successfully.");
-        } catch (err) { alert("Failed to add course."); }
+        } catch (_err) { alert("Failed to add course."); }
     };
 
     const handleDeleteCourse = async (id) => {
@@ -86,7 +86,7 @@ const Admin = () => {
         try {
             await api.delete(`/api/admin/courses/${id}`, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setCourses(courses.filter(c => c.id !== id));
-        } catch (err) { alert("Failed to delete course."); }
+        } catch (_err) { alert("Failed to delete course."); }
     };
 
     const handleTriggerScrape = async () => {
@@ -95,7 +95,7 @@ const Admin = () => {
         try {
             const res = await api.post('/api/admin/trigger-scrape', {}, { headers: { 'Authorization': `Bearer ${user.token}` } });
             setScrapeStatus(`Success: ${res.data.message} (${res.data.timestamp})`);
-        } catch (err) { setScrapeStatus('Failed to trigger simulation.'); }
+        } catch (_err) { setScrapeStatus('Failed to trigger simulation.'); }
     };
 
     if (loading) return (

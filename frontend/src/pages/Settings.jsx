@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Settings as SettingsIcon, User, Target, Save, LogOut, Sparkles, ExternalLink, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -40,11 +40,7 @@ const Settings = () => {
     'Software Engineering', 'Technical Writing', 'IT Support', 'Network Administration'
   ];
 
-  useEffect(() => {
-    fetchData();
-  }, [user]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user?.token) return;
     try {
       const [profileRes, prefRes] = await Promise.all([
@@ -67,12 +63,16 @@ const Settings = () => {
         preferred_location: prefRes.data.preferences?.preferred_location || '',
         salary_target: prefRes.data.preferences?.salary_target || 0,
       });
-    } catch (err) {
-      console.error(err);
+    } catch (_err) {
+      console.error(_err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchData();
+  }, [user, fetchData]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -82,8 +82,8 @@ const Settings = () => {
       updateUser({ full_name: profileData.full_name });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch (err) {
-      console.error(err);
+    } catch (_err) {
+      console.error(_err);
     } finally {
       setSaving(false);
     }

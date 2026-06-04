@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
@@ -16,13 +17,13 @@ export const AuthProvider = ({ children }) => {
         const fetchUser = async () => {
             try {
                 const res = await api.get('/api/auth/me');
-                setUser({
-                    token: '',
+                setUser(prev => ({
+                    ...prev,
                     role: res.data.role,
                     username: res.data.username,
                     full_name: res.data.full_name
-                });
-            } catch (err) {
+                }));
+            } catch (_err) {
                 setUser(null);
                 localStorage.removeItem('user');
             }
@@ -48,7 +49,9 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await api.post('/api/auth/logout');
-        } catch (err) {}
+        } catch (_err) {
+            // Ignore logout errors
+        }
         setUser(null);
         localStorage.removeItem('user');
     };
