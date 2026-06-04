@@ -6,52 +6,77 @@ from api.market_data import get_market_trends_for_role
 
 def compute_resume_score_breakdown(resume_data: Dict[str, Any]) -> Tuple[int, List[str], Dict[str, Any]]:
     breakdown = {
-        "objective_or_summary": {"weight": 15, "score": 0, "status": "missing", "evidence": []},
-        "education": {"weight": 20, "score": 0, "status": "missing", "evidence": []},
-        "experience": {"weight": 20, "score": 0, "status": "missing", "evidence": []},
-        "skills": {"weight": 20, "score": 0, "status": "missing", "evidence": []},
-        "hobbies_or_interests": {"weight": 20, "score": 0, "status": "missing", "evidence": []},
+        "summary": {"weight": 15, "score": 0, "status": "missing", "evidence": []},
+        "education": {"weight": 15, "score": 0, "status": "missing", "evidence": []},
+        "experience": {"weight": 35, "score": 0, "status": "missing", "evidence": []},
+        "skills": {"weight": 25, "score": 0, "status": "missing", "evidence": []},
+        "contact_info": {"weight": 10, "score": 0, "status": "missing", "evidence": []},
     }
     feedback_msgs: List[str] = []
 
-    if resume_data.get("objective") or resume_data.get("summary"):
-        breakdown["objective_or_summary"]["score"] = 15
-        breakdown["objective_or_summary"]["status"] = "present"
-        breakdown["objective_or_summary"]["evidence"] = [resume_data.get("objective") or resume_data.get("summary")]
+    # 1. Summary Analysis
+    summary = resume_data.get("summary", "") or resume_data.get("objective", "")
+    if summary and len(str(summary)) > 30:
+        breakdown["summary"]["score"] = 15
+        breakdown["summary"]["status"] = "present"
+        breakdown["summary"]["evidence"] = [summary[:100] + "..."]
     else:
-        feedback_msgs.append("Please add your career objective, it will give your career intention to the Recruiters.")
+        feedback_msgs.append("Your professional summary is too short or missing. Add a 2-3 sentence overview of your career goals.")
 
-    if resume_data.get("education") or resume_data.get("degree"):
-        breakdown["education"]["score"] = 20
+    # 2. Education Analysis
+    edu = resume_data.get("education") or []
+    if edu:
+        breakdown["education"]["score"] = 15
         breakdown["education"]["status"] = "present"
-        breakdown["education"]["evidence"] = (resume_data.get("education") or [])[:2]
+        breakdown["education"]["evidence"] = edu[:2]
     else:
-        feedback_msgs.append("Please add Education Details.")
+        feedback_msgs.append("Education details not found. Ensure your degrees and universities are clearly listed.")
 
-    exp_evidence = resume_data.get("experience") or resume_data.get("designation") or resume_data.get("company_names")
-    if exp_evidence:
-        breakdown["experience"]["score"] = 20
-        breakdown["experience"]["status"] = "present"
-        if isinstance(exp_evidence, list):
-            breakdown["experience"]["evidence"] = exp_evidence[:2]
+    # 3. Experience Analysis (Weighted by depth)
+    exp = resume_data.get("experience") or []
+    if exp:
+        exp_count = len(exp)
+        if exp_count >= 5:
+            breakdown["experience"]["score"] = 35
+        elif exp_count >= 3:
+            breakdown["experience"]["score"] = 25
         else:
-            breakdown["experience"]["evidence"] = [str(exp_evidence)]
+            breakdown["experience"]["score"] = 15
+            feedback_msgs.append("Your experience section is brief. Try to add more detailed bullet points describing your impact.")
+        
+        breakdown["experience"]["status"] = "present"
+        breakdown["experience"]["evidence"] = exp[:2]
     else:
-        feedback_msgs.append("Please add Experience Details.")
+        feedback_msgs.append("No professional experience detected. Add internships, projects, or work history.")
 
-    if resume_data.get("skills"):
-        breakdown["skills"]["score"] = 20
+    # 4. Skills Analysis
+    skills = resume_data.get("skills") or []
+    if skills:
+        skill_count = len(skills)
+        if skill_count >= 10:
+            breakdown["skills"]["score"] = 25
+        elif skill_count >= 5:
+            breakdown["skills"]["score"] = 15
+        else:
+            breakdown["skills"]["score"] = 10
+            feedback_msgs.append("You have very few skills listed. Add more technical and soft skills to improve visibility.")
+        
         breakdown["skills"]["status"] = "present"
-        breakdown["skills"]["evidence"] = (resume_data.get("skills") or [])[:8]
+        breakdown["skills"]["evidence"] = skills[:8]
     else:
-        feedback_msgs.append("Please add Skills.")
+        feedback_msgs.append("Skills section is empty. This is critical for ATS matching.")
 
-    if resume_data.get("hobbies") or resume_data.get("interests"):
-        breakdown["hobbies_or_interests"]["score"] = 20
-        breakdown["hobbies_or_interests"]["status"] = "present"
-        breakdown["hobbies_or_interests"]["evidence"] = (resume_data.get("hobbies") or resume_data.get("interests") or [])[:5]
+    # 5. Contact Info Analysis
+    has_email = bool(resume_data.get("email"))
+    has_phone = bool(resume_data.get("mobile_number") or resume_data.get("phone"))
+    if has_email and has_phone:
+        breakdown["contact_info"]["score"] = 10
+        breakdown["contact_info"]["status"] = "present"
+    elif has_email or has_phone:
+        breakdown["contact_info"]["score"] = 5
+        feedback_msgs.append("Missing either email or phone number. Recruiters need both to reach you.")
     else:
-        feedback_msgs.append("Please add Hobbies, it will show your personality.")
+        feedback_msgs.append("Contact information missing. Ensure your email and phone are visible.")
 
     total = sum(v["score"] for v in breakdown.values())
     return total, feedback_msgs, breakdown

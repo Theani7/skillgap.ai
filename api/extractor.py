@@ -13,11 +13,11 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY", "").strip()
 logger.info(f"GEMINI_API_KEY present: {bool(api_key)}, length: {len(api_key)}")
 if not api_key:
-    logger.error("GEMINI_API_KEY is not set in environment variables")
-    raise ValueError("GEMINI_API_KEY environment variable is required")
-
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.0-flash')
+    logger.warning("GEMINI_API_KEY is not set. Gemini-powered features will be disabled, falling back to local hybrid parser.")
+    model = None
+else:
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-2.0-flash')
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Extracts raw text from a PDF file."""
@@ -228,7 +228,6 @@ def rewrite_resume_with_gemini(resume_data: dict, target_role: str = None) -> di
     }
     try:
         response = model.generate_content(
-            model='gemini-2.5-flash',
             contents=prompt,
             generation_config=genai.types.GenerationConfig(
                 response_mime_type="application/json",
@@ -297,7 +296,6 @@ Now write the cover letter:"""
     
     try:
         response = model.generate_content(
-            model='gemini-2.5-flash',
             contents=prompt,
             generation_config=genai.types.GenerationConfig(
                 temperature=0.2,
@@ -310,3 +308,57 @@ Now write the cover letter:"""
     except Exception as e:
         logger.error(f"Error during Gemini cover letter generation: {e}")
         return ""
+
+def simulate_interview_turn(resume_data: dict, target_role: str, chat_history: list) -> dict:
+    """
+    Simulates a turn in an AI-driven interview.
+    Generates a follow-up question based on resume data and history.
+    """
+    if model is None:
+        logger.warning("simulate_interview_turn called but Gemini model is not available")
+        return {
+            "feedback": "Thanks for your answer.",
+            "question": "Can you elaborate on your experience with key projects?",
+            "is_finished": False
+        }
+
+    history_str = "\n".join([f"{m['role']}: {m['content']}" for m in chat_history])
+    
+    prompt = f"""
+    You are an expert Technical Interviewer for the role of {target_role}.
+    You are interviewing a candidate with the following resume details:
+    {json.dumps(resume_data)}
+    
+    Current Interview History:
+    {history_str}
+    
+    RULES:
+    1. If this is the start (history is empty), introduce yourself briefly and ask the first question.
+    2. Ask deep, behavioral or technical questions based on the candidate's actual projects or skills.
+    3. Provide brief, encouraging feedback on their last answer before asking the next question.
+    4. Return ONLY a JSON object with this schema:
+    {{
+      "feedback": "Your coaching/feedback on the last answer",
+      "question": "Your next interview question",
+      "is_finished": boolean
+    }}
+    5. After 3-4 turns, wrap up the interview and set is_finished to true.
+    """
+    
+    try:
+        response = model.generate_content(
+            contents=prompt,
+            generation_config=genai.types.GenerationConfig(
+                response_mime_type="application/json",
+                temperature=0.7,
+            ),
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        logger.error(f"Interview simulation failed: {e}")
+        return {
+            "feedback": "Interesting perspective.",
+            "question": "Can you tell me more about your most challenging technical project?",
+            "is_finished": False
+        }
+

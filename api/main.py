@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Depends, Form, HTTPException, status, Request, Response
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
@@ -12,11 +13,13 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional
 import re
+import hashlib
 
 from api.database import get_db_connection
 from api.extractor import parse_resume_with_gemini, rewrite_resume_with_gemini, generate_cover_letter_with_gemini, extract_text_from_pdf
 from api.courses import ds_course, web_course, android_course, ios_course, uiux_course
-from api.auth import get_password_hash, verify_password, create_access_token, create_refresh_token, decode_token, get_current_user, get_current_admin, get_current_optional_user, get_current_user_from_cookie, COOKIE_NAME
+from api.auth import create_access_token, create_refresh_token, decode_token, get_current_user, get_current_admin, get_current_optional_user, get_current_user_from_cookie, COOKIE_NAME
+from api.security import get_password_hash, verify_password
 from api.scraper import simulate_trend_update, get_scraper_status
 from api.market_data import get_market_trends_for_role
 from api.career_services import (
@@ -35,17 +38,58 @@ from api.job_hunt_services import (
     rewrite_resume_fallback,
     generate_roadmap_fallback,
 )
+from api.exceptions import SkillGapException, ResumeParseException, LLMServiceException, DatabaseContentionException, AuthenticationException
 import json
 
 app = FastAPI(title="AI Resume Analyzer API")
+
+@app.exception_handler(SkillGapException)
+async def skillgap_exception_handler(request: Request, exc: SkillGapException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.message,
+            "code": exc.code,
+            "status": "error"
+        }
+    )
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail,
+            "code": f"HTTP_{exc.status_code}",
+            "status": "error"
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled error: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "An unexpected error occurred. Our engineers have been notified.",
+            "code": "INTERNAL_SERVER_ERROR",
+            "status": "error"
+        }
+    )
+
 logger = logging.getLogger("resume-analyzer")
 logging.basicConfig(level=logging.INFO)
-RATE_BUCKET = {}
+
+
+def get_content_hash(data: bytes) -> str:
+    """Generate SHA-256 hash of file content for caching."""
+    return hashlib.sha256(data).hexdigest()
+
+
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
 
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_LOCKOUT_MINUTES = 15
-FAILED_LOGIN_ATTEMPTS = {}
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
 
@@ -105,6 +149,12 @@ class InterviewRequest(BaseModel):
     target_role: str
     skills: list[str] = []
     missing_skills: list[str] = []
+
+
+class InterviewSimulatorRequest(BaseModel):
+    resume_data: dict
+    target_role: str
+    chat_history: list[dict] = []
 
 
 class RewriteRequest(BaseModel):
@@ -189,18 +239,35 @@ class TranslationRequest(BaseModel):
 async def request_logging_and_rate_limit(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
     now_minute = int(time.time() // 60)
-    stale_keys = []
-    for key in RATE_BUCKET.keys():
-        minute = int(key.rsplit(":", 1)[-1])
-        if minute < now_minute - 1:
-            stale_keys.append(key)
-    for key in stale_keys:
-        RATE_BUCKET.pop(key, None)
-
     bucket_key = f"{client_ip}:{now_minute}"
-    RATE_BUCKET[bucket_key] = RATE_BUCKET.get(bucket_key, 0) + 1
-    if RATE_BUCKET[bucket_key] > RATE_LIMIT_PER_MINUTE:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in a minute.")
+    
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        # Clean up old rate limit entries (older than current minute)
+        cursor.execute("DELETE FROM rate_limits WHERE updated_at < ?", (now_minute,))
+        
+        # Get current count or insert new
+        cursor.execute("SELECT count FROM rate_limits WHERE key = ?", (bucket_key,))
+        row = cursor.fetchone()
+        
+        if row:
+            count = row["count"] + 1
+            cursor.execute("UPDATE rate_limits SET count = ? WHERE key = ?", (count, bucket_key))
+        else:
+            count = 1
+            cursor.execute("INSERT INTO rate_limits (key, count, updated_at) VALUES (?, ?, ?)", (bucket_key, count, now_minute))
+        
+        conn.commit()
+        
+        if count > RATE_LIMIT_PER_MINUTE:
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in a minute.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Rate limit error: {e}")
+    finally:
+        conn.close()
 
     start = time.perf_counter()
     request_id = str(uuid.uuid4())
@@ -265,31 +332,43 @@ def register_user(user: UserRegister):
 @app.post("/api/auth/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Response = None):
     username = form_data.username
+    now = int(time.time())
 
-    attempt_key = f"login:{username}"
-    now = time.time()
-
-    if attempt_key in FAILED_LOGIN_ATTEMPTS:
-        attempts, first_attempt, locked_until = FAILED_LOGIN_ATTEMPTS[attempt_key]
-        if locked_until and now < locked_until:
-            remaining = int(locked_until - now)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Check for existing lockout
+    cursor.execute("SELECT * FROM login_attempts WHERE username = ?", (username,))
+    attempt_row = cursor.fetchone()
+    
+    if attempt_row:
+        if attempt_row["locked_until"] and now < attempt_row["locked_until"]:
+            remaining = int(attempt_row["locked_until"] - now)
+            conn.close()
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail=f"Too many failed attempts. Try again in {remaining} seconds."
             )
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
-    conn.close()
 
     if not user or not verify_password(form_data.password, user["hashed_password"]):
-        attempts = FAILED_LOGIN_ATTEMPTS.get(attempt_key, [0, 0, 0])[0] + 1
-        if attempts >= MAX_LOGIN_ATTEMPTS:
-            FAILED_LOGIN_ATTEMPTS[attempt_key] = [attempts, now, now + (LOGIN_LOCKOUT_MINUTES * 60)]
+        # Increment failed attempts
+        if attempt_row:
+            attempts = attempt_row["attempts"] + 1
+            locked_until = now + (LOGIN_LOCKOUT_MINUTES * 60) if attempts >= MAX_LOGIN_ATTEMPTS else 0
+            cursor.execute(
+                "UPDATE login_attempts SET attempts = ?, locked_until = ? WHERE username = ?",
+                (attempts, locked_until, username)
+            )
         else:
-            FAILED_LOGIN_ATTEMPTS[attempt_key] = [attempts, now, None]
+            cursor.execute(
+                "INSERT INTO login_attempts (username, attempts, first_attempt, locked_until) VALUES (?, ?, ?, ?)",
+                (username, 1, now, 0)
+            )
+        conn.commit()
+        conn.close()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -298,10 +377,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Resp
         
     user_dict = dict(user)
 
-    if attempt_key in FAILED_LOGIN_ATTEMPTS:
-        del FAILED_LOGIN_ATTEMPTS[attempt_key]
+    # Success: Clear attempts
+    cursor.execute("DELETE FROM login_attempts WHERE username = ?", (username,))
+    conn.commit()
 
-    access_token_expires = timedelta(minutes=60*24*7) # 7 days
+    access_token_expires = timedelta(minutes=30) # Reduced for security
     access_token = create_access_token(
         data={"sub": user_dict["username"], "role": user_dict["role"]}, expires_delta=access_token_expires
     )
@@ -320,8 +400,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Resp
         key=COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,
+        samesite="strict",
         max_age=60 * 60 * 24 * 7,
         path="/"
     )
@@ -406,7 +486,7 @@ def refresh_access_token(payload: RefreshTokenRequest, response: Response = None
             key=COOKIE_NAME,
             value=new_access_token,
             httponly=True,
-            secure=False,
+            secure=True,
             samesite="lax",
             max_age=60 * 60 * 24 * 7,
             path="/"
@@ -431,6 +511,22 @@ async def analyze_resume(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
     
+    content_hash = get_content_hash(contents)
+    t_role = target_role if target_role else "General"
+    
+    # Check Cache
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT result_json FROM analysis_cache WHERE content_hash = ? AND target_role = ?",
+        (content_hash, t_role)
+    )
+    cache_row = cursor.fetchone()
+    if cache_row:
+        conn.close()
+        logger.info(f"Serving cached result for {file.filename}")
+        return json.loads(cache_row["result_json"])
+
     # Save file temporarily to disk
     ext = ".pdf" if is_pdf else ".docx"
     with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
@@ -438,18 +534,39 @@ async def analyze_resume(
         tmp_path = tmp.name
 
     try:
-        # Use our new Advanced Gemini Parsing Engine
-        try:
-            resume_data = parse_resume_with_gemini(tmp_path, target_role)
-        except Exception as e:
-            logger.warning(f"Gemini parse failed, using fallback: {e}")
-            # Fallback: extract text directly and use regex parser
-            with open(tmp_path, 'r', encoding='utf-8', errors='ignore') as f:
-                resume_text = f.read()
-            resume_data = parse_resume_fallback(resume_text, target_role)
+        # Step 1: Extract raw text based on file type
+        if is_pdf:
+            resume_text = extract_text_from_pdf(tmp_path)
+        elif is_docx:
+            resume_text = extract_text_from_docx(tmp_path)
+        else:
+            resume_text = ""
+
+        if not resume_text.strip():
+            raise ResumeParseException("Could not extract any text from the uploaded file.")
+
+        # Step 2: Attempt Local Hybrid Parsing First (Fast, Free)
+        local_data = parse_resume_fallback(resume_text, target_role)
+        
+        # Step 3: Conditional LLM Parsing
+        # If local parser is highly confident (e.g. >= 80%), we can potentially skip Gemini
+        # For now, let's use a threshold of 85% to be safe.
+        if local_data.get("confidence_score", 0) >= 85:
+            logger.info(f"Using high-confidence local parse for {file.filename}")
+            resume_data = local_data
+        else:
+            logger.info(f"Low confidence ({local_data.get('confidence_score')}%) in local parse. Invoking Gemini...")
+            try:
+                resume_data = parse_resume_with_gemini(tmp_path, target_role)
+                # Merge local links if Gemini missed them
+                if not resume_data.get('email') and local_data.get('email'):
+                    resume_data['email'] = local_data['email']
+            except Exception as e:
+                logger.warning(f"Gemini parse failed, using local hybrid fallback: {e}")
+                resume_data = local_data
         
         if not resume_data:
-            raise HTTPException(status_code=500, detail="Failed to extract data from the resume")
+            raise ResumeParseException("Gemini returned no data and fallback failed.")
         
         # Explainable scoring with evidence
         resume_score, feedback_msgs, score_breakdown = compute_resume_score_breakdown(resume_data)
@@ -486,7 +603,7 @@ async def analyze_resume(
         trends = get_market_trends_for_role('General')
         
         # Initialize Database connection early for courses
-        conn = get_db_connection()
+        # Use existing conn
         cursor = conn.cursor()
 
         # Fetch courses from dynamic DB instead of static dictionary
@@ -523,7 +640,6 @@ async def analyze_resume(
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         missing_skills_str = ", ".join(missing_skills) if missing_skills else ""
-        t_role = target_role if target_role else "Unknown"
         
         u_id = -1
         if current_user and 'id' in current_user:
@@ -553,6 +669,12 @@ async def analyze_resume(
         }
 
         try:
+            # Store in Cache
+            cursor.execute(
+                "INSERT OR REPLACE INTO analysis_cache (content_hash, target_role, result_json) VALUES (?, ?, ?)",
+                (content_hash, t_role, json.dumps(final_response_payload))
+            )
+
             cursor.execute(
                 """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -803,8 +925,8 @@ def request_password_reset(payload: PasswordResetRequest):
         )
         conn.commit()
         conn.close()
-        # In production, email this token. Returning token now for local/dev workflow.
-        return {"status": "success", "reset_token": token, "expires_in_seconds": 1800}
+        # In production, email this token. 
+        return {"status": "success", "message": "If the email exists, a reset flow has been created."}
     conn.close()
     return {"status": "success", "message": "If the email exists, a reset flow has been created."}
 
@@ -846,6 +968,11 @@ def interview_copilot(payload: InterviewRequest, current_user: dict = Depends(ge
     questions = generate_interview_questions(payload.target_role, payload.missing_skills, payload.skills)
     return {"target_role": payload.target_role, "questions": questions}
 
+
+@app.post("/api/interview/simulate")
+def interview_simulator(payload: InterviewSimulatorRequest, current_user: dict = Depends(get_current_optional_user)):
+    result = simulate_interview_turn(payload.resume_data, payload.target_role, payload.chat_history)
+    return result
 
 @app.post("/api/rewrite-resume")
 def rewrite_resume(payload: RewriteRequest, current_user: dict = Depends(get_current_optional_user)):
@@ -1184,3 +1311,4 @@ def quality_metrics(current_admin: dict = Depends(get_current_admin)):
         "feedback_events": feedback_count,
         "parse_failure_rate_pct": round((errors / total_requests) * 100, 2) if total_requests else 0.0,
     }
+

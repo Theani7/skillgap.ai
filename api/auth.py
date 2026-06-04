@@ -2,29 +2,22 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordBearer
 import sqlite3
 from dotenv import load_dotenv
 from api.database import get_db_connection
+from api.security import verify_password, get_password_hash
 
 load_dotenv()
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.urandom(32).hex())
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 COOKIE_NAME = "auth_token"
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
 
 def _create_token(data: dict, token_type: str, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
