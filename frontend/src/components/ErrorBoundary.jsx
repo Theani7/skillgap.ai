@@ -22,58 +22,20 @@ export class ErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             return (
-                <div style={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 'var(--spacing-xl)',
-                    background: 'var(--clay-bg)'
-                }}>
-                    <div style={{
-                        textAlign: 'center',
-                        maxWidth: '400px'
-                    }}>
-                        <div style={{
-                            width: '80px',
-                            height: '80px',
-                            margin: '0 auto var(--spacing-lg)',
-                            background: 'rgba(220, 38, 38, 0.1)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <AlertTriangle size={36} color="#DC2626" />
+                <div className="min-h-screen flex items-center justify-center p-12 bg-secondary">
+                    <div className="text-center max-w-[400px]">
+                        <div className="w-20 h-20 mx-auto mb-6 bg-error-50 rounded-full flex items-center justify-center">
+                            <AlertTriangle size={36} className="text-error-600" />
                         </div>
-                        <h2 style={{
-                            fontSize: '1.5rem',
-                            marginBottom: 'var(--spacing-md)',
-                            color: 'var(--clay-foreground)'
-                        }}>
+                        <h2 className="text-2xl font-bold mb-4 text-primary">
                             Something went wrong
                         </h2>
-                        <p style={{
-                            color: 'var(--clay-muted)',
-                            marginBottom: 'var(--spacing-lg)'
-                        }}>
+                        <p className="text-secondary mb-8">
                             {this.state.error?.message || 'An unexpected error occurred'}
                         </p>
                         <button
                             onClick={this.handleRetry}
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 'var(--spacing-sm)',
-                                padding: '12px 24px',
-                                background: 'var(--clay-accent)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: 'var(--radius-lg)',
-                                fontSize: '1rem',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                            }}
+                            className="btn btn-primary shadow-md inline-flex items-center gap-2"
                         >
                             <RefreshCw size={18} />
                             Try Again

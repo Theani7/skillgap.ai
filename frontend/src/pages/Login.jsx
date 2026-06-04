@@ -50,114 +50,69 @@ const Login = () => {
     };
 
     return (
-        <div className="clay-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 200px)' }}>
+        <div className="py-20 px-4 flex items-center justify-center min-h-[calc(100vh-200px)]">
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-                style={{ width: '100%', maxWidth: '420px' }}
+                className="w-full max-w-[420px]"
             >
-                <div className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-2xl)' }}>
+                <div className="card p-8 md:p-12">
                     {/* Header */}
-                    <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)' }}>
-                        <Link to="/" style={{ display: 'inline-block', textDecoration: 'none' }}>
+                    <div className="text-center mb-8">
+                        <Link to="/" className="inline-block no-underline">
                             <div
-                                className="clay-icon clay-icon-purple"
-                                style={{
-                                    width: '72px',
-                                    height: '72px',
-                                    borderRadius: 'var(--radius-lg)',
-                                    margin: '0 auto var(--spacing-md)',
-                                    cursor: 'pointer'
-                                }}
+                                className="w-16 h-16 rounded-xl bg-primary-600 flex items-center justify-center mx-auto mb-4 shadow-lg hover:bg-primary-700 transition"
+                                style={{ cursor: 'pointer' }}
                             >
-                                <Zap size={32} fill="white" />
+                                <Zap size={32} fill="white" color="white" />
                             </div>
                         </Link>
-                        <h2 style={{ fontSize: '1.75rem', marginBottom: 'var(--spacing-xs)' }}>Welcome Back</h2>
-                        <p style={{ color: 'var(--clay-muted)', margin: 0 }}>Sign in to continue your journey</p>
+                        <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
+                        <p className="text-secondary">Sign in to continue your journey</p>
                     </div>
 
                     {/* Error Message */}
                     {error && (
-                        <div style={{
-                            color: '#DC2626',
-                            marginBottom: 'var(--spacing-md)',
-                            textAlign: 'center',
-                            background: 'rgba(220, 38, 38, 0.08)',
-                            padding: 'var(--spacing-sm) var(--spacing-md)',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: '0.9rem',
-                            fontWeight: 500
-                        }}>
+                        <div className="bg-error-50 text-error-600 p-3 rounded-lg text-sm font-medium mb-6 text-center">
                             {error}
                         </div>
                     )}
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                         {/* Username Input */}
                         <div>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: 'var(--spacing-xs)',
-                                fontFamily: 'var(--font-display)',
-                                fontWeight: 700,
-                                fontSize: '0.9rem',
-                                color: 'var(--clay-foreground)'
-                            }}>
+                            <label className="block mb-2 font-semibold text-sm text-primary">
                                 Username
                             </label>
-                            <div style={{ position: 'relative' }}>
-                                <User size={20} style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: 'var(--spacing-md)',
-                                    transform: 'translateY(-50%)',
-                                    color: 'var(--clay-muted)',
-                                    pointerEvents: 'none'
-                                }} />
+                            <div className="relative">
+                                <User size={20} className="absolute top-1/2 left-4 -translate-y-1/2 text-tertiary pointer-events-none" />
                                 <input
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     required
                                     placeholder="Enter your username"
-                                    className="clay-input"
-                                    style={{ paddingLeft: '48px' }}
+                                    className="input pl-12"
                                 />
                             </div>
                         </div>
 
                         {/* Password Input */}
                         <div>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: 'var(--spacing-xs)',
-                                fontFamily: 'var(--font-display)',
-                                fontWeight: 700,
-                                fontSize: '0.9rem',
-                                color: 'var(--clay-foreground)'
-                            }}>
+                            <label className="block mb-2 font-semibold text-sm text-primary">
                                 Password
                             </label>
-                            <div style={{ position: 'relative' }}>
-                                <Lock size={20} style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: 'var(--spacing-md)',
-                                    transform: 'translateY(-50%)',
-                                    color: 'var(--clay-muted)',
-                                    pointerEvents: 'none'
-                                }} />
+                            <div className="relative">
+                                <Lock size={20} className="absolute top-1/2 left-4 -translate-y-1/2 text-tertiary pointer-events-none" />
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     placeholder="Enter your password"
-                                    className="clay-input"
-                                    style={{ paddingLeft: '48px' }}
+                                    className="input pl-12"
                                 />
                             </div>
                         </div>
@@ -165,19 +120,12 @@ const Login = () => {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className="clay-btn clay-btn-primary shadow-clay-button"
+                            className="btn btn-primary w-full"
                             disabled={loading}
-                            style={{ width: '100%', marginTop: 'var(--spacing-sm)' }}
                         >
                             {loading ? (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                                    <span className="animate-spin" style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        border: '2px solid rgba(255,255,255,0.3)',
-                                        borderTopColor: 'white',
-                                        borderRadius: '50%'
-                                    }} />
+                                <span className="flex items-center gap-2">
+                                    <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
                                     Signing in...
                                 </span>
                             ) : (
@@ -186,21 +134,11 @@ const Login = () => {
                         </button>
 
                         {/* Footer Link */}
-                        <p style={{
-                            textAlign: 'center',
-                            marginTop: 'var(--spacing-md)',
-                            marginBottom: 0,
-                            color: 'var(--clay-muted)',
-                            fontSize: '0.95rem'
-                        }}>
+                        <p className="text-center mt-4 text-secondary text-sm">
                             Don't have an account?{' '}
                             <Link
                                 to="/register"
-                                style={{
-                                    color: 'var(--clay-accent)',
-                                    textDecoration: 'none',
-                                    fontWeight: 700
-                                }}
+                                className="text-primary-600 font-bold hover:text-primary-700 transition"
                             >
                                 Register here
                             </Link>

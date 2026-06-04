@@ -96,109 +96,111 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="clay-loader" style={{ minHeight: '100vh' }}>
-        <div className="clay-spinner" style={{ width: '48px', height: '48px' }} />
-        <p>Loading Settings...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-secondary">
+        <div className="animate-spin w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full mb-4" />
+        <p className="text-secondary font-medium">Loading Settings...</p>
       </div>
     );
   }
 
   return (
-    <motion.div className="clay-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ minHeight: 'calc(100vh - 200px)', padding: 'var(--spacing-xl) 0' }}>
-      <div className="container" style={{ maxWidth: '800px' }}>
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 'var(--spacing-2xl)' }}>
-          <h1 style={{ fontSize: '1.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <SettingsIcon size={28} /> Settings
+    <motion.div className="py-12 px-4 min-h-[calc(100vh-200px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div className="container mx-auto max-w-[800px]">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
+          <h1 className="text-3xl font-bold m-0 flex items-center gap-3">
+            <SettingsIcon size={28} className="text-primary-600" /> Settings
           </h1>
-          <p style={{ color: 'var(--clay-muted)', margin: '8px 0 0' }}>Manage your profile and preferences</p>
+          <p className="text-secondary mt-2">Manage your profile and career preferences</p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'var(--clay-cardBg)', borderRadius: 'var(--radius-xl)', padding: 'var(--spacing-xl)', marginBottom: 'var(--spacing-lg)', boxShadow: 'var(--shadow-sm)' }}>
-          <h3 style={{ margin: '0 0 var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: '8px' }}><Target size={20} /> Career Preferences</h3>
-          <div style={{ display: 'grid', gap: 'var(--spacing-md)' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Target Role</label>
-              <select value={preferences.target_role} onChange={(e) => setPreferences({ ...preferences, target_role: e.target.value })} className="clay-input" style={{ height: '48px' }}>
-                <option value="">Select your target role...</option>
-                {targetRoles.map(role => <option key={role} value={role}>{role}</option>)}
-              </select>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
+        <div className="flex flex-col gap-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-8">
+            <h3 className="m-0 mb-8 flex items-center gap-2 text-lg font-bold"><Target size={20} className="text-primary-600" /> Career Preferences</h3>
+            <div className="grid gap-6">
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Timeline</label>
-                <select value={preferences.timeline_months} onChange={(e) => setPreferences({ ...preferences, timeline_months: parseInt(e.target.value) })} className="clay-input" style={{ height: '48px' }}>
-                  <option value={3}>3 months</option>
-                  <option value={6}>6 months</option>
-                  <option value={12}>12 months</option>
-                  <option value={18}>18 months</option>
-                  <option value={24}>24 months</option>
+                <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Target Role</label>
+                <select value={preferences.target_role} onChange={(e) => setPreferences({ ...preferences, target_role: e.target.value })} className="input h-12">
+                  <option value="">Select your target role...</option>
+                  {targetRoles.map(role => <option key={role} value={role}>{role}</option>)}
                 </select>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Timeline</label>
+                  <select value={preferences.timeline_months} onChange={(e) => setPreferences({ ...preferences, timeline_months: parseInt(e.target.value) })} className="input h-12">
+                    <option value={3}>3 months</option>
+                    <option value={6}>6 months</option>
+                    <option value={12}>12 months</option>
+                    <option value={18}>18 months</option>
+                    <option value={24}>24 months</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Salary Target ($)</label>
+                  <input type="number" value={preferences.salary_target} onChange={(e) => setPreferences({ ...preferences, salary_target: parseInt(e.target.value) || 0 })} className="input h-12" placeholder="e.g., 100000" />
+                </div>
+              </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Salary Target ($)</label>
-                <input type="number" value={preferences.salary_target} onChange={(e) => setPreferences({ ...preferences, salary_target: parseInt(e.target.value) || 0 })} className="clay-input" placeholder="e.g., 100000" style={{ height: '48px' }} />
+                <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Preferred Location</label>
+                <input type="text" value={preferences.preferred_location} onChange={(e) => setPreferences({ ...preferences, preferred_location: e.target.value })} className="input h-12" placeholder="e.g., Remote, San Francisco" />
               </div>
             </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Preferred Location</label>
-              <input type="text" value={preferences.preferred_location} onChange={(e) => setPreferences({ ...preferences, preferred_location: e.target.value })} className="clay-input" placeholder="e.g., Remote, San Francisco" style={{ height: '48px' }} />
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={{ background: 'var(--clay-cardBg)', borderRadius: 'var(--radius-xl)', padding: 'var(--spacing-xl)', marginBottom: 'var(--spacing-lg)', boxShadow: 'var(--shadow-sm)' }}>
-          <h3 style={{ margin: '0 0 var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: '8px' }}><User size={20} /> Profile Information</h3>
-          <div style={{ display: 'grid', gap: 'var(--spacing-md)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Full Name</label>
-                <input type="text" value={profileData.full_name} onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })} className="clay-input" style={{ height: '48px' }} />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card p-8">
+            <h3 className="m-0 mb-8 flex items-center gap-2 text-lg font-bold"><User size={20} className="text-primary-600" /> Profile Information</h3>
+            <div className="grid gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Full Name</label>
+                  <input type="text" value={profileData.full_name} onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })} className="input h-12" />
+                </div>
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Phone</label>
+                  <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} className="input h-12" />
+                </div>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Phone</label>
-                <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} className="clay-input" style={{ height: '48px' }} />
+                <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Location</label>
+                <input type="text" value={profileData.location} onChange={(e) => setProfileData({ ...profileData, location: e.target.value })} className="input h-12" placeholder="City, State" />
+              </div>
+              <div>
+                <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Bio</label>
+                <textarea value={profileData.bio} onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })} className="input min-h-[100px]" rows={3} placeholder="Tell us about yourself..." />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Current Role</label>
+                  <input type="text" value={profileData.current_role} onChange={(e) => setProfileData({ ...profileData, current_role: e.target.value })} className="input h-12" />
+                </div>
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Experience (years)</label>
+                  <input type="text" value={profileData.experience_years} onChange={(e) => setProfileData({ ...profileData, experience_years: e.target.value })} className="input h-12" placeholder="e.g., 3" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">LinkedIn URL</label>
+                  <input type="url" value={profileData.linkedin_url} onChange={(e) => setProfileData({ ...profileData, linkedin_url: e.target.value })} className="input h-12" />
+                </div>
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">GitHub URL</label>
+                  <input type="url" value={profileData.github_url} onChange={(e) => setProfileData({ ...profileData, github_url: e.target.value })} className="input h-12" />
+                </div>
               </div>
             </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Location</label>
-              <input type="text" value={profileData.location} onChange={(e) => setProfileData({ ...profileData, location: e.target.value })} className="clay-input" placeholder="City, State" style={{ height: '48px' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Bio</label>
-              <textarea value={profileData.bio} onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })} className="clay-input" rows={3} placeholder="Tell us about yourself..." style={{ minHeight: '100px' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Current Role</label>
-                <input type="text" value={profileData.current_role} onChange={(e) => setProfileData({ ...profileData, current_role: e.target.value })} className="clay-input" style={{ height: '48px' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Experience (years)</label>
-                <input type="text" value={profileData.experience_years} onChange={(e) => setProfileData({ ...profileData, experience_years: e.target.value })} className="clay-input" placeholder="e.g., 3" style={{ height: '48px' }} />
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>LinkedIn URL</label>
-                <input type="url" value={profileData.linkedin_url} onChange={(e) => setProfileData({ ...profileData, linkedin_url: e.target.value })} className="clay-input" style={{ height: '48px' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>GitHub URL</label>
-                <input type="url" value={profileData.github_url} onChange={(e) => setProfileData({ ...profileData, github_url: e.target.value })} className="clay-input" style={{ height: '48px' }} />
-              </div>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end' }}>
-          <button onClick={() => setShowLogoutConfirm(true)} className="clay-btn clay-btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <LogOut size={18} /> Logout
-          </button>
-          <button onClick={handleSave} disabled={saving} className="clay-btn clay-btn-primary shadow-clay-button" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {saving ? 'Saving...' : saved ? <><CheckCircle size={18} /> Saved!</> : <><Save size={18} /> Save Changes</>}
-          </button>
-        </motion.div>
-
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-secondary p-6 rounded-2xl border border-neutral-100">
+            <button onClick={() => setShowLogoutConfirm(true)} className="btn btn-secondary w-full sm:w-auto flex items-center gap-2 hover:bg-error-50 hover:text-error-600 hover:border-error-200">
+              <LogOut size={18} /> Logout
+            </button>
+            <button onClick={handleSave} disabled={saving} className="btn btn-primary w-full sm:w-auto flex items-center gap-2 shadow-md">
+              {saving ? 'Saving...' : saved ? <><CheckCircle size={18} /> Saved!</> : <><Save size={18} /> Save Changes</>}
+            </button>
+          </motion.div>
+        </div>
+...
         {/* Logout Confirmation Modal */}
         <AnimatePresence>
           {showLogoutConfirm && (
