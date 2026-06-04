@@ -1,9 +1,9 @@
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
-from google.generativeai import types
-from PyPDF2 import PdfReader
+import pypdf
 import docx
+from defusedxml import ElementTree as DET
 import json
 import logging
 
@@ -11,9 +11,11 @@ logger = logging.getLogger("resume-analyzer")
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY", "").strip()
-logger.info(f"GEMINI_API_KEY present: {bool(api_key)}, length: {len(api_key)}")
-if not api_key:
+if api_key:
+    logger.info("GEMINI_API_KEY is configured.")
+else:
     logger.warning("GEMINI_API_KEY is not set. Gemini-powered features will be disabled, falling back to local hybrid parser.")
+if not api_key:
     model = None
 else:
     genai.configure(api_key=api_key)
@@ -22,7 +24,7 @@ else:
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Extracts raw text from a PDF file."""
     try:
-        reader = PdfReader(pdf_path)
+        reader = pypdf.PdfReader(pdf_path)
         text = ""
         for page in reader.pages:
             extracted = page.extract_text()
@@ -174,7 +176,7 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
         
         try:
             if file_path.lower().endswith('.pdf'):
-                reader = PdfReader(file_path)
+                reader = pypdf.PdfReader(file_path)
                 parsed_data["no_of_pages"] = len(reader.pages)
             else:
                 parsed_data["no_of_pages"] = 1

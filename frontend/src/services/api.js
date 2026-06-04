@@ -4,28 +4,32 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-api.interceptors.request.use((config) => {
-  const user = localStorage.getItem('user');
-  if (user) {
-    const parsed = JSON.parse(user);
-    if (parsed.token) {
-      config.headers.Authorization = `Bearer ${parsed.token}`;
-    }
-  }
-  return config;
-});
+let logoutHandler = null;
+export const registerLogoutHandler = (fn) => { logoutHandler = fn; };
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401 && !error.config.url.includes('/auth/me')) {
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+  async (error) => {
+    const config = error.config || {};
+    const status = error.response?.status;
+    const url = config.url || '';
+    const skipRedirect = config._skipAuthRedirect;
+    const isAuthMe = url.includes('/auth/me');
+
+    if (status === 401 && !isAuthMe && !skipRedirect) {
+      if (logoutHandler) {
+        logoutHandler();
+      }
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.history.pushState({}, '', '/login');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
     }
     return Promise.reject(error);
   }

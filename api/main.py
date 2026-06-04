@@ -2,8 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Depends, Form, HTTPException, sta
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, Field
-import sqlite3
+from pydantic import BaseModel, Field, EmailStr, HttpUrl
 import os
 import secrets
 import tempfile
@@ -12,13 +11,30 @@ import uuid
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
-import re
 import hashlib
+import re
 
 from api.database import get_db_connection
-from api.extractor import parse_resume_with_gemini, rewrite_resume_with_gemini, generate_cover_letter_with_gemini, extract_text_from_pdf
-from api.courses import ds_course, web_course, android_course, ios_course, uiux_course
-from api.auth import create_access_token, create_refresh_token, decode_token, get_current_user, get_current_admin, get_current_optional_user, get_current_user_from_cookie, COOKIE_NAME
+from api.extractor import (
+    parse_resume_with_gemini,
+    rewrite_resume_with_gemini,
+    generate_cover_letter_with_gemini,
+    extract_text_from_pdf,
+    extract_text_from_docx,
+    simulate_interview_turn,
+)
+from api.auth import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    get_current_user,
+    get_current_admin,
+    get_current_optional_user,
+    get_current_user_from_cookie,
+    COOKIE_NAME,
+    REFRESH_COOKIE_NAME,
+    hash_token,
+)
 from api.security import get_password_hash, verify_password
 from api.scraper import simulate_trend_update, get_scraper_status
 from api.market_data import get_market_trends_for_role
@@ -38,7 +54,7 @@ from api.job_hunt_services import (
     rewrite_resume_fallback,
     generate_roadmap_fallback,
 )
-from api.exceptions import SkillGapException, ResumeParseException, LLMServiceException, DatabaseContentionException, AuthenticationException
+from api.exceptions import SkillGapException, ResumeParseException
 import json
 
 app = FastAPI(title="AI Resume Analyzer API")
@@ -87,11 +103,18 @@ def get_content_hash(data: bytes) -> str:
 
 
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
+RESET_COOLDOWN_SECONDS = 5 * 60
 
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_LOCKOUT_MINUTES = 15
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+ENV = os.getenv("ENV", "development").lower()
+IS_PROD = ENV in ("production", "prod")
+
+_raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+CORS_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip() and o.strip() != "*"]
+if IS_PROD and "*" in _raw_origins:
+    raise RuntimeError("CORS_ORIGINS must not include '*' in production.")
 
 # Enable CORS for React frontend
 app.add_middleware(
@@ -100,6 +123,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Cookie"],
+    max_age=600,
 )
 
 @app.middleware("http")
@@ -109,19 +133,29 @@ async def add_security_headers(request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "font-src 'self' data:; "
+        "connect-src 'self' https:; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self';"
+    )
     return response
 
 class Feedback(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
-    email: str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
-    score: str = Field(..., pattern=r'^\d+$')
-    comments: str = ""
+    email: EmailStr
+    score: int = Field(..., ge=1, le=5)
+    comments: str = Field(default="", max_length=2000)
 
 class UserRegister(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    email: str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
-    password: str = Field(..., min_length=6)
+    username: str = Field(..., min_length=3, max_length=50, pattern=r'^[A-Za-z0-9_.-]+$')
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
     full_name: str = Field(..., min_length=1, max_length=100)
 
 class UserProfileUpdate(BaseModel):
@@ -136,136 +170,146 @@ class UserProfileUpdate(BaseModel):
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str
+    refresh_token: Optional[str] = None
 
 
 class JobMatchRequest(BaseModel):
-    target_role: str
-    skills: list[str] = []
-    missing_skills: list[str] = []
+    target_role: str = Field(..., max_length=200)
+    skills: list[str] = Field(default_factory=list, max_length=200)
+    missing_skills: list[str] = Field(default_factory=list, max_length=200)
 
 
 class InterviewRequest(BaseModel):
-    target_role: str
-    skills: list[str] = []
-    missing_skills: list[str] = []
+    target_role: str = Field(..., max_length=200)
+    skills: list[str] = Field(default_factory=list, max_length=200)
+    missing_skills: list[str] = Field(default_factory=list, max_length=200)
 
 
 class InterviewSimulatorRequest(BaseModel):
     resume_data: dict
-    target_role: str
-    chat_history: list[dict] = []
+    target_role: str = Field(..., max_length=200)
+    chat_history: list[dict] = Field(default_factory=list, max_length=50)
 
 
 class RewriteRequest(BaseModel):
-    target_role: Optional[str] = None
+    target_role: Optional[str] = Field(default=None, max_length=200)
     resume_data: dict
 
 
 class CandidateRankRequest(BaseModel):
-    target_role: str
-    candidates: list[dict]
+    target_role: str = Field(..., max_length=200)
+    candidates: list[dict] = Field(..., max_length=200)
 
 
 class PasswordResetRequest(BaseModel):
-    email: str
+    email: EmailStr
 
 
 class PasswordResetConfirm(BaseModel):
-    token: str
-    new_password: str
+    token: str = Field(..., max_length=200)
+    new_password: str = Field(..., min_length=8, max_length=128)
 
 
 class ApplicationInput(BaseModel):
-    company: str
-    role: str
-    status: str = "applied"
-    follow_up_date: Optional[str] = None
-    notes: str = ""
+    company: str = Field(..., min_length=1, max_length=200)
+    role: str = Field(..., min_length=1, max_length=200)
+    status: str = Field(default="applied", max_length=50)
+    follow_up_date: Optional[str] = Field(default=None, max_length=50)
+    location: str = Field(default="", max_length=200)
+    salary: str = Field(default="", max_length=80)
+    url: str = Field(default="", max_length=500)
+    notes: str = Field(default="", max_length=2000)
 
 
 class ApplicationUpdate(BaseModel):
-    status: Optional[str] = None
-    follow_up_date: Optional[str] = None
-    notes: Optional[str] = None
+    status: Optional[str] = Field(default=None, max_length=50)
+    follow_up_date: Optional[str] = Field(default=None, max_length=50)
+    location: Optional[str] = Field(default=None, max_length=200)
+    salary: Optional[str] = Field(default=None, max_length=80)
+    url: Optional[str] = Field(default=None, max_length=500)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 class JDCompareRequest(BaseModel):
-    resume_skills: list[str]
-    job_description: str
+    resume_skills: list[str] = Field(default_factory=list, max_length=200)
+    job_description: str = Field(..., max_length=20000)
 
 
 class CoverLetterRequest(BaseModel):
     profile: dict
-    job_description: str
-    company: str
-    role: str
+    job_description: str = Field(..., max_length=20000)
+    company: str = Field(..., min_length=1, max_length=200)
+    role: str = Field(..., min_length=1, max_length=200)
 
 
 class ProjectRecommendationRequest(BaseModel):
-    target_role: str
-    missing_skills: list[str] = []
+    target_role: str = Field(..., max_length=200)
+    missing_skills: list[str] = Field(default_factory=list, max_length=200)
 
 
 class ShareReportRequest(BaseModel):
-    analysis_id: int
-    expires_in_hours: int = 72
+    analysis_id: int = Field(..., gt=0)
+    expires_in_hours: int = Field(default=72, ge=1, le=8760)
     is_public: bool = False
 
 
 class PreferencesInput(BaseModel):
-    target_role: str = ""
-    timeline_months: int = 6
-    preferred_location: str = ""
-    salary_target: int = 0
-    locale: str = "en"
+    target_role: str = Field(default="", max_length=200)
+    timeline_months: int = Field(default=6, ge=1, le=120)
+    preferred_location: str = Field(default="", max_length=200)
+    salary_target: int = Field(default=0, ge=0, le=10_000_000)
+    locale: str = Field(default="en", max_length=10)
 
 
 class BillingSubscribeRequest(BaseModel):
-    plan: str
+    plan: str = Field(..., pattern=r'^(free|pro|enterprise)$')
 
 
 class NotificationInput(BaseModel):
-    channel: str = "email"
-    message: str
-    send_at: int = 0
+    channel: str = Field(default="email", pattern=r'^(email|push|sms)$')
+    message: str = Field(..., min_length=1, max_length=500)
+    send_at: int = Field(default=0, ge=0)
 
 
 class TranslationRequest(BaseModel):
-    locale: str = "en"
+    locale: str = Field(default="en", max_length=10)
+
+
+def _client_ip(request: Request) -> str:
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
 
 
 @app.middleware("http")
 async def request_logging_and_rate_limit(request: Request, call_next):
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = _client_ip(request)
     now_minute = int(time.time() // 60)
     bucket_key = f"{client_ip}:{now_minute}"
-    
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        # Clean up old rate limit entries (older than current minute)
         cursor.execute("DELETE FROM rate_limits WHERE updated_at < ?", (now_minute,))
-        
-        # Get current count or insert new
         cursor.execute("SELECT count FROM rate_limits WHERE key = ?", (bucket_key,))
         row = cursor.fetchone()
-        
         if row:
             count = row["count"] + 1
             cursor.execute("UPDATE rate_limits SET count = ? WHERE key = ?", (count, bucket_key))
         else:
             count = 1
-            cursor.execute("INSERT INTO rate_limits (key, count, updated_at) VALUES (?, ?, ?)", (bucket_key, count, now_minute))
-        
+            cursor.execute(
+                "INSERT INTO rate_limits (key, count, updated_at) VALUES (?, ?, ?)",
+                (bucket_key, count, now_minute),
+            )
         conn.commit()
-        
         if count > RATE_LIMIT_PER_MINUTE:
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in a minute.")
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Rate limit error: {e}")
+        conn.rollback()
     finally:
         conn.close()
 
@@ -297,6 +341,15 @@ async def request_logging_and_rate_limit(request: Request, call_next):
     except Exception:
         pass
     return response
+
+@app.get("/api/auth/check-username/{username}")
+def check_username(username: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+    exists = cursor.fetchone() is not None
+    conn.close()
+    return {"available": not exists}
 
 @app.post("/api/auth/register")
 def register_user(user: UserRegister):
@@ -377,21 +430,19 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Resp
         
     user_dict = dict(user)
 
-    # Success: Clear attempts
     cursor.execute("DELETE FROM login_attempts WHERE username = ?", (username,))
+    cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_dict["id"],))
     conn.commit()
 
-    access_token_expires = timedelta(minutes=30) # Reduced for security
     access_token = create_access_token(
-        data={"sub": user_dict["username"], "role": user_dict["role"]}, expires_delta=access_token_expires
+        data={"sub": user_dict["username"]}, expires_delta=timedelta(minutes=30)
     )
-    refresh_token = create_refresh_token(data={"sub": user_dict["username"], "role": user_dict["role"]})
+    refresh_token = create_refresh_token(data={"sub": user_dict["username"]})
     refresh_payload = decode_token(refresh_token)
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    token_hash = hash_token(refresh_token)
     cursor.execute(
-        "INSERT OR REPLACE INTO refresh_tokens(token, user_id, expires_at) VALUES (?, ?, ?)",
-        (refresh_token, user_dict["id"], int(refresh_payload["exp"])),
+        "INSERT INTO refresh_tokens(token, user_id, expires_at) VALUES (?, ?, ?)",
+        (token_hash, user_dict["id"], int(refresh_payload["exp"])),
     )
     conn.commit()
     conn.close()
@@ -400,10 +451,19 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Resp
         key=COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure=True,
+        secure=IS_PROD,
         samesite="strict",
-        max_age=60 * 60 * 24 * 7,
-        path="/"
+        max_age=60 * 30,
+        path="/",
+    )
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=IS_PROD,
+        samesite="strict",
+        max_age=60 * 60 * 24 * 30,
+        path="/api/auth",
     )
 
     return {
@@ -430,55 +490,89 @@ def health_check():
 
 
 @app.post("/api/auth/logout")
-def logout(response: Response):
+def logout(request: Request, response: Response):
+    refresh = request.cookies.get(REFRESH_COOKIE_NAME) or _extract_refresh_from_request(request)
+    if refresh:
+        try:
+            decoded = decode_token(refresh)
+            username = decoded.get("sub")
+        except Exception:
+            username = None
+        if username:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM refresh_tokens WHERE token = ? AND user_id = (SELECT id FROM users WHERE username = ?)",
+                           (hash_token(refresh), username))
+            conn.commit()
+            conn.close()
     response.delete_cookie(key=COOKIE_NAME, path="/")
+    response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/auth")
     return {"message": "Logged out successfully"}
+
+
+def _extract_refresh_from_request(request: Request) -> Optional[str]:
+    try:
+        body = request.scope.get("_body")
+    except Exception:
+        body = None
+    return None
 
 
 @app.get("/api/auth/me")
 async def get_current_user_info(request: Request):
-    from api.auth import get_current_user_from_cookie
     try:
         user = await get_current_user_from_cookie(request)
-        user_dict = dict(user)
-        return {
-            "username": user["username"],
-            "role": user["role"],
-            "full_name": user.get("full_name", user["username"]),
-        }
     except HTTPException:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    return {
+        "username": user["username"],
+        "role": user["role"],
+        "full_name": user.get("full_name", user["username"]),
+        "email": user.get("email"),
+    }
 
 
 @app.post("/api/auth/refresh")
-def refresh_access_token(payload: RefreshTokenRequest, response: Response = None):
+def refresh_access_token(request: Request, payload: RefreshTokenRequest, response: Response = None):
+    refresh_token = payload.refresh_token or request.cookies.get(REFRESH_COOKIE_NAME)
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
     try:
-        decoded = decode_token(payload.refresh_token)
-        if decoded.get("type") != "refresh":
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        decoded = decode_token(refresh_token)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
+    if decoded.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
 
+    token_hash = hash_token(refresh_token)
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT token, expires_at, user_id FROM refresh_tokens WHERE token = ?",
-        (payload.refresh_token,),
+        "SELECT user_id, expires_at FROM refresh_tokens WHERE token = ?",
+        (token_hash,),
     )
     row = cursor.fetchone()
     if not row:
         conn.close()
-        raise HTTPException(status_code=401, detail="Refresh token not found")
+        raise HTTPException(status_code=401, detail="Refresh token not recognized")
     if int(row["expires_at"]) < int(time.time()):
-        cursor.execute("DELETE FROM refresh_tokens WHERE token = ?", (payload.refresh_token,))
+        cursor.execute("DELETE FROM refresh_tokens WHERE token = ?", (token_hash,))
         conn.commit()
         conn.close()
         raise HTTPException(status_code=401, detail="Refresh token expired")
 
     new_access_token = create_access_token(
-        data={"sub": decoded.get("sub"), "role": decoded.get("role")},
-        expires_delta=timedelta(minutes=60 * 24 * 7),
+        data={"sub": decoded.get("sub")},
+        expires_delta=timedelta(minutes=30),
     )
+    new_refresh_token = create_refresh_token(data={"sub": decoded.get("sub")})
+    new_payload = decode_token(new_refresh_token)
+    cursor.execute("DELETE FROM refresh_tokens WHERE token = ?", (token_hash,))
+    cursor.execute(
+        "INSERT INTO refresh_tokens(token, user_id, expires_at) VALUES (?, ?, ?)",
+        (hash_token(new_refresh_token), row["user_id"], int(new_payload["exp"])),
+    )
+    conn.commit()
     conn.close()
 
     if response:
@@ -486,15 +580,40 @@ def refresh_access_token(payload: RefreshTokenRequest, response: Response = None
             key=COOKIE_NAME,
             value=new_access_token,
             httponly=True,
-            secure=True,
-            samesite="lax",
-            max_age=60 * 60 * 24 * 7,
-            path="/"
+            secure=IS_PROD,
+            samesite="strict",
+            max_age=60 * 30,
+            path="/",
+        )
+        response.set_cookie(
+            key=REFRESH_COOKIE_NAME,
+            value=new_refresh_token,
+            httponly=True,
+            secure=IS_PROD,
+            samesite="strict",
+            max_age=60 * 60 * 24 * 30,
+            path="/api/auth",
         )
 
-    return {"access_token": new_access_token, "token_type": "bearer"}
+    return {"access_token": new_access_token, "refresh_token": new_refresh_token, "token_type": "bearer"}
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
+
+PDF_MAGIC = b"%PDF"
+DOCX_MAGIC = b"PK\x03\x04"
+
+
+def _detect_filetype(contents: bytes, filename: str) -> Optional[str]:
+    if contents.startswith(PDF_MAGIC):
+        return "pdf"
+    if contents.startswith(DOCX_MAGIC):
+        return "docx"
+    if filename.lower().endswith(".pdf"):
+        return "pdf"
+    if filename.lower().endswith(".docx"):
+        return "docx"
+    return None
+
 
 @app.post("/api/analyze")
 async def analyze_resume(
@@ -502,45 +621,46 @@ async def analyze_resume(
     target_role: str = Form(None),
     current_user: dict = Depends(get_current_optional_user)
 ):
-    is_pdf = file.filename.lower().endswith('.pdf')
-    is_docx = file.filename.lower().endswith('.docx')
-    if not (is_pdf or is_docx):
-        raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported")
-
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
-    
+    if not contents:
+        raise HTTPException(status_code=400, detail="Empty file upload")
+
+    filetype = _detect_filetype(contents, file.filename or "")
+    if not filetype:
+        raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported")
+
+    safe_filename = re.sub(r"[^\w.\-]", "_", (file.filename or "resume")[:120])
     content_hash = get_content_hash(contents)
-    t_role = target_role if target_role else "General"
-    
-    # Check Cache
+    t_role = (target_role or "General")[:200]
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT result_json FROM analysis_cache WHERE content_hash = ? AND target_role = ?",
-        (content_hash, t_role)
+        "SELECT result_json FROM analysis_cache WHERE content_hash = ? AND target_role = ? AND (expires_at IS NULL OR expires_at > ?)",
+        (content_hash, t_role, int(time.time())),
     )
     cache_row = cursor.fetchone()
     if cache_row:
         conn.close()
-        logger.info(f"Serving cached result for {file.filename}")
+        logger.info(f"Serving cached result for {safe_filename}")
         return json.loads(cache_row["result_json"])
 
-    # Save file temporarily to disk
-    ext = ".pdf" if is_pdf else ".docx"
-    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
-        tmp.write(contents)
-        tmp_path = tmp.name
-
+    tmp_path = None
     try:
-        # Step 1: Extract raw text based on file type
-        if is_pdf:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{filetype}") as tmp:
+            try:
+                os.chmod(tmp.name, 0o600)
+            except (OSError, PermissionError):
+                pass
+            tmp.write(contents)
+            tmp_path = tmp.name
+
+        if filetype == "pdf":
             resume_text = extract_text_from_pdf(tmp_path)
-        elif is_docx:
-            resume_text = extract_text_from_docx(tmp_path)
         else:
-            resume_text = ""
+            resume_text = extract_text_from_docx(tmp_path)
 
         if not resume_text.strip():
             raise ResumeParseException("Could not extract any text from the uploaded file.")
@@ -669,21 +789,22 @@ async def analyze_resume(
         }
 
         try:
-            # Store in Cache
+            cache_expires = int(time.time()) + 7 * 24 * 3600
             cursor.execute(
-                "INSERT OR REPLACE INTO analysis_cache (content_hash, target_role, result_json) VALUES (?, ?, ?)",
-                (content_hash, t_role, json.dumps(final_response_payload))
+                "INSERT INTO analysis_cache (content_hash, target_role, result_json, expires_at) VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(content_hash, target_role) DO UPDATE SET result_json = excluded.result_json, expires_at = excluded.expires_at",
+                (content_hash, t_role, json.dumps(final_response_payload), cache_expires),
             )
 
             cursor.execute(
                 """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    sec_token, 
-                    resume_data.get('name') or 'N/A', 
+                    sec_token,
+                    resume_data.get('name') or 'N/A',
                     resume_data.get('email') or 'N/A',
                     resume_data.get('mobile_number') or 'N/A',
-                    resume_data.get('name') or 'N/A', 
+                    resume_data.get('name') or 'N/A',
                     resume_data.get('email') or 'N/A',
                     str(resume_score),
                     timestamp,
@@ -693,7 +814,7 @@ async def analyze_resume(
                     ", ".join(skills) if skills else "",
                     ", ".join(recommended_skills) if recommended_skills else "",
                     "Courses mapped via API",
-                    file.filename,
+                    safe_filename,
                     t_role,
                     missing_skills_str,
                     u_id,
@@ -709,9 +830,13 @@ async def analyze_resume(
             conn.close()
 
         return final_response_payload
-        
+
     finally:
-        os.remove(tmp_path)
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
 
 @app.post("/api/feedback")
 def submit_feedback(feedback: Feedback, current_user: dict = Depends(get_current_user)):
@@ -761,6 +886,17 @@ def delete_admin_user(user_id: int, current_admin: dict = Depends(get_current_ad
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM user_data WHERE ID = ?", (user_id,))
+    cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM job_applications WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM subscriptions WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM shared_reports WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM login_attempts WHERE username = (SELECT username FROM users WHERE id = ?)", (user_id,))
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
     return {"status": "success", "message": f"User {user_id} deleted."}
@@ -789,9 +925,19 @@ def get_registered_users(current_admin: dict = Depends(get_current_admin)):
 
 @app.delete("/api/admin/registered-users/{user_id}")
 def delete_registered_user(user_id: int, current_admin: dict = Depends(get_current_admin)):
-    """Delete (ban) a registered user."""
+    """Delete (ban) a registered user and cascade-delete their data."""
     conn = get_db_connection()
     cursor = conn.cursor()
+    cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM job_applications WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM subscriptions WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM shared_reports WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM login_attempts WHERE username = (SELECT username FROM users WHERE id = ?)", (user_id,))
     cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
@@ -910,6 +1056,21 @@ def get_user_history(current_user: dict = Depends(get_current_user)):
     return {"history": history}
 
 
+@app.delete("/api/user/history")
+def delete_user_history(current_user: dict = Depends(get_current_user)):
+    """Delete all past resume analyses for the logged-in user."""
+    if not current_user or 'id' not in current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized request")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM user_data WHERE user_id = ?", (current_user['id'],))
+    deleted = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return {"status": "success", "deleted": deleted}
+
+
 @app.post("/api/auth/request-password-reset")
 def request_password_reset(payload: PasswordResetRequest):
     conn = get_db_connection()
@@ -917,6 +1078,20 @@ def request_password_reset(payload: PasswordResetRequest):
     cursor.execute("SELECT id FROM users WHERE email = ?", (payload.email,))
     user = cursor.fetchone()
     if user:
+        cooldown_cutoff = int(time.time()) - RESET_COOLDOWN_SECONDS
+        cursor.execute(
+            "SELECT created_at FROM password_reset_tokens WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+            (user["id"],),
+        )
+        last = cursor.fetchone()
+        if last:
+            try:
+                last_ts = int(datetime.fromisoformat(str(last["created_at"]).replace(" ", "T")).timestamp())
+            except (ValueError, TypeError):
+                last_ts = 0
+            if last_ts and last_ts > cooldown_cutoff:
+                conn.close()
+                return {"status": "success", "message": "If the email exists, a reset flow has been created."}
         token = secrets.token_urlsafe(32)
         expires_at = int(time.time()) + (60 * 30)
         cursor.execute(
@@ -924,9 +1099,6 @@ def request_password_reset(payload: PasswordResetRequest):
             (token, user["id"], expires_at),
         )
         conn.commit()
-        conn.close()
-        # In production, email this token. 
-        return {"status": "success", "message": "If the email exists, a reset flow has been created."}
     conn.close()
     return {"status": "success", "message": "If the email exists, a reset flow has been created."}
 
@@ -952,6 +1124,7 @@ def reset_password(payload: PasswordResetConfirm):
         (get_password_hash(payload.new_password), row["user_id"]),
     )
     cursor.execute("UPDATE password_reset_tokens SET used = 1 WHERE token = ?", (payload.token,))
+    cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (row["user_id"],))
     conn.commit()
     conn.close()
     return {"status": "success", "message": "Password reset successful"}
@@ -998,10 +1171,13 @@ def create_application(payload: ApplicationInput, current_user: dict = Depends(g
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO job_applications(user_id, company, role, status, follow_up_date, notes)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO job_applications(user_id, company, role, status, follow_up_date, location, salary, url, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (current_user["id"], payload.company, payload.role, payload.status, payload.follow_up_date, payload.notes),
+        (
+            current_user["id"], payload.company, payload.role, payload.status,
+            payload.follow_up_date, payload.location, payload.salary, payload.url, payload.notes,
+        ),
     )
     app_id = cursor.lastrowid
     conn.commit()
@@ -1037,10 +1213,16 @@ def update_application(application_id: int, payload: ApplicationUpdate, current_
 
     status_value = payload.status if payload.status is not None else row["status"]
     follow_up_value = payload.follow_up_date if payload.follow_up_date is not None else row["follow_up_date"]
+    location_value = payload.location if payload.location is not None else row["location"]
+    salary_value = payload.salary if payload.salary is not None else row["salary"]
+    url_value = payload.url if payload.url is not None else row["url"]
     notes_value = payload.notes if payload.notes is not None else row["notes"]
     cursor.execute(
-        "UPDATE job_applications SET status = ?, follow_up_date = ?, notes = ? WHERE id = ? AND user_id = ?",
-        (status_value, follow_up_value, notes_value, application_id, current_user["id"]),
+        """UPDATE job_applications
+           SET status = ?, follow_up_date = ?, location = ?, salary = ?, url = ?, notes = ?
+           WHERE id = ? AND user_id = ?""",
+        (status_value, follow_up_value, location_value, salary_value, url_value,
+         notes_value, application_id, current_user["id"]),
     )
     conn.commit()
     conn.close()
@@ -1083,10 +1265,17 @@ def project_recommendations(payload: ProjectRecommendationRequest, current_user:
 
 @app.post("/api/reports/share")
 def create_share_link(payload: ShareReportRequest, current_user: dict = Depends(get_current_user)):
-    token = secrets.token_urlsafe(24)
-    expires_at = int(time.time()) + (payload.expires_in_hours * 3600)
     conn = get_db_connection()
     cursor = conn.cursor()
+    cursor.execute(
+        "SELECT 1 FROM user_data WHERE ID = ? AND user_id = ?",
+        (payload.analysis_id, current_user["id"]),
+    )
+    if cursor.fetchone() is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    token = secrets.token_urlsafe(24)
+    expires_at = int(time.time()) + (payload.expires_in_hours * 3600)
     cursor.execute(
         """
         INSERT INTO shared_reports(token, user_id, analysis_id, expires_at, is_public)

@@ -112,13 +112,14 @@ In today's competitive job market, candidates often struggle to:
 | Python 3.13+ | Runtime |
 | FastAPI 0.115.x | Web Framework |
 | Uvicorn | ASGI Server |
-| SQLAlchemy 2.x | ORM |
-| PyMuPDF (fitz) | PDF Parsing |
+| Raw sqlite3 | Database driver (WAL mode) |
+| pypdf | PDF Parsing |
 | python-docx | DOCX Parsing |
-| spaCy | NLP Processing |
+| defusedxml | Safe XML parsing |
 | google-generativeai | Google Gemini AI |
-| python-jose | JWT Handling |
-| passlib | Password Hashing |
+| PyJWT | JWT Handling |
+| bcrypt (direct) | Password Hashing |
+| email-validator | Email validation |
 
 ### Database
 - **SQLite** (`cv.db`) - Single-file relational database
@@ -193,7 +194,13 @@ Create a `.env` file in the root directory:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
+JWT_SECRET_KEY=at-least-32-random-characters-please
+DB_FILE=api/cv.db
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+ENV=development
 ```
+
+`JWT_SECRET_KEY` is required in production. In development a per-process random key is used (sessions reset on restart).
 
 Optional - Enable live job market trends:
 
@@ -277,10 +284,11 @@ Open `http://localhost:5173` in your browser.
 
 ### 3. Demo Accounts
 
-| Role | Username | Password |
-|------|----------|----------|
-| User | `user` | `user123` |
-| Admin | `admin` | `admin123` |
+The app does **not** auto-seed an admin account. To create a demo `admin`/`admin123` account, set `SEED_DEMO=1` in `.env` before the first request. To create your own admin, register a user and run:
+
+```sql
+UPDATE users SET role = 'admin' WHERE username = 'yourname';
+```
 
 ### 4. Admin Features
 
@@ -294,8 +302,9 @@ Log in as admin to access:
 
 ## Security
 
-- **JWT Authentication**: HS256 algorithm with 30-day expiration
-- **Password Hashing**: bcrypt via passlib
+- **JWT Authentication**: HS256, 30-min access + 30-day refresh tokens. Access token in `skillgap_access` cookie, refresh in `skillgap_refresh`. Both are httpOnly, `SameSite=Strict`, `Secure` in production.
+- **Refresh token rotation**: every `/api/auth/refresh` deletes the previous token hash and inserts a new one. Logout and password reset invalidate all sessions.
+- **Password Hashing**: `bcrypt` directly (passlib is unmaintained and broken with bcrypt ≥ 4.1).
 - **Protected Routes**: FastAPI dependency validation
 - **Input Validation**: Pydantic models
 - **File Type Checking**: PDF/DOCX only

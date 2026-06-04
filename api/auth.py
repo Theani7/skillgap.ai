@@ -1,101 +1,123 @@
 import os
-from datetime import datetime, timedelta
+import hashlib
+from datetime import datetime, timedelta, timezone
 from typing import Optional
-from jose import JWTError, jwt
-from fastapi import Depends, HTTPException, status, Request, Response
+import jwt
+from jwt import InvalidTokenError
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
-import sqlite3
 from dotenv import load_dotenv
 from api.database import get_db_connection
-from api.security import verify_password, get_password_hash
+from api.security import verify_password
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.urandom(32).hex())
+_SECRET_FROM_ENV = os.getenv("JWT_SECRET_KEY")
+if not _SECRET_FROM_ENV or len(_SECRET_FROM_ENV) < 32:
+    if os.getenv("ENV", "development").lower() in ("production", "prod"):
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be set to a 32+ char secret in production."
+        )
+    _SECRET_FROM_ENV = os.urandom(32).hex()
+
+SECRET_KEY = _SECRET_FROM_ENV
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 30
-COOKIE_NAME = "auth_token"
+COOKIE_NAME = "skillgap_access"
+REFRESH_COOKIE_NAME = "skillgap_refresh"
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
-def _create_token(data: dict, token_type: str, expires_delta: Optional[timedelta] = None):
+
+def _create_token(data: dict, token_type: str, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire, "type": token_type})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=15))
+    jti = hashlib.sha256(os.urandom(16)).hexdigest()[:16]
+    to_encode.update({"exp": expire, "type": token_type, "jti": jti})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    return _create_token(data, "access", expires_delta)
 
-def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
-    refresh_expiry = expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    return _create_token(data, "refresh", refresh_expiry)
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    return _create_token(data, "access", expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
+
+def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    return _create_token(data, "refresh", expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _decode(token: str) -> dict:
+    return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+
+def _load_user(username: str) -> Optional[dict]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, username, email, full_name, role, created_at FROM users WHERE username = ?",
+        (username,),
+    )
+    user = cursor.fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+
+def _raise_401() -> HTTPException:
+    return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)) -> dict:
+    auth_token = token
+    if not auth_token:
+        auth_token = request.cookies.get(COOKIE_NAME)
+    if not auth_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            auth_token = auth_header.split(" ", 1)[1]
+    if not auth_token:
+        raise _raise_401()
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        role: str = payload.get("role")
-        token_type: str = payload.get("type")
-        if username is None or role is None:
-            raise credentials_exception
-        if token_type and token_type != "access":
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-        
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    conn.close()
-    
+        payload = _decode(auth_token)
+    except InvalidTokenError:
+        raise _raise_401()
+    username = payload.get("sub")
+    token_type = payload.get("type")
+    if not username or token_type != "access":
+        raise _raise_401()
+    user = _load_user(username)
     if user is None:
-        raise credentials_exception
-    return dict(user)
+        raise _raise_401()
+    return user
 
-from fastapi import Request
 
-async def get_current_optional_user(request: Request):
-    token = await get_user_from_cookie(request)
+async def get_current_optional_user(request: Request) -> Optional[dict]:
+    token = request.cookies.get(COOKIE_NAME)
     if not token:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
-        else:
-            return None
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        token_type: str = payload.get("type")
-        if username is None:
-            return None
-        if token_type and token_type != "access":
-            return None
-    except JWTError:
+    if not token:
         return None
+    try:
+        payload = _decode(token)
+    except InvalidTokenError:
+        return None
+    username = payload.get("sub")
+    token_type = payload.get("type")
+    if not username or token_type != "access":
+        return None
+    return _load_user(username)
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    conn.close()
 
-    if user:
-        return dict(user)
-    return None
-
-async def get_current_admin(current_user: dict = Depends(get_current_user)):
+async def get_current_admin(current_user: dict = Depends(get_current_user)) -> dict:
     if current_user.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -103,47 +125,34 @@ async def get_current_admin(current_user: dict = Depends(get_current_user)):
         )
     return current_user
 
+
 def decode_token(token: str) -> dict:
-    return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    return _decode(token)
 
 
 async def get_user_from_cookie(request: Request) -> Optional[str]:
-    cookie_value = request.cookies.get(COOKIE_NAME)
-    if cookie_value:
-        return cookie_value
+    token = request.cookies.get(COOKIE_NAME)
+    if token:
+        return token
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         return auth_header.split(" ")[1]
     return None
 
 
-async def get_current_user_from_cookie(request: Request):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+async def get_current_user_from_cookie(request: Request) -> dict:
     token = await get_user_from_cookie(request)
     if not token:
-        raise credentials_exception
+        raise _raise_401()
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        role: str = payload.get("role")
-        token_type: str = payload.get("type")
-        if username is None or role is None:
-            raise credentials_exception
-        if token_type and token_type != "access":
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    conn.close()
-
+        payload = _decode(token)
+    except InvalidTokenError:
+        raise _raise_401()
+    username = payload.get("sub")
+    token_type = payload.get("type")
+    if not username or token_type != "access":
+        raise _raise_401()
+    user = _load_user(username)
     if user is None:
-        raise credentials_exception
-    return dict(user)
+        raise _raise_401()
+    return user
