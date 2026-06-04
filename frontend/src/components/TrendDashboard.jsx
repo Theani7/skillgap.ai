@@ -66,7 +66,8 @@ const TrendDashboard = ({ trends, field }) => {
             </motion.div>
 
             <motion.div
-                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 'var(--space-6)' }}
+                className="grid grid-cols-1 md:grid-cols-2"
+                style={{ gap: 'var(--space-6)' }}
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"

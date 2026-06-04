@@ -27,27 +27,28 @@ const RoadmapStep = ({ step, index, isLast }) => {
                 paddingLeft: 'var(--space-8)'
             }}
         >
-            <div style={{
-                position: 'absolute',
-                left: '-5px',
-                top: '6px',
-                background: 'var(--color-white)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 2,
-                cursor: 'pointer',
-                width: '12px',
-                height: '12px',
-                border: completedTasks.size > 0 && step.action_items && completedTasks.size === step.action_items.length 
-                    ? '2px solid var(--color-success-500)' 
-                    : '2px solid var(--color-primary-500)'
-            }} onClick={() => setIsExpanded(!isExpanded)} />
+            <div 
+                className="bg-primary"
+                style={{
+                    position: 'absolute',
+                    left: '-5px',
+                    top: '6px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2,
+                    cursor: 'pointer',
+                    width: '12px',
+                    height: '12px',
+                    border: completedTasks.size > 0 && step.action_items && completedTasks.size === step.action_items.length 
+                        ? '2px solid var(--color-success-500)' 
+                        : '2px solid var(--color-primary-500)'
+                }} onClick={() => setIsExpanded(!isExpanded)} />
 
             <div
+                className="bg-primary"
                 style={{
-                    background: 'var(--color-white)',
                     border: '1px solid var(--color-neutral-200)',
                     borderRadius: 'var(--border-radius-lg)',
                     padding: 'var(--space-4)',
@@ -181,13 +182,13 @@ const Roadmap = ({ path }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
+            className="bg-primary"
             style={{ 
                 marginTop: 'var(--space-8)', 
                 marginBottom: 'var(--space-8)', 
                 padding: 'var(--space-6)',
                 border: '1px solid var(--color-neutral-200)',
-                borderRadius: 'var(--border-radius-lg)',
-                background: 'var(--color-white)'
+                borderRadius: 'var(--border-radius-lg)'
             }}
         >
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
