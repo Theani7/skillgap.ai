@@ -50,7 +50,7 @@
   --color-text-secondary: var(--color-neutral-700);
   --color-text-tertiary: var(--color-neutral-500);
   --color-text-quaternary: var(--color-neutral-400);
-  --color-text-inverse: #ffffff;
+  --color-text-inverse: var(--color-bg-primary);
   
   /* Semantic Colors mapped to Tokens */
   --color-success: var(--color-success-600);
@@ -101,11 +101,11 @@
   --radius-none: var(--border-radius-none);
   --radius-sm: var(--border-radius-sm);
   --radius-base: var(--border-radius-base);
-  --radius-md: var(--border-radius-md);
-  --radius-lg: var(--border-radius-lg);
-  --radius-xl: var(--border-radius-xl);
-  --radius-2xl: var(--border-radius-2xl);
-  --radius-3xl: var(--border-radius-3xl);
+  --radius-md: var(--border-radius-base);
+  --radius-lg: var(--border-radius-md);
+  --radius-xl: var(--border-radius-lg);
+  --radius-2xl: var(--border-radius-xl);
+  --radius-3xl: var(--border-radius-2xl);
   --radius-full: var(--border-radius-full);
 
   /* === LEGACY MAPPINGS FOR BACKWARDS COMPATIBILITY === */
@@ -126,12 +126,6 @@
   --spacing-lg: var(--space-6);
   --spacing-xl: var(--space-10);
   --spacing-2xl: var(--space-16);
-  --radius-sm: var(--border-radius-sm);
-  --radius-md: var(--border-radius-base);
-  --radius-lg: var(--border-radius-md);
-  --radius-xl: var(--border-radius-lg);
-  --radius-2xl: var(--border-radius-xl);
-  --radius-3xl: var(--border-radius-2xl);
 }
 
 /* === UTILITY CLASSES === */
