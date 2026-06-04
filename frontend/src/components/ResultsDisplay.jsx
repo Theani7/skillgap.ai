@@ -136,15 +136,15 @@ const ResultsDisplay = ({ data, onReset }) => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
+                    className="bg-primary"
                     style={{ 
                         marginBottom: 'var(--space-8)', 
                         padding: 'var(--space-6)',
                         border: '1px solid var(--color-neutral-200)',
-                        borderRadius: 'var(--border-radius-lg)',
-                        background: 'var(--color-white)'
+                        borderRadius: 'var(--border-radius-lg)'
                     }}
                 >
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', md: '1fr 1fr', gap: 'var(--space-8)' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-8)' }}>
                         <div>
                             <h3 style={{ 
                                 paddingBottom: 'var(--space-3)', 
@@ -290,16 +290,16 @@ const ResultsDisplay = ({ data, onReset }) => {
                     </div>
                 </motion.div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', lg: '1fr 1fr', gap: 'var(--space-8)', marginBottom: 'var(--space-8)' }}>
+                <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 'var(--space-8)', marginBottom: 'var(--space-8)' }}>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
+                        className="bg-primary"
                         style={{ 
                             padding: 'var(--space-6)',
                             border: '1px solid var(--color-neutral-200)',
-                            borderRadius: 'var(--border-radius-lg)',
-                            background: 'var(--color-white)'
+                            borderRadius: 'var(--border-radius-lg)'
                         }}
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
@@ -378,11 +378,11 @@ const ResultsDisplay = ({ data, onReset }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4 }}
+                        className="bg-primary"
                         style={{ 
                             padding: 'var(--space-6)',
                             border: '1px solid var(--color-neutral-200)',
-                            borderRadius: 'var(--border-radius-lg)',
-                            background: 'var(--color-white)'
+                            borderRadius: 'var(--border-radius-lg)'
                         }}
                     >
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-1)', fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--color-neutral-900)' }}>
@@ -430,19 +430,19 @@ const ResultsDisplay = ({ data, onReset }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
+                        className="bg-primary"
                         style={{ 
                             marginTop: 'var(--space-8)', 
                             padding: 'var(--space-6)',
                             border: '1px solid var(--color-neutral-200)',
-                            borderRadius: 'var(--border-radius-lg)',
-                            background: 'var(--color-white)'
+                            borderRadius: 'var(--border-radius-lg)'
                         }}
                     >
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--color-neutral-900)' }}>
                             <Award size={20} />
                             Score Breakdown
                         </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-4)' }}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5" style={{ gap: 'var(--space-4)' }}>
                             {Object.entries(score_breakdown).map(([key, value]) => (
                                 <div key={key} style={{ padding: 'var(--space-4)', background: 'var(--color-neutral-50)', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--color-neutral-100)' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-1)' }}>
@@ -463,12 +463,12 @@ const ResultsDisplay = ({ data, onReset }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6 }}
+                        className="bg-primary"
                         style={{ 
                             marginTop: 'var(--space-8)', 
                             padding: 'var(--space-6)',
                             border: '1px solid var(--color-neutral-200)',
-                            borderRadius: 'var(--border-radius-lg)',
-                            background: 'var(--color-white)'
+                            borderRadius: 'var(--border-radius-lg)'
                         }}
                     >
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--color-neutral-900)' }}>
@@ -477,9 +477,8 @@ const ResultsDisplay = ({ data, onReset }) => {
                         </h3>
                         <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
                             {job_matches.slice(0, 6).map((job) => (
-                                <div key={job.job_id} style={{ 
+                                <div key={job.job_id} className="bg-primary" style={{ 
                                     padding: 'var(--space-4)', 
-                                    background: 'var(--color-white)', 
                                     borderRadius: 'var(--border-radius-lg)', 
                                     border: '1px solid var(--color-neutral-100)', 
                                     display: 'flex', 
@@ -515,12 +514,12 @@ const ResultsDisplay = ({ data, onReset }) => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.7 }}
+                    className="bg-primary"
                     style={{ 
                         marginTop: 'var(--space-8)', 
                         padding: 'var(--space-6)',
                         border: '1px solid var(--color-neutral-200)',
-                        borderRadius: 'var(--border-radius-lg)',
-                        background: 'var(--color-white)'
+                        borderRadius: 'var(--border-radius-lg)'
                     }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
@@ -538,7 +537,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
                         {videos.tutorials && videos.tutorials.length > 0 ? (
                             videos.tutorials.slice(0, 6).map((video, i) => (
                                 <a
@@ -548,9 +547,8 @@ const ResultsDisplay = ({ data, onReset }) => {
                                     rel="noopener noreferrer"
                                     style={{ textDecoration: 'none' }}
                                 >
-                                    <div style={{ 
+                                    <div className="bg-primary" style={{ 
                                         padding: 'var(--space-4)', 
-                                        background: 'var(--color-white)', 
                                         borderRadius: 'var(--border-radius-lg)', 
                                         border: '1px solid var(--color-neutral-200)', 
                                         minHeight: '120px', 
@@ -577,7 +575,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                         )}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', md: '1fr 1fr', gap: 'var(--space-4)' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-4)' }}>
                         <div style={{ padding: 'var(--space-4)', background: 'var(--color-neutral-50)', borderRadius: 'var(--border-radius-lg)', border: '1px solid var(--color-neutral-100)' }}>
                             <h3 style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-neutral-900)' }}>Resume Tips</h3>
                             <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
@@ -597,7 +595,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                                         );
                                     })
                                 ) : (
-                                    <div style={{ padding: 'var(--space-4)', background: 'var(--color-white)', borderRadius: 'var(--border-radius-md)', color: 'var(--color-neutral-400)', textAlign: 'center', fontSize: 'var(--text-xs)' }}>
+                                    <div className="bg-primary" style={{ padding: 'var(--space-4)', borderRadius: 'var(--border-radius-md)', color: 'var(--color-neutral-400)', textAlign: 'center', fontSize: 'var(--text-xs)' }}>
                                         Resume tips unavailable.
                                     </div>
                                 )}
@@ -622,7 +620,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                                         );
                                     })
                                 ) : (
-                                    <div style={{ padding: 'var(--space-4)', background: 'var(--color-white)', borderRadius: 'var(--border-radius-md)', color: 'var(--color-neutral-400)', textAlign: 'center', fontSize: 'var(--text-xs)' }}>
+                                    <div className="bg-primary" style={{ padding: 'var(--space-4)', borderRadius: 'var(--border-radius-md)', color: 'var(--color-neutral-400)', textAlign: 'center', fontSize: 'var(--text-xs)' }}>
                                         Interview videos unavailable.
                                     </div>
                                 )}
@@ -635,6 +633,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.8 }}
+                    className="bg-primary"
                     style={{ 
                         marginTop: 'var(--space-8)', 
                         marginBottom: 'var(--space-16)', 
@@ -643,8 +642,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                         marginLeft: 'auto', 
                         marginRight: 'auto',
                         border: '1px solid var(--color-neutral-200)',
-                        borderRadius: 'var(--border-radius-lg)',
-                        background: 'var(--color-white)'
+                        borderRadius: 'var(--border-radius-lg)'
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
