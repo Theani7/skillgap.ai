@@ -6,8 +6,9 @@
 /* === DESIGN TOKENS === */
 :root, [data-theme="light"] {
   /* === TYPOGRAPHY === */
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-family-sans);
+  --font-body: var(--font-family-sans);
   
   /* Font Sizes - Editorial Scale */
   --text-xs: 0.75rem;      /* 12px */
@@ -41,10 +42,10 @@
   --tracking-wider: 0.1em;
 
   /* === COLOR SYSTEM === */
-  /* Warm Cream Background */
-  --color-bg-primary: #faf8f3;
-  --color-bg-secondary: #f5f2ea;
-  --color-bg-tertiary: #f0ebe0;
+  /* Pure White Background */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: var(--color-neutral-50);
+  --color-bg-tertiary: var(--color-neutral-100);
   
   /* Deep Navy Primary */
   --color-primary-50: #f8f9fc;
@@ -431,10 +432,10 @@ html {
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: var(--font-family-sans);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
-  color: var(--color-text-primary);
+  color: var(--color-neutral-900);
   background-color: var(--color-bg-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -735,4 +736,11 @@ body {
 
 [data-theme="dark"] .clay-table th {
   background: var(--color-bg-tertiary);
+}
+
+/* Remove Claymorphism effects */
+.clay-bg, .clay-card {
+  background: white !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--color-neutral-200) !important;
 }
