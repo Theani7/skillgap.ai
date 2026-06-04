@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../services/env';
-import { RefreshCcw, User, Mail, Phone, FileDigit, Briefcase, GraduationCap, PlayCircle, Lightbulb, Star, Send, RotateCw, Target, Award, BookOpen, TrendingUp, Share2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, User, Mail, Phone, FileDigit, Briefcase, GraduationCap, PlayCircle, Lightbulb, Star, Send, RotateCw, Target, Award, BookOpen, TrendingUp, Share2, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Roadmap from './Roadmap';
@@ -89,6 +89,7 @@ const ResultsDisplay = ({ data, onReset }) => {
 
     return (
         <motion.div
+            layout
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -113,6 +114,13 @@ const ResultsDisplay = ({ data, onReset }) => {
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                        <button
+                            onClick={onReset}
+                            className="btn btn-ghost p-2 rounded-full"
+                            title="Back to Upload"
+                        >
+                            <ArrowLeft size={24} />
+                        </button>
                         <div>
                             <h2 style={{ fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-neutral-900)', marginBottom: '0' }}>
                                 Analysis Results
@@ -136,152 +144,108 @@ const ResultsDisplay = ({ data, onReset }) => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-primary"
+                    className="bg-primary card p-6"
                     style={{ 
-                        marginBottom: 'var(--space-8)', 
-                        padding: 'var(--space-6)',
-                        border: '1px solid var(--color-neutral-200)',
-                        borderRadius: 'var(--border-radius-lg)'
+                        marginBottom: 'var(--space-8)'
                     }}
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-8)' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                            <h3 style={{ 
+                            <h3 className="border-b border-light flex items-center gap-2 text-lg font-semibold text-primary" style={{ 
                                 paddingBottom: 'var(--space-3)', 
-                                marginBottom: 'var(--space-4)', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 'var(--space-2)', 
-                                fontSize: 'var(--text-lg)',
-                                fontWeight: 600,
-                                color: 'var(--color-neutral-900)',
-                                borderBottom: '1px solid var(--color-neutral-100)'
+                                marginBottom: 'var(--space-4)'
                             }}>
                                 <User size={18} />
                                 Basic Details
                             </h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0' }}>
-                                    <span style={{ color: 'var(--color-neutral-500)' }}>Name</span>
-                                    <span style={{ color: 'var(--color-neutral-900)', fontWeight: 600 }}>{resumeInfo.name || 'Not Found'}</span>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex justify-between py-2">
+                                    <span className="text-tertiary">Name</span>
+                                    <span className="text-primary font-semibold">{resumeInfo.name || 'Not Found'}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0' }}>
-                                    <span style={{ color: 'var(--color-neutral-500)' }}>Email</span>
-                                    <span style={{ color: 'var(--color-neutral-900)', fontWeight: 600 }}>{resumeInfo.email || 'Not Found'}</span>
+                                <div className="flex justify-between py-2">
+                                    <span className="text-tertiary">Email</span>
+                                    <span className="text-primary font-semibold">{resumeInfo.email || 'Not Found'}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0' }}>
-                                    <span style={{ color: 'var(--color-neutral-500)' }}>Mobile</span>
-                                    <span style={{ color: 'var(--color-neutral-900)', fontWeight: 600 }}>{resumeInfo.mobile_number || 'Not Found'}</span>
+                                <div className="flex justify-between py-2">
+                                    <span className="text-tertiary">Mobile</span>
+                                    <span className="text-primary font-semibold">{resumeInfo.mobile_number || 'Not Found'}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0' }}>
-                                    <span style={{ color: 'var(--color-neutral-500)' }}>Pages</span>
-                                    <span style={{ color: 'var(--color-neutral-900)', fontWeight: 600 }}>{resumeInfo.no_of_pages}</span>
+                                <div className="flex justify-between py-2">
+                                    <span className="text-tertiary">Pages</span>
+                                    <span className="text-primary font-semibold">{resumeInfo.no_of_pages}</span>
                                 </div>
                             </div>
 
-                            <h3 style={{ 
+                            <h3 className="border-b border-light flex items-center gap-2 text-lg font-semibold text-primary" style={{ 
                                 marginTop: 'var(--space-8)', 
                                 marginBottom: 'var(--space-4)',
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 'var(--space-2)', 
-                                fontSize: 'var(--text-lg)',
-                                fontWeight: 600,
-                                color: 'var(--color-neutral-900)',
-                                borderBottom: '1px solid var(--color-neutral-100)',
                                 paddingBottom: 'var(--space-3)'
                             }}>
                                 <Briefcase size={18} />
                                 Field Analysis
                             </h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0' }}>
-                                    <span style={{ color: 'var(--color-neutral-500)' }}>Target Role</span>
-                                    <span style={{ color: 'var(--color-primary-600)', fontWeight: 600 }}>{target_role || 'Not Specified'}</span>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex justify-between py-2">
+                                    <span className="text-tertiary">Target Role</span>
+                                    <span className="text-primary-600 font-semibold">{target_role || 'Not Specified'}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0' }}>
-                                    <span style={{ color: 'var(--color-neutral-500)' }}>Predicted</span>
-                                    <span style={{ color: 'var(--color-primary-600)', fontWeight: 600 }}>{predicted_field}</span>
+                                <div className="flex justify-between py-2">
+                                    <span className="text-tertiary">Predicted</span>
+                                    <span className="text-primary-600 font-semibold">{predicted_field}</span>
                                 </div>
                             </div>
 
-                            <h3 style={{ 
+                            <h3 className="border-b border-light flex items-center gap-2 text-lg font-semibold text-primary" style={{ 
                                 marginTop: 'var(--space-8)', 
                                 marginBottom: 'var(--space-4)',
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 'var(--space-2)', 
-                                fontSize: 'var(--text-lg)',
-                                fontWeight: 600,
-                                color: 'var(--color-neutral-900)',
-                                borderBottom: '1px solid var(--color-neutral-100)',
                                 paddingBottom: 'var(--space-3)'
                             }}>
                                 <Star size={18} />
                                 Skills Detected
                             </h3>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                            <div className="flex flex-wrap gap-2">
                                 {resumeInfo.skills && resumeInfo.skills.length > 0 ? (
                                     resumeInfo.skills.slice(0, 12).map((s, i) => (
-                                        <span key={i} style={{ 
-                                            background: 'var(--color-neutral-100)', 
-                                            color: 'var(--color-neutral-700)', 
-                                            padding: 'var(--space-1) var(--space-3)', 
-                                            borderRadius: 'var(--border-radius-full)',
-                                            fontSize: 'var(--text-sm)',
-                                            fontWeight: 500
+                                        <span key={i} className="bg-tertiary text-secondary rounded-full font-medium text-sm" style={{ 
+                                            padding: 'var(--space-1) var(--space-3)'
                                         }}>{s}</span>
                                     ))
                                 ) : (
-                                    <span style={{ color: 'var(--color-neutral-400)' }}>No skills detected.</span>
+                                    <span className="text-quaternary">No skills detected.</span>
                                 )}
                             </div>
                         </div>
 
-                        <div style={{ borderLeft: '1px solid var(--color-neutral-100)', paddingLeft: 'var(--space-8)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 'var(--space-8)', flexWrap: 'wrap', gap: 'var(--space-6)' }}>
-                                <div style={{ textAlign: 'center' }}>
-                                    <p style={{ textTransform: 'uppercase', color: 'var(--color-neutral-400)', marginBottom: 'var(--space-4)', fontSize: 'var(--text-xs)', fontWeight: 600, letterSpacing: '0.05em' }}>Resume Score</p>
+                        <div className="border-l border-light" style={{ paddingLeft: 'var(--space-8)' }}>
+                            <div className="flex justify-around flex-wrap gap-6" style={{ marginBottom: 'var(--space-8)' }}>
+                                <div className="text-center">
+                                    <p className="text-quaternary font-semibold tracking-wider text-xs uppercase" style={{ marginBottom: 'var(--space-4)' }}>Resume Score</p>
                                     <AnimatedScore score={resume_score} />
                                 </div>
                                 {target_role && (
-                                    <div style={{ textAlign: 'center' }}>
-                                        <p style={{ textTransform: 'uppercase', color: 'var(--color-neutral-400)', marginBottom: 'var(--space-4)', fontSize: 'var(--text-xs)', fontWeight: 600, letterSpacing: '0.05em' }}>Role Match</p>
+                                    <div className="text-center">
+                                        <p className="text-quaternary font-semibold tracking-wider text-xs uppercase" style={{ marginBottom: 'var(--space-4)' }}>Role Match</p>
                                         <AnimatedScore score={match_score || 0} />
                                     </div>
                                 )}
                             </div>
 
-                            <h3 style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 'var(--space-2)', 
-                                fontSize: 'var(--text-lg)',
-                                fontWeight: 600,
-                                color: 'var(--color-neutral-900)',
+                            <h3 className="border-b border-light flex items-center gap-2 text-lg font-semibold text-primary" style={{ 
                                 marginBottom: 'var(--space-4)', 
-                                borderBottom: '1px solid var(--color-neutral-100)', 
                                 paddingBottom: 'var(--space-3)' 
                             }}>
                                 <Lightbulb size={18} />
                                 AI Suggestions
                             </h3>
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                            <ul className="m-0 p-0 flex flex-col gap-3" style={{ listStyle: 'none' }}>
                                 {feedback.map((f, i) => (
-                                    <li key={i} style={{ 
-                                        padding: 'var(--space-3)', 
-                                        background: 'var(--color-neutral-50)', 
-                                        borderRadius: 'var(--border-radius-md)', 
-                                        color: 'var(--color-neutral-700)', 
-                                        fontSize: 'var(--text-sm)',
-                                        lineHeight: 1.5,
-                                        border: '1px solid var(--color-neutral-100)'
-                                    }}>
+                                    <li key={i} className="p-3 bg-secondary rounded-md text-secondary text-sm leading-relaxed border border-light">
                                         {f}
                                     </li>
                                 ))}
                                 {feedback.length === 0 && (
-                                    <li style={{ padding: 'var(--space-3)', background: 'var(--color-success-50)', borderRadius: 'var(--border-radius-md)', color: 'var(--color-success-700)', fontWeight: 500, fontSize: 'var(--text-sm)' }}>
+                                    <li className="p-3 rounded-md text-success font-medium text-sm" style={{ background: 'var(--color-success-50)' }}>
                                         Great job! Your resume hits all the key points.
                                     </li>
                                 )}
@@ -290,35 +254,20 @@ const ResultsDisplay = ({ data, onReset }) => {
                     </div>
                 </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 'var(--space-8)', marginBottom: 'var(--space-8)' }}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" style={{ marginBottom: 'var(--space-8)' }}>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="bg-primary"
-                        style={{ 
-                            padding: 'var(--space-6)',
-                            border: '1px solid var(--color-neutral-200)',
-                            borderRadius: 'var(--border-radius-lg)'
-                        }}
+                        className="bg-primary card p-6"
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', margin: 0, fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--color-neutral-900)' }}>
+                        <div className="flex justify-between items-start flex-wrap gap-2" style={{ marginBottom: 'var(--space-4)' }}>
+                            <h3 className="flex items-center gap-2 m-0 text-xl font-semibold text-primary">
                                 <Target size={20} />
                                 Skills Analysis
                             </h3>
                             {scraperStatus && (
-                                <div style={{ 
-                                    fontSize: 'var(--text-xs)', 
-                                    color: 'var(--color-neutral-500)', 
-                                    background: 'var(--color-neutral-50)', 
-                                    padding: 'var(--space-1) var(--space-2)', 
-                                    borderRadius: 'var(--border-radius-md)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 'var(--space-1)',
-                                    border: '1px solid var(--color-neutral-100)'
-                                }}>
+                                <div className="text-xs text-tertiary bg-secondary rounded-md flex items-center gap-1 border border-light" style={{ padding: 'var(--space-1) var(--space-2)' }}>
                                     <RotateCw size={12} />
                                     Scraped: {scraperStatus.split(' ')[0]}
                                 </div>
@@ -327,29 +276,18 @@ const ResultsDisplay = ({ data, onReset }) => {
 
                         {missing_skills && missing_skills.length > 0 && (
                             <div style={{ marginBottom: 'var(--space-6)' }}>
-                                <p style={{ color: 'var(--color-primary-600)', marginBottom: 'var(--space-2)', fontWeight: 600, fontSize: 'var(--text-sm)' }}>Missing Skills for {target_role}:</p>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                                <p className="text-primary-600 font-semibold text-sm" style={{ marginBottom: 'var(--space-2)' }}>Missing Skills for {target_role}:</p>
+                                <div className="flex flex-wrap gap-2">
                                     {missing_skills.map((ms, i) => (
                                         <a
                                             key={i}
                                             href={ms.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
+                                            className="inline-block"
                                             style={{ textDecoration: 'none' }}
                                         >
-                                            <span style={{ 
-                                                background: 'var(--color-primary-50)', 
-                                                color: 'var(--color-primary-700)', 
-                                                border: '1px solid var(--color-primary-100)', 
-                                                cursor: 'pointer', 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                gap: '4px',
-                                                padding: 'var(--space-1) var(--space-3)',
-                                                borderRadius: 'var(--border-radius-full)',
-                                                fontSize: 'var(--text-sm)',
-                                                fontWeight: 500
-                                            }}>
+                                            <span className="text-primary-600 border border-primary flex items-center gap-1 rounded-full font-medium text-sm" style={{ background: 'var(--color-primary-50)', padding: 'var(--space-1) var(--space-3)' }}>
                                                 {ms.title?.replace('Learn ', '')} <PlayCircle size={12} />
                                             </span>
                                         </a>
@@ -358,19 +296,12 @@ const ResultsDisplay = ({ data, onReset }) => {
                             </div>
                         )}
 
-                        <p style={{ color: 'var(--color-neutral-500)', marginBottom: 'var(--space-2)', fontSize: 'var(--text-sm)' }}>Recommended {predicted_field} Skills:</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                        <p className="text-tertiary text-sm" style={{ marginBottom: 'var(--space-2)' }}>Recommended {predicted_field} Skills:</p>
+                        <div className="flex flex-wrap gap-2">
                             {recommended_skills.map((s, i) => (
-                                <span key={i} style={{ 
-                                    background: 'var(--color-neutral-100)', 
-                                    color: 'var(--color-neutral-700)', 
-                                    padding: 'var(--space-1) var(--space-3)', 
-                                    borderRadius: 'var(--border-radius-full)',
-                                    fontSize: 'var(--text-sm)',
-                                    fontWeight: 500
-                                }}>{s}</span>
+                                <span key={i} className="bg-tertiary text-secondary rounded-full font-medium text-sm" style={{ padding: 'var(--space-1) var(--space-3)' }}>{s}</span>
                             ))}
-                            {recommended_skills.length === 0 && <span style={{ color: 'var(--color-neutral-400)' }}>No recommendations available.</span>}
+                            {recommended_skills.length === 0 && <span className="text-quaternary">No recommendations available.</span>}
                         </div>
                     </motion.div>
 
@@ -378,28 +309,23 @@ const ResultsDisplay = ({ data, onReset }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4 }}
-                        className="bg-primary"
-                        style={{ 
-                            padding: 'var(--space-6)',
-                            border: '1px solid var(--color-neutral-200)',
-                            borderRadius: 'var(--border-radius-lg)'
-                        }}
+                        className="bg-primary card p-6"
                     >
-                        <h3 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-1)', fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--color-neutral-900)' }}>
+                        <h3 className="flex items-center gap-2 text-xl font-semibold text-primary" style={{ marginBottom: 'var(--space-1)' }}>
                             <GraduationCap size={20} />
                             Recommended Courses
                         </h3>
-                        <p style={{ color: 'var(--color-neutral-500)', marginBottom: 'var(--space-4)', fontSize: 'var(--text-sm)' }}>Curated learning path for {target_role || predicted_field}.</p>
-                        <div style={{ maxHeight: '280px', overflowY: 'auto', paddingRight: 'var(--space-2)' }}>
+                        <p className="text-tertiary text-sm" style={{ marginBottom: 'var(--space-4)' }}>Curated learning path for {target_role || predicted_field}.</p>
+                        <div className="overflow-auto" style={{ maxHeight: '280px', paddingRight: 'var(--space-2)' }}>
                             {missing_skills && missing_skills.length > 0 && (
                                 <div style={{ marginBottom: 'var(--space-4)' }}>
-                                    <p style={{ color: 'var(--color-primary-600)', fontWeight: 600, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)', paddingBottom: '4px', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                                    <p className="text-primary-600 font-semibold text-sm border-b border-light" style={{ marginBottom: 'var(--space-2)', paddingBottom: '4px' }}>
                                         Priority: Missing Skill Courses
                                     </p>
                                     {missing_skills.map((ms, i) => (
-                                        <div key={'ms' + i} style={{ padding: 'var(--space-3)', background: 'var(--color-primary-50)', borderRadius: 'var(--border-radius-md)', marginBottom: 'var(--space-2)', borderLeft: '3px solid var(--color-primary-500)' }}>
-                                            <h4 style={{ margin: '0 0 var(--space-1) 0', fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-neutral-900)' }}>{ms.title}</h4>
-                                            <a href={ms.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-600)', fontSize: 'var(--text-xs)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
+                                        <div key={'ms' + i} className="p-3 rounded-md bg-primary-50" style={{ marginBottom: 'var(--space-2)', borderLeft: '3px solid var(--color-primary-500)' }}>
+                                            <h4 className="m-0 text-sm font-semibold text-primary" style={{ marginBottom: 'var(--space-1)' }}>{ms.title}</h4>
+                                            <a href={ms.url} target="_blank" rel="noopener noreferrer" className="text-primary-600 text-xs flex items-center gap-1 font-medium">
                                                 Start Learning <PlayCircle size={12} />
                                             </a>
                                         </div>
@@ -407,18 +333,18 @@ const ResultsDisplay = ({ data, onReset }) => {
                                 </div>
                             )}
 
-                            <p style={{ color: 'var(--color-neutral-900)', fontWeight: 600, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)', paddingBottom: '4px', borderBottom: '1px solid var(--color-neutral-100)' }}>
+                            <p className="text-primary font-semibold text-sm border-b border-light" style={{ marginBottom: 'var(--space-2)', paddingBottom: '4px' }}>
                                 General {predicted_field} Courses
                             </p>
                             {recommended_courses.map((c, i) => (
-                                <div key={i} style={{ padding: 'var(--space-3)', background: 'var(--color-neutral-50)', borderRadius: 'var(--border-radius-md)', marginBottom: 'var(--space-2)', border: '1px solid var(--color-neutral-100)' }}>
-                                    <h4 style={{ margin: '0 0 var(--space-1) 0', fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-neutral-900)' }}>{c[0]}</h4>
-                                    <a href={c[1]} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-600)', fontSize: 'var(--text-xs)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
+                                <div key={i} className="p-3 bg-secondary rounded-md border border-light" style={{ marginBottom: 'var(--space-2)' }}>
+                                    <h4 className="m-0 text-sm font-semibold text-primary" style={{ marginBottom: 'var(--space-1)' }}>{c[0]}</h4>
+                                    <a href={c[1]} target="_blank" rel="noopener noreferrer" className="text-primary-600 text-xs flex items-center gap-1 font-medium">
                                         View Course <PlayCircle size={12} />
                                     </a>
                                 </div>
                             ))}
-                            {recommended_courses.length === 0 && <span style={{ color: 'var(--color-neutral-400)' }}>No courses for this field yet.</span>}
+                            {recommended_courses.length === 0 && <span className="text-quaternary">No courses for this field yet.</span>}
                         </div>
                     </motion.div>
                 </div>

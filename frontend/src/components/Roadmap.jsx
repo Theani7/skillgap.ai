@@ -19,7 +19,8 @@ const RoadmapStep = ({ step, index, isLast }) => {
     return (
         <motion.div
             initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             style={{
                 position: 'relative',
@@ -180,8 +181,9 @@ const Roadmap = ({ path }) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
             className="bg-primary"
             style={{ 
                 marginTop: 'var(--space-8)', 
