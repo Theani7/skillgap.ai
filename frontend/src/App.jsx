@@ -26,7 +26,7 @@ const AppContent = () => {
       
       {!isLanding && !isAuth && <Navbar />}
 
-      <main className="main-content" style={{ paddingTop: isLanding ? '0' : '24px' }}>
+      <main className="main-content">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
