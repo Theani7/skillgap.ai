@@ -116,102 +116,98 @@ const Jobs = () => {
 
   if (loading) {
     return (
-      <div className="clay-loader" style={{ minHeight: 'calc(100vh - 200px)' }}>
-        <div className="clay-spinner" style={{ width: '48px', height: '48px' }} />
-        <p style={{ color: 'var(--clay-accent)', fontWeight: 700 }}>Loading...</p>
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] bg-secondary">
+        <div className="animate-spin w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full mb-4" />
+        <p className="text-primary-600 font-bold">Loading...</p>
       </div>
     );
   }
 
   return (
-    <motion.div className="clay-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ minHeight: 'calc(100vh - 200px)' }}>
-      <div className="container">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 'var(--spacing-xl)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-              <div className="clay-icon clay-icon-purple" style={{ width: '52px', height: '52px' }}>
+    <motion.div className="py-12 px-4 min-h-[calc(100vh-200px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div className="container mx-auto max-w-[800px]">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shadow-sm">
                 <Briefcase size={24} />
               </div>
               <div>
-                <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', margin: 0 }}>Job Applications</h1>
-                <p style={{ color: 'var(--clay-muted)', margin: 0 }}>Track your job search</p>
+                <h1 className="text-2xl font-bold m-0">Job Applications</h1>
+                <p className="text-secondary m-0">Track your job search</p>
               </div>
             </div>
-            <button onClick={handleAddNew} className="clay-btn clay-btn-primary shadow-clay-button" style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <button onClick={handleAddNew} className="btn btn-primary flex items-center gap-2 shadow-md">
               <Plus size={18} /> Add Application
             </button>
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-xl)' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total', value: stats.total, color: 'var(--clay-accent)' },
-            { label: 'Applied', value: stats.applied, color: '#7395c0' },
-            { label: 'Interview', value: stats.interview, color: '#e17f34' },
-            { label: 'Offers', value: stats.offer, color: '#2d7a2d' }
+            { label: 'Total', value: stats.total, color: 'text-primary-600' },
+            { label: 'Applied', value: stats.applied, color: 'text-info' },
+            { label: 'Interview', value: stats.interview, color: 'text-warning' },
+            { label: 'Offers', value: stats.offer, color: 'text-success' }
           ].map((stat, i) => (
-            <div key={i} className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-lg)', textAlign: 'center' }}>
-              <div style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 900, color: stat.color, fontFamily: 'var(--font-display)' }}>{stat.value}</div>
-              <div style={{ color: 'var(--clay-muted)', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</div>
+            <div key={i} className="card p-6 text-center">
+              <div className={`text-3xl font-black ${stat.color}`}>{stat.value}</div>
+              <div className="text-secondary text-[10px] font-bold uppercase tracking-wider">{stat.label}</div>
             </div>
           ))}
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={{ display: 'flex', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-lg)', flexWrap: 'wrap' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex gap-2 mb-8 flex-wrap">
           {[{ value: 'all', label: 'All' }, ...STATUS_OPTIONS].map(opt => (
-            <button key={opt.value} onClick={() => setFilter(opt.value)} className={`clay-btn ${filter === opt.value ? 'clay-btn-primary' : 'clay-btn-secondary'}`} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+            <button key={opt.value} onClick={() => setFilter(opt.value)} className={`btn ${filter === opt.value ? 'btn-primary' : 'btn-secondary'} px-4 py-2 min-h-0 h-auto text-xs`}>
               {opt.label}
             </button>
           ))}
         </motion.div>
 
         {filteredApps.length === 0 ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-2xl)', textAlign: 'center' }}>
-            <div className="clay-icon clay-icon-purple" style={{ margin: '0 auto var(--spacing-lg)', width: '64px', height: '64px' }}><Briefcase size={28} /></div>
-            <h3>No Applications Yet</h3>
-            <p style={{ color: 'var(--clay-muted)', marginBottom: 'var(--spacing-lg)' }}>Start tracking your job applications.</p>
-            <button onClick={handleAddNew} className="clay-btn clay-btn-primary shadow-clay-button"><Plus size={18} /> Add Application</button>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-6"><Briefcase size={28} /></div>
+            <h3 className="text-xl font-bold mb-2">No Applications Yet</h3>
+            <p className="text-secondary mb-8">Start tracking your job applications.</p>
+            <button onClick={handleAddNew} className="btn btn-primary flex items-center gap-2 mx-auto"><Plus size={18} /> Add Application</button>
           </motion.div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+          <div className="flex flex-col gap-4">
             {[...filteredApps].reverse().map((app, i) => {
               const statusInfo = getStatusInfo(app.status);
               return (
-                <motion.div key={app.id || i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-lg)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-                    <div style={{ flex: 1, minWidth: '200px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
-                        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{app.role}</h3>
-                        {app.url && <a href={app.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--clay-accent)' }}><ExternalLink size={14} /></a>}
+                <motion.div key={app.id || i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="card p-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div className="flex-1 min-w-[200px]">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="m-0 text-lg font-bold">{app.role}</h3>
+                        {app.url && <a href={app.url} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700"><ExternalLink size={14} /></a>}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', color: 'var(--clay-muted)', fontSize: '0.9rem', flexWrap: 'wrap' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Building size={14} />{app.company}</span>
-                        {app.location && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} />{app.location}</span>}
-                        {app.salary && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><DollarSign size={14} />{app.salary}</span>}
+                      <div className="flex flex-wrap items-center gap-4 text-secondary text-sm">
+                        <span className="flex items-center gap-1"><Building size={14} className="opacity-50" />{app.company}</span>
+                        {app.location && <span className="flex items-center gap-1"><MapPin size={14} className="opacity-50" />{app.location}</span>}
+                        {app.salary && <span className="flex items-center gap-1"><DollarSign size={14} className="opacity-50" />{app.salary}</span>}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', flexWrap: 'wrap' }}>
+                    <div className="flex items-center gap-4 w-full md:w-auto">
                       <select
                         value={app.status}
                         onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                        className="flex-1 md:flex-none p-2 px-4 rounded-lg font-semibold text-sm cursor-pointer transition-colors"
                         style={{
-                          padding: '8px 16px',
-                          borderRadius: 'var(--radius-lg)',
-                          background: `${statusInfo.color}15`,
+                          background: `${statusInfo.color}10`,
                           color: statusInfo.color,
-                          fontWeight: 600,
-                          border: `1px solid ${statusInfo.color}30`,
-                          cursor: 'pointer',
-                          fontSize: '0.9rem'
+                          border: `1px solid ${statusInfo.color}20`,
                         }}
                       >
                         {STATUS_OPTIONS.map(opt => (
-                          <option key={opt.value} value={opt.value} style={{ color: statusInfo.color }}>{opt.label}</option>
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
-                      <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
-                        <button onClick={() => handleEdit(app)} className="clay-btn clay-btn-secondary" style={{ padding: '8px', height: 'auto' }}><Edit2 size={16} /></button>
-                        <button onClick={() => handleDelete(app.id)} className="clay-btn clay-btn-secondary" style={{ padding: '8px', height: 'auto' }}><Trash2 size={16} /></button>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEdit(app)} className="btn btn-secondary p-2 h-auto min-h-0 rounded-lg hover:bg-neutral-100"><Edit2 size={16} /></button>
+                        <button onClick={() => handleDelete(app.id)} className="btn btn-secondary p-2 h-auto min-h-0 rounded-lg hover:bg-error-50 hover:text-error-600 hover:border-error-200"><Trash2 size={16} /></button>
                       </div>
                     </div>
                   </div>
@@ -223,50 +219,50 @@ const Jobs = () => {
 
         <AnimatePresence>
           {showForm && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(51, 47, 58, 0.6)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--spacing-lg)' }}>
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={{ maxWidth: '500px', width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: 'var(--radius-2xl)', background: 'var(--clay-cardBg)', padding: 'var(--spacing-xl)', boxShadow: 'var(--shadow-xl)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.4rem' }}>{editingJob ? 'Edit Application' : 'Add Application'}</h2>
-                  <button onClick={() => { setShowForm(false); setEditingJob(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}><X size={20} /></button>
+            <div className="fixed inset-0 bg-neutral-900/40 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-[500px] max-h-[90vh] overflow-y-auto p-8 border border-neutral-200">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="m-0 text-xl font-bold">{editingJob ? 'Edit Application' : 'Add Application'}</h2>
+                  <button onClick={() => { setShowForm(false); setEditingJob(null); }} className="p-2 hover:bg-neutral-100 rounded-full transition-colors"><X size={20} /></button>
                 </div>
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Company *</label>
-                      <input type="text" required value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="clay-input" style={{ height: '48px' }} />
+                      <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Company *</label>
+                      <input type="text" required value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="input h-12" />
                     </div>
                     <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Role *</label>
-                      <input type="text" required value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="clay-input" style={{ height: '48px' }} />
+                      <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Role *</label>
+                      <input type="text" required value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="input h-12" />
                     </div>
                   </div>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Status</label>
-                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="clay-input" style={{ height: '48px' }}>
+                    <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Status</label>
+                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="input h-12">
                       {STATUS_OPTIONS.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                     </select>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Location</label>
-                      <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="clay-input" style={{ height: '48px' }} />
+                      <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Location</label>
+                      <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="input h-12" />
                     </div>
                     <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Salary</label>
-                      <input type="text" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: e.target.value })} className="clay-input" placeholder="e.g., $80,000" style={{ height: '48px' }} />
+                      <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Salary</label>
+                      <input type="text" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: e.target.value })} className="input h-12" placeholder="e.g., $80,000" />
                     </div>
                   </div>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Job URL</label>
-                    <input type="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} className="clay-input" style={{ height: '48px' }} />
+                    <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Job URL</label>
+                    <input type="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} className="input h-12" />
                   </div>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Notes</label>
-                    <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="clay-input" rows={3} style={{ minHeight: '80px' }} />
+                    <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Notes</label>
+                    <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="input min-h-[80px]" rows={3} />
                   </div>
-                  <div style={{ display: 'flex', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-md)' }}>
-                    <button type="button" onClick={() => { setShowForm(false); setEditingJob(null); }} className="clay-btn clay-btn-secondary" style={{ flex: 1 }}>Cancel</button>
-                    <button type="submit" className="clay-btn clay-btn-primary shadow-clay-button" style={{ flex: 1 }}><Save size={16} />{editingJob ? 'Update' : 'Save'}</button>
+                  <div className="flex gap-4 mt-4">
+                    <button type="button" onClick={() => { setShowForm(false); setEditingJob(null); }} className="btn btn-secondary flex-1">Cancel</button>
+                    <button type="submit" className="btn btn-primary flex-1 shadow-md"><Save size={16} />{editingJob ? 'Update' : 'Save'}</button>
                   </div>
                 </form>
               </motion.div>

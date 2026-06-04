@@ -101,25 +101,17 @@ export const SkeletonChart = ({ height = '300px' }) => (
 
 export const PageLoader = () => (
     <div
-        className="clay-loader"
         style={{
             minHeight: 'calc(100vh - 200px)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 'var(--spacing-md)'
+            gap: 'var(--space-4)'
         }}
     >
-        <div className="clay-spinner" style={{ width: '48px', height: '48px' }} />
-        <p style={{
-            color: 'var(--clay-accent)',
-            fontWeight: 700,
-            fontFamily: 'var(--font-display)',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            fontSize: '0.9rem'
-        }}>
+        <div className="animate-spin w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full mb-4" />
+        <p className="text-primary-600 font-bold uppercase tracking-widest text-sm">
             Loading...
         </p>
     </div>

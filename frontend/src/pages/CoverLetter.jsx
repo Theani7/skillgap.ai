@@ -85,76 +85,80 @@ const CoverLetter = () => {
   };
 
   return (
-    <motion.div className="clay-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ minHeight: 'calc(100vh - 200px)' }}>
-      <div className="container">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 'var(--spacing-xl)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-            <div className="clay-icon clay-icon-purple" style={{ width: '52px', height: '52px' }}>
+    <motion.div className="py-12 px-4 min-h-[calc(100vh-200px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div className="container mx-auto max-w-[800px]">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shadow-sm">
               <FileText size={24} />
             </div>
             <div>
-              <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', margin: 0 }}>Cover Letter Generator</h1>
-              <p style={{ color: 'var(--clay-muted)', margin: 0 }}>GenerateAI-powered cover letter</p>
+              <h1 className="text-2xl font-bold m-0">Cover Letter Generator</h1>
+              <p className="text-secondary m-0">AI-powered cover letter generation</p>
             </div>
           </div>
         </motion.div>
 
         {error && (
-          <div style={{ color: '#DC2626', background: 'rgba(220, 38, 38, 0.1)', padding: 'var(--spacing-md)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--spacing-lg)' }}>
+          <div className="bg-error-50 text-error-600 p-4 rounded-xl mb-8 font-medium">
             {error}
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 'var(--spacing-xl)' }}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-xl)' }}>
-            <h3 style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-              <Sparkles size={18} /> Generate Cover Letter
+        <div className="grid grid-cols-1 gap-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card p-8">
+            <h3 className="mb-6 flex items-center gap-2 text-lg font-bold">
+              <Sparkles size={18} className="text-primary-600" /> Generate Cover Letter
             </h3>
-            <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Your Name *</label>
-                <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="clay-input" placeholder="John Doe" style={{ height: '48px' }} />
+            <form onSubmit={handleGenerate} className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Your Name *</label>
+                  <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="input h-12" placeholder="John Doe" />
+                </div>
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Your Email</label>
+                  <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="input h-12" placeholder="john@example.com" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Company Name *</label>
+                  <input type="text" required value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="input h-12" placeholder="e.g., Google" />
+                </div>
+                <div>
+                  <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Target Role *</label>
+                  <input type="text" required value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="input h-12" placeholder="e.g., Software Engineer" />
+                </div>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Your Email</label>
-                <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="clay-input" placeholder="john@example.com" style={{ height: '48px' }} />
+                <label className="block mb-2 font-semibold text-secondary text-xs uppercase tracking-wider">Job Description (Optional)</label>
+                <textarea value={formData.job_description} onChange={(e) => setFormData({ ...formData, job_description: e.target.value })} className="input min-h-[120px]" rows={4} placeholder="Paste job description..." />
               </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Company Name *</label>
-                <input type="text" required value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="clay-input" placeholder="e.g., Google" style={{ height: '48px' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Target Role *</label>
-                <input type="text" required value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="clay-input" placeholder="e.g., Software Engineer" style={{ height: '48px' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: 'var(--clay-muted)', fontSize: '0.85rem' }}>Job Description (Optional)</label>
-                <textarea value={formData.job_description} onChange={(e) => setFormData({ ...formData, job_description: e.target.value })} className="clay-input" rows={4} placeholder="Paste job description..." style={{ minHeight: '120px' }} />
-              </div>
-              <button type="submit" disabled={loading || !formData.company || !formData.role} className="clay-btn clay-btn-primary shadow-clay-button" style={{ marginTop: 'var(--spacing-md)' }}>
-                {loading ? <><Loader2 size={18} className="spin" /> Generating...</> : <><Sparkles size={18} /> Generate Cover Letter</>}
+              <button type="submit" disabled={loading || !formData.company || !formData.role} className="btn btn-primary shadow-md mt-2">
+                {loading ? <><Loader2 size={18} className="animate-spin" /> Generating...</> : <><Sparkles size={18} /> Generate Cover Letter</>}
               </button>
             </form>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="clay-card shadow-clay-card" style={{ padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}><FileText size={18} /> Generated Cover Letter</h3>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="card p-8 flex flex-col">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+              <h3 className="m-0 flex items-center gap-2 text-lg font-bold"><FileText size={18} className="text-primary-600" /> Generated Result</h3>
               {coverLetter && (
-                <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                  <button onClick={handleCopy} className="clay-btn clay-btn-secondary" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button onClick={handleCopy} className="btn btn-secondary flex-1 sm:flex-none text-xs h-auto min-h-0 py-2">
                     {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Copied' : 'Copy'}
                   </button>
-                  <button onClick={handleDownloadPDF} className="clay-btn clay-btn-secondary" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
+                  <button onClick={handleDownloadPDF} className="btn btn-secondary flex-1 sm:flex-none text-xs h-auto min-h-0 py-2">
                     <Download size={16} /> Download
                   </button>
                 </div>
               )}
             </div>
-            <div style={{ flex: 1, background: 'var(--clay-bg)', borderRadius: 'var(--radius-lg)', padding: 'var(--spacing-lg)', whiteSpace: 'pre-wrap', fontSize: '0.95rem', lineHeight: 1.7, color: 'var(--clay-foreground)', overflowY: 'auto', minHeight: '300px' }}>
+            <div className="flex-1 bg-secondary rounded-xl p-8 whitespace-pre-wrap text-base leading-relaxed text-primary border border-neutral-100 min-h-[300px]">
               {coverLetter || (
-                <div style={{ textAlign: 'center', color: 'var(--clay-muted)', padding: 'var(--spacing-xl)' }}>
-                  <FileText size={48} style={{ opacity: 0.3, marginBottom: 'var(--spacing-md)' }} />
+                <div className="text-center text-tertiary py-12">
+                  <FileText size={48} className="opacity-10 mx-auto mb-4" />
                   <p>Fill in the details and click generate to create your personalized cover letter.</p>
                 </div>
               )}
