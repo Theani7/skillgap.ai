@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
 import api from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, FileText, CheckCircle2, Sparkles, Briefcase, Loader2 } from 'lucide-react';
+import { UploadCloud, Sparkles, Briefcase } from 'lucide-react';
 import ResultsDisplay from '../components/ResultsDisplay';
 import { useAuth } from '../context/AuthContext';
 
-const Home = () => {
+const Analyzer = () => {
     const [file, setFile] = useState(null);
     const [targetRole, setTargetRole] = useState('Data Science');
     const [loading, setLoading] = useState(false);
@@ -313,56 +313,7 @@ const Home = () => {
                                         Analyze My Resume
                                     </button>
                                 </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="loading-ui"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    style={{
-                                        flex: 1,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        textAlign: 'center'
-                                    }}
-                                >
-                                    <div style={{ 
-                                        width: '80px', 
-                                        height: '80px', 
-                                        borderRadius: 'var(--border-radius-full)',
-                                        background: 'var(--color-primary-50)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginBottom: 'var(--space-6)',
-                                        color: 'var(--color-primary-600)'
-                                    }}>
-                                        <motion.div
-                                            animate={{ rotate: 360 }}
-                                            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                                        >
-                                            <Loader2 size={40} />
-                                        </motion.div>
-                                    </div>
-                                    <h2 style={{ 
-                                        fontSize: 'var(--font-size-2xl)', 
-                                        fontWeight: 'var(--font-weight-bold)',
-                                        color: 'var(--color-neutral-900)',
-                                        marginBottom: 'var(--space-2)'
-                                    }}>
-                                        Analyzing Your Career Path
-                                    </h2>
-                                    <p style={{ 
-                                        color: 'var(--color-neutral-500)',
-                                        fontSize: 'var(--font-size-lg)',
-                                        maxWidth: '400px'
-                                    }}>
-                                        Our AI is extracting skills from your resume and matching them against {targetRole} requirements.
-                                    </p>
-                                </motion.div>
-                            )}
+                            ) : null}
                         </AnimatePresence>
                     </div>
                 </div>
@@ -371,4 +322,4 @@ const Home = () => {
     );
 };
 
-export default Home;
+export default Analyzer;
