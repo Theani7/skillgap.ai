@@ -3,7 +3,6 @@ import api from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, Sparkles, Briefcase } from 'lucide-react';
 import ResultsDisplay from '../components/ResultsDisplay';
-import { useAuth } from '../context/AuthContext';
 
 const Analyzer = () => {
     const [file, setFile] = useState(null);
@@ -13,7 +12,6 @@ const Analyzer = () => {
     const [error, setError] = useState('');
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef(null);
-    const { user } = useAuth();
 
     const targetRoles = [
         'Data Science',
