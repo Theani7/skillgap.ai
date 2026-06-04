@@ -14,14 +14,15 @@ from api.job_hunt_services import compare_resume_to_jd, recommend_projects, get_
 class FeatureTests(unittest.TestCase):
     def test_explainable_scoring(self):
         resume_data = {
-            "summary": "Backend engineer",
-            "education": ["B.Tech CSE"],
-            "experience": ["Built APIs"],
-            "skills": ["Python", "FastAPI"],
-            "interests": ["Open source"],
+            "summary": "Highly experienced Backend Engineer with 10+ years in building scalable microservices and APIs.",
+            "education": ["B.Tech Computer Science", "MS Software Systems"],
+            "experience": ["Worked at Google", "Worked at Meta", "Worked at Amazon", "Worked at Netflix", "Worked at Apple"],
+            "skills": ["Python", "FastAPI", "Go", "Docker", "Kubernetes", "AWS", "SQL", "Redis", "Kafka", "React"],
+            "email": "test@example.com",
+            "phone": "+1234567890"
         }
         score, feedback, breakdown = compute_resume_score_breakdown(resume_data)
-        self.assertEqual(score, 95)
+        self.assertEqual(score, 100)
         self.assertEqual(len(feedback), 0)
         self.assertEqual(breakdown["skills"]["status"], "present")
         self.assertTrue(breakdown["skills"]["evidence"])
