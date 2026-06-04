@@ -1,6 +1,8 @@
 import sqlite3
 import os
 from contextlib import contextmanager
+from sqlalchemy import create_engine, event
+from sqlalchemy.pool import QueuePool
 
 db_path = os.getenv("DB_FILE")
 if not db_path:
@@ -11,10 +13,23 @@ if not db_path:
         db_path = os.path.join(db_dir, "cv.db")
 DB_FILE = db_path
 
+# Create a SQLAlchemy engine for connection pooling
+engine = create_engine(
+    f"sqlite:///{DB_FILE}",
+    poolclass=QueuePool,
+    pool_size=10,
+    max_overflow=20,
+    connect_args={"check_same_thread": False}
+)
+
+@event.listens_for(engine, "connect")
+def set_sqlite_row_factory(dbapi_connection, connection_record):
+    dbapi_connection.row_factory = sqlite3.Row
+
 def get_db_connection():
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    # Maintain compatibility with sqlite3.Row and raw cursor usage
+    # The event listener above ensures row_factory is set
+    return engine.raw_connection()
 
 @contextmanager
 def get_db():
@@ -209,10 +224,36 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS analysis_cache (
+                content_hash VARCHAR(64) PRIMARY KEY,
+                target_role VARCHAR(200),
+                result_json TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS rate_limits (
+                key VARCHAR(100) PRIMARY KEY,
+                count INTEGER DEFAULT 0,
+                updated_at INTEGER NOT NULL
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS login_attempts (
+                username VARCHAR(100) PRIMARY KEY,
+                attempts INTEGER DEFAULT 0,
+                first_attempt INTEGER NOT NULL,
+                locked_until INTEGER DEFAULT 0
+            )
+        ''')
         
         cursor.execute("SELECT id FROM users WHERE username = 'admin'")
         if cursor.fetchone() is None:
-            from api.auth import get_password_hash
+            from api.security import get_password_hash
             default_hashed = get_password_hash("admin123")
             cursor.execute('''
                 INSERT INTO users (username, email, full_name, hashed_password, role)
