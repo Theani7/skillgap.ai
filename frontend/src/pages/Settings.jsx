@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -73,6 +73,9 @@ const ConfirmModal = (props) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
             style={{
               background: 'var(--color-surface)', borderRadius: 'var(--radius-2xl)',
               boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)',
@@ -87,7 +90,7 @@ const ConfirmModal = (props) => {
             }}>
               <AlertTriangle size={26} />
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 'var(--font-bold)', color: 'var(--color-text)', margin: '0 0 8px' }}>
+            <h3 id="confirm-modal-title" style={{ fontSize: '18px', fontWeight: 'var(--font-bold)', color: 'var(--color-text)', margin: '0 0 8px' }}>
               {title}
             </h3>
             <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: '0 0 24px' }}>
@@ -162,6 +165,9 @@ const DataAction = (props) => {
 const Settings = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const toastTimer = useRef(null);
+
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
 
   const [showLogout, setShowLogout] = useState(false);
   const [showClearHistory, setShowClearHistory] = useState(false);
@@ -172,7 +178,8 @@ const Settings = () => {
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 2600);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2600);
   };
 
   const handleExportData = async () => {

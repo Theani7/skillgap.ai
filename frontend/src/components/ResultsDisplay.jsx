@@ -24,6 +24,12 @@ const badge = (color) => ({
 });
 
 const ResultsDisplay = ({ data, onReset }) => {
+  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
+
+  if (!data) return null;
   const {
     data: resumeInfo,
     target_role,
@@ -42,11 +48,6 @@ const ResultsDisplay = ({ data, onReset }) => {
   const matchedSkills = Array.isArray(resumeInfo?.skills) ? resumeInfo.skills : [];
   const feedbackMsgs = Array.isArray(feedback) ? feedback : [];
   const tutorials = Array.isArray(videos?.tutorials) ? videos.tutorials : [];
-
-  const [feedbackSent, setFeedbackSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [rating, setRating] = useState(5);
-  const [hoverRating, setHoverRating] = useState(0);
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();

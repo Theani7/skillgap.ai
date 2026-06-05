@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -565,6 +565,9 @@ const ShareModal = ({ analysisId, targetRole, resumeName, onClose }) => {
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const copiedTimer = useRef(null);
+
+  useEffect(() => () => { if (copiedTimer.current) clearTimeout(copiedTimer.current); }, []);
 
   const createLink = useCallback(async () => {
     setCreating(true);
@@ -591,7 +594,8 @@ const ShareModal = ({ analysisId, targetRole, resumeName, onClose }) => {
     if (!shareUrl) return;
     navigator.clipboard?.writeText(shareUrl).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopied(false), 2000);
     }).catch(() => {});
   }, [shareUrl]);
 
@@ -617,6 +621,9 @@ const ShareModal = ({ analysisId, targetRole, resumeName, onClose }) => {
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ duration: 0.2 }}
         className="share-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Share Analysis"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="share-modal-header">

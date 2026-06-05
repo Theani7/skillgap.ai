@@ -436,43 +436,48 @@ const Jobs = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      fetchApplications();
-      fetchPreferencesAndMatches();
-    }
-  }, [user]);
-
-  const fetchApplications = async () => {
+  const fetchApplications = async (signal) => {
     try {
-      const res = await api.get('/api/jobs/applications');
+      const res = await api.get('/api/jobs/applications', { signal });
       setApplications(res.data.applications || []);
     } catch (err) {
-      console.error(err);
-      setError('Failed to load applications. Please try again.');
+      if (err?.name !== 'CanceledError' && err?.code !== 'ERR_CANCELED') {
+        console.error(err);
+        setError('Failed to load applications. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPreferencesAndMatches = async () => {
+  const fetchPreferencesAndMatches = async (signal) => {
     setMatchesLoading(true);
     try {
-      const prefRes = await api.get('/api/user/preferences');
+      const prefRes = await api.get('/api/user/preferences', { signal });
       const role = prefRes.data?.preferences?.target_role;
       if (role) {
         setTargetRole(role);
         const matchRes = await api.post('/api/jobs/matches', {
           target_role: role, skills: [], missing_skills: [],
-        });
+        }, { signal });
         setMatches(matchRes.data?.jobs?.slice(0, 4) || []);
       }
     } catch (err) {
-      console.error(err);
+      if (err?.name !== 'CanceledError' && err?.code !== 'ERR_CANCELED') {
+        console.error(err);
+      }
     } finally {
       setMatchesLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!user) return;
+    const controller = new AbortController();
+    fetchApplications(controller.signal);
+    fetchPreferencesAndMatches(controller.signal);
+    return () => controller.abort();
+  }, [user]);
 
   const handleSubmit = async (formData) => {
     try {
@@ -536,8 +541,8 @@ const Jobs = () => {
       const matchesStatus = filter === 'all' || app.status === filter;
       const q = search.trim().toLowerCase();
       const matchesSearch = !q ||
-        app.company.toLowerCase().includes(q) ||
-        app.role.toLowerCase().includes(q) ||
+        (app.company || '').toLowerCase().includes(q) ||
+        (app.role || '').toLowerCase().includes(q) ||
         (app.location || '').toLowerCase().includes(q);
       return matchesStatus && matchesSearch;
     });
@@ -996,6 +1001,9 @@ const Jobs = () => {
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.2 }}
                 onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Confirm delete"
                 style={{
                   background: '#FFFFFF', border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '380px',

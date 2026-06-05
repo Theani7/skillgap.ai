@@ -67,10 +67,12 @@ const CoverLetter = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!user) return;
+    const controller = new AbortController();
+    const { signal } = controller;
     const fetchProfile = async () => {
-      if (!user) return;
       try {
-        const res = await api.get('/api/user/profile');
+        const res = await api.get('/api/user/profile', { signal });
         const p = res.data.profile || {};
         setFormData((prev) => ({
           ...prev,
@@ -78,10 +80,13 @@ const CoverLetter = () => {
           email: prev.email || p.email || user?.email || '',
         }));
       } catch (err) {
-        console.error(err);
+        if (err?.name !== 'CanceledError' && err?.code !== 'ERR_CANCELED') {
+          console.error(err);
+        }
       }
     };
     fetchProfile();
+    return () => controller.abort();
   }, [user?.username, user?.full_name, user?.email, user]);
 
   const wordCount = useMemo(

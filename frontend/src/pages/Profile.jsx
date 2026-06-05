@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -139,6 +139,9 @@ const Profile = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedResult, setSelectedResult] = useState(null);
+  const savedTimer = useRef(null);
+
+  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
 
   const [profile, setProfile] = useState({
     full_name: '', phone: '', location: '', bio: '',
@@ -162,13 +165,15 @@ const Profile = () => {
   const [prefsError, setPrefsError] = useState('');
 
   useEffect(() => {
+    if (!user) return;
+    const controller = new AbortController();
+    const { signal } = controller;
     const fetchData = async () => {
-      if (!user) return;
       try {
         const [historyRes, profileRes, prefRes] = await Promise.all([
-          api.get('/api/user/history'),
-          api.get('/api/user/profile'),
-          api.get('/api/user/preferences'),
+          api.get('/api/user/history', { signal }),
+          api.get('/api/user/profile', { signal }),
+          api.get('/api/user/preferences', { signal }),
         ]);
         const sorted = (historyRes.data.history || []).sort(
           (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
@@ -195,12 +200,15 @@ const Profile = () => {
         setPreferences(pr);
         setPrefsDraft(pr);
       } catch (err) {
-        console.error(err);
+        if (err?.name !== 'CanceledError' && err?.code !== 'ERR_CANCELED') {
+          console.error(err);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchData();
+    return () => controller.abort();
   }, [user]);
 
   const handleSaveProfile = async () => {
@@ -211,7 +219,8 @@ const Profile = () => {
       setProfile(profileDraft);
       setEditingProfile(false);
       setSavedProfile(true);
-      setTimeout(() => setSavedProfile(false), 2200);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setSavedProfile(false), 2200);
     } catch (err) {
       console.error(err);
       setProfileError('Failed to save profile. Please try again.');
@@ -233,7 +242,8 @@ const Profile = () => {
       setPreferences(payload);
       setEditingPrefs(false);
       setSavedPrefs(true);
-      setTimeout(() => setSavedPrefs(false), 2200);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setSavedPrefs(false), 2200);
     } catch (err) {
       console.error(err);
       setPrefsError('Failed to save preferences. Please try again.');

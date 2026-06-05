@@ -193,6 +193,9 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
     }
 
     try:
+        if model is None:
+            logger.error("Gemini model not available — GEMINI_API_KEY not configured")
+            return {}
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
@@ -267,6 +270,9 @@ def rewrite_resume_with_gemini(resume_data: dict, target_role: str = None) -> di
         "required": ["target_role", "rewritten_bullets"]
     }
     try:
+        if model is None:
+            logger.error("Gemini model not available — GEMINI_API_KEY not configured")
+            return {}
         response = model.generate_content(
             contents=prompt,
             generation_config=genai.types.GenerationConfig(
@@ -335,6 +341,9 @@ If Job Description is empty, write a strong general letter based on the role and
 Now write the cover letter:"""
     
     try:
+        if model is None:
+            logger.error("Gemini model not available — GEMINI_API_KEY not configured")
+            return ""
         response = model.generate_content(
             contents=prompt,
             generation_config=genai.types.GenerationConfig(

@@ -56,14 +56,16 @@ def _decode(token: str) -> dict:
 
 def _load_user(username: str) -> Optional[dict]:
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id, username, email, full_name, role, created_at FROM users WHERE username = ?",
-        (username,),
-    )
-    user = cursor.fetchone()
-    conn.close()
-    return dict(user) if user else None
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, username, email, full_name, role, created_at FROM users WHERE username = ?",
+            (username,),
+        )
+        user = cursor.fetchone()
+        return dict(user) if user else None
+    finally:
+        conn.close()
 
 
 def _raise_401() -> HTTPException:

@@ -45,8 +45,8 @@ const Analyzer = () => {
 
   const validateAndSetFile = (selected) => {
     if (!selected) return;
-    if (selected.type === 'application/pdf' || selected.name.endsWith('.pdf') ||
-        selected.name.endsWith('.docx')) {
+    if (selected.type === 'application/pdf' || selected.name.toLowerCase().endsWith('.pdf') ||
+        selected.name.toLowerCase().endsWith('.docx')) {
       setFile(selected);
       setError('');
     } else {
