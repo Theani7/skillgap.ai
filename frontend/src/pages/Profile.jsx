@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   User, Mail, MapPin, Phone, FileText, Briefcase, Target, Calendar, DollarSign,
   Edit2, Save, X, UploadCloud, Github, Linkedin, Clock, TrendingUp, Award,
-  Activity, ArrowRight, Sparkles, Check,
+  Activity, ArrowRight, Sparkles, Check, AlertOctagon,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -158,10 +158,12 @@ const Profile = () => {
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [savedProfile, setSavedProfile] = useState(false);
   const [savedPrefs, setSavedPrefs] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [prefsError, setPrefsError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user?.token) return;
+      if (!user) return;
       try {
         const [historyRes, profileRes, prefRes] = await Promise.all([
           api.get('/api/user/history'),
@@ -203,6 +205,7 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     setSavingProfile(true);
+    setProfileError('');
     try {
       await api.put('/api/user/profile', profileDraft);
       setProfile(profileDraft);
@@ -211,6 +214,7 @@ const Profile = () => {
       setTimeout(() => setSavedProfile(false), 2200);
     } catch (err) {
       console.error(err);
+      setProfileError('Failed to save profile. Please try again.');
     } finally {
       setSavingProfile(false);
     }
@@ -218,6 +222,7 @@ const Profile = () => {
 
   const handleSavePrefs = async () => {
     setSavingPrefs(true);
+    setPrefsError('');
     try {
       const payload = {
         ...prefsDraft,
@@ -231,6 +236,7 @@ const Profile = () => {
       setTimeout(() => setSavedPrefs(false), 2200);
     } catch (err) {
       console.error(err);
+      setPrefsError('Failed to save preferences. Please try again.');
     } finally {
       setSavingPrefs(false);
     }
@@ -397,6 +403,54 @@ const Profile = () => {
                 }}
               >
                 <Check size={14} /> Preferences saved
+              </motion.div>
+            )}
+            {profileError && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                style={{
+                  marginTop: '16px', padding: '10px 14px',
+                  background: 'var(--color-error-light)', color: 'var(--color-error)',
+                  border: '1px solid #FECACA', borderRadius: 'var(--radius-md)',
+                  fontSize: '13px', fontWeight: 'var(--font-semibold)',
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                }}
+              >
+                <AlertOctagon size={14} /> {profileError}
+                <button
+                  onClick={() => setProfileError('')}
+                  style={{
+                    marginLeft: '6px', background: 'transparent', border: 'none',
+                    color: 'var(--color-error)', cursor: 'pointer', padding: '0',
+                    display: 'inline-flex', alignItems: 'center',
+                  }}
+                >
+                  <X size={12} />
+                </button>
+              </motion.div>
+            )}
+            {prefsError && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                style={{
+                  marginTop: '16px', padding: '10px 14px',
+                  background: 'var(--color-error-light)', color: 'var(--color-error)',
+                  border: '1px solid #FECACA', borderRadius: 'var(--radius-md)',
+                  fontSize: '13px', fontWeight: 'var(--font-semibold)',
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                }}
+              >
+                <AlertOctagon size={14} /> {prefsError}
+                <button
+                  onClick={() => setPrefsError('')}
+                  style={{
+                    marginLeft: '6px', background: 'transparent', border: 'none',
+                    color: 'var(--color-error)', cursor: 'pointer', padding: '0',
+                    display: 'inline-flex', alignItems: 'center',
+                  }}
+                >
+                  <X size={12} />
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

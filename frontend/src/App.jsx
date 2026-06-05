@@ -11,11 +11,13 @@ const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Analyzer = lazy(() => import('./pages/Analyzer'));
+const AnalysisResult = lazy(() => import('./pages/AnalysisResult'));
 const Jobs = lazy(() => import('./pages/Jobs'));
 const CoverLetter = lazy(() => import('./pages/CoverLetter'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Admin = lazy(() => import('./pages/Admin'));
+const SharedReport = lazy(() => import('./pages/SharedReport'));
 
 const withBoundary = (node) => <ErrorBoundary>{node}</ErrorBoundary>;
 
@@ -24,7 +26,7 @@ const PUBLIC_PATHS = ['/', '/login', '/register'];
 const Layout = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
-  const isPublic = PUBLIC_PATHS.includes(location.pathname);
+  const isPublic = PUBLIC_PATHS.includes(location.pathname) || location.pathname.startsWith('/shared/');
 
   if (loading && !isPublic) {
     return (
@@ -44,6 +46,7 @@ const Layout = () => {
               <Route path="/" element={withBoundary(<Landing />)} />
               <Route path="/login" element={withBoundary(<Login />)} />
               <Route path="/register" element={withBoundary(<Register />)} />
+              <Route path="/shared/:token" element={withBoundary(<SharedReport />)} />
             </Routes>
           </Suspense>
         </main>
@@ -72,6 +75,7 @@ const Layout = () => {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/app" element={<ProtectedRoute>{withBoundary(<Analyzer />)}</ProtectedRoute>} />
+            <Route path="/analysis" element={<ProtectedRoute>{withBoundary(<AnalysisResult />)}</ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute>{withBoundary(<Jobs />)}</ProtectedRoute>} />
             <Route path="/cover-letter" element={<ProtectedRoute>{withBoundary(<CoverLetter />)}</ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute>{withBoundary(<Settings />)}</ProtectedRoute>} />

@@ -4,7 +4,6 @@ import {
   ArrowLeft, PlayCircle, Star, Send, Target, Award, BookOpen,
   TrendingUp, Share2, Check, CheckCircle, XCircle, Briefcase, DollarSign,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Roadmap from './Roadmap';
 import TrendDashboard from './TrendDashboard';
@@ -48,15 +47,12 @@ const ResultsDisplay = ({ data, onReset }) => {
   const [loading, setLoading] = useState(false);
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
-  const { user } = useAuth();
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     setLoading(true);
     try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (user?.token) headers['Authorization'] = `Bearer ${user.token}`;
       const res = await api.post('/api/feedback', {
         name: resumeInfo?.name || 'Anonymous',
         email: resumeInfo?.email || 'N/A',

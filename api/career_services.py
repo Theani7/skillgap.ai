@@ -1,10 +1,131 @@
 import json
+import re
 from typing import Any, Dict, List, Tuple
 
 from api.market_data import get_market_trends_for_role
+from api.job_hunt_services import _target_categories_for_role
+from api.skills_taxonomy import SKILLS_TAXONOMY
 
 
-def compute_resume_score_breakdown(resume_data: Dict[str, Any]) -> Tuple[int, List[str], Dict[str, Any]]:
+# Action verbs that signal strong, results-oriented bullets
+_ACTION_VERBS = {
+    "led", "built", "developed", "implemented", "optimized", "delivered", "managed",
+    "created", "established", "spearheaded", "architected", "designed", "launched",
+    "reduced", "increased", "improved", "automated", "streamlined", "migrated",
+    "integrated", "deployed", "scaled", "refactored", "debugged", "resolved",
+    "coordinated", "mentored", "guided", "directed", "oversaw", "owned",
+    "drove", "championed", "pioneered", "invented", "produced", "shipped",
+    "instrumented", "standardized", "consolidated", "quantified", "measured",
+}
+
+# Metrics patterns that indicate quantified impact
+_METRICS_RE = re.compile(
+    r"(?:\d+\.?\d*\s*(?:%|percent|ms|seconds?|minutes?|hours?|days?|weeks?|months?)"
+    r"|\$\s*\d|kpi|roi|uptime|latency|throughput|revenue|cost\s*saving"
+    r"|\d+\s*(?:users?|requests?|transactions?|deployments?|releases?))",
+    re.IGNORECASE,
+)
+
+
+def _score_experience_blocks(exp_blocks: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
+    """Score experience quality based on structured experience_blocks.
+
+    Returns (score_out_of_35, feedback_messages).
+    Scoring dimensions:
+      - Entry count (up to 8 pts)
+      - Total bullet count (up to 8 pts)
+      - Average bullets per entry (up to 6 pts)
+      - Action verb usage (up to 6 pts)
+      - Quantified metrics (up to 7 pts)
+    """
+    feedback: List[str] = []
+    if not exp_blocks:
+        feedback.append("No professional experience detected. Add work history with detailed bullet points.")
+        return 0, feedback
+
+    n_entries = len(exp_blocks)
+
+    # --- Entry count (0-8) ---
+    if n_entries >= 5:
+        entry_pts = 8
+    elif n_entries >= 3:
+        entry_pts = 6
+    elif n_entries >= 2:
+        entry_pts = 4
+    else:
+        entry_pts = 2
+        if n_entries == 1:
+            feedback.append("You only have 1 experience entry. Add more roles to show career progression.")
+
+    # --- Total bullet count (0-8) ---
+    all_bullets = []
+    for b in exp_blocks:
+        all_bullets.extend(b.get("bullets", []))
+    total_bullets = len(all_bullets)
+    if total_bullets >= 12:
+        bullet_pts = 8
+    elif total_bullets >= 8:
+        bullet_pts = 6
+    elif total_bullets >= 5:
+        bullet_pts = 4
+    elif total_bullets >= 2:
+        bullet_pts = 2
+    else:
+        bullet_pts = 1
+        feedback.append("Your experience bullets are sparse. Aim for 3-5 bullet points per role with specific accomplishments.")
+
+    # --- Average bullets per entry (0-6) ---
+    avg_bullets = total_bullets / n_entries if n_entries else 0
+    if avg_bullets >= 4:
+        avg_pts = 6
+    elif avg_bullets >= 3:
+        avg_pts = 4
+    elif avg_bullets >= 2:
+        avg_pts = 2
+    else:
+        avg_pts = 0
+        if n_entries > 1:
+            feedback.append("Some roles have very few bullets. Each role should have 3-5 detailed bullet points.")
+
+    # --- Action verb usage (0-6) ---
+    verbs_found = set()
+    for bullet in all_bullets:
+        first_word = bullet.strip().split()[0].lower().rstrip(".,;:") if bullet.strip() else ""
+        if first_word in _ACTION_VERBS:
+            verbs_found.add(first_word)
+    verb_ratio = len(verbs_found) / max(1, total_bullets)
+    if verb_ratio >= 0.6:
+        verb_pts = 6
+    elif verb_ratio >= 0.4:
+        verb_pts = 4
+    elif verb_ratio >= 0.2:
+        verb_pts = 2
+    else:
+        verb_pts = 0
+        if total_bullets >= 3:
+            feedback.append("Start bullets with strong action verbs (Led, Built, Implemented, Optimized, Delivered) instead of 'Responsible for' or 'Worked on'.")
+
+    # --- Quantified metrics (0-7) ---
+    metrics_count = sum(1 for b in all_bullets if _METRICS_RE.search(b))
+    metrics_ratio = metrics_count / max(1, total_bullets)
+    if metrics_ratio >= 0.5:
+        metrics_pts = 7
+    elif metrics_ratio >= 0.3:
+        metrics_pts = 5
+    elif metrics_ratio >= 0.15:
+        metrics_pts = 3
+    elif metrics_count >= 1:
+        metrics_pts = 1
+    else:
+        metrics_pts = 0
+        if total_bullets >= 3:
+            feedback.append("Add quantified results to your bullets (e.g., 'reduced latency by 40%', 'served 10K+ users', 'saved $50K annually').")
+
+    total = entry_pts + bullet_pts + avg_pts + verb_pts + metrics_pts
+    return min(35, total), feedback
+
+
+def compute_resume_score_breakdown(resume_data: Dict[str, Any], target_role: str = None) -> Tuple[int, List[str], Dict[str, Any]]:
     breakdown = {
         "summary": {"weight": 15, "score": 0, "status": "missing", "evidence": []},
         "education": {"weight": 15, "score": 0, "status": "missing", "evidence": []},
@@ -24,42 +145,85 @@ def compute_resume_score_breakdown(resume_data: Dict[str, Any]) -> Tuple[int, Li
         feedback_msgs.append("Your professional summary is too short or missing. Add a 2-3 sentence overview of your career goals.")
 
     # 2. Education Analysis
-    edu = resume_data.get("education") or []
+    edu = resume_data.get("education") or resume_data.get("education_blocks") or []
     if edu:
         breakdown["education"]["score"] = 15
         breakdown["education"]["status"] = "present"
-        breakdown["education"]["evidence"] = edu[:2]
+        breakdown["education"]["evidence"] = edu[:2] if isinstance(edu, list) else [str(edu)[:100]]
     else:
         feedback_msgs.append("Education details not found. Ensure your degrees and universities are clearly listed.")
 
-    # 3. Experience Analysis (Weighted by depth)
-    exp = resume_data.get("experience") or []
-    if exp:
-        exp_count = len(exp)
-        if exp_count >= 5:
-            breakdown["experience"]["score"] = 35
-        elif exp_count >= 3:
-            breakdown["experience"]["score"] = 25
-        else:
-            breakdown["experience"]["score"] = 15
-            feedback_msgs.append("Your experience section is brief. Try to add more detailed bullet points describing your impact.")
-        
+    # 3. Experience Analysis — quality-aware (uses experience_blocks if available)
+    exp_blocks = resume_data.get("experience_blocks") or []
+    exp_flat = resume_data.get("experience") or []
+    if exp_blocks:
+        exp_score, exp_feedback = _score_experience_blocks(exp_blocks)
+        breakdown["experience"]["score"] = exp_score
         breakdown["experience"]["status"] = "present"
-        breakdown["experience"]["evidence"] = exp[:2]
+        breakdown["experience"]["evidence"] = [
+            f"{b.get('title', '?')} at {b.get('company', '?')}" for b in exp_blocks[:2]
+        ]
+        feedback_msgs.extend(exp_feedback)
+    elif exp_flat:
+        # Fallback: treat flat experience as a list of strings
+        exp_count = len(exp_flat)
+        if exp_count >= 5:
+            breakdown["experience"]["score"] = 25
+        elif exp_count >= 3:
+            breakdown["experience"]["score"] = 18
+        else:
+            breakdown["experience"]["score"] = 10
+            feedback_msgs.append("Your experience section is brief. Add more detailed bullet points describing your impact.")
+        breakdown["experience"]["status"] = "present"
+        breakdown["experience"]["evidence"] = exp_flat[:2]
     else:
         feedback_msgs.append("No professional experience detected. Add internships, projects, or work history.")
 
-    # 4. Skills Analysis
+    # 4. Skills Analysis — role-aware scoring
     skills = resume_data.get("skills") or []
     if skills:
         skill_count = len(skills)
-        if skill_count >= 10:
-            breakdown["skills"]["score"] = 25
-        elif skill_count >= 5:
-            breakdown["skills"]["score"] = 15
+
+        # If a target role is provided, score by RELEVANT skills (those matching the role's categories)
+        if target_role:
+            categories = _target_categories_for_role(target_role)
+            target_skills_set = set()
+            for cat in categories:
+                for s in SKILLS_TAXONOMY.get(cat, []):
+                    target_skills_set.add(s.lower())
+            relevant_count = sum(1 for s in skills if s.lower() in target_skills_set)
+            irrelevant_count = skill_count - relevant_count
+
+            if relevant_count >= 8:
+                breakdown["skills"]["score"] = 25
+            elif relevant_count >= 5:
+                breakdown["skills"]["score"] = 18
+            elif relevant_count >= 3:
+                breakdown["skills"]["score"] = 12
+            elif relevant_count >= 1:
+                breakdown["skills"]["score"] = 6
+            else:
+                breakdown["skills"]["score"] = 0
+                feedback_msgs.append(
+                    f"None of your {skill_count} skills match the target role ({target_role}). "
+                    f"Add skills relevant to {target_role} such as: "
+                    f"{', '.join(list(target_skills_set)[:5])}."
+                )
+
+            if irrelevant_count > 0 and relevant_count > 0:
+                feedback_msgs.append(
+                    f"{irrelevant_count} of your skills are not relevant to {target_role}. "
+                    "Consider moving them to a separate section or removing them to keep focus."
+                )
         else:
-            breakdown["skills"]["score"] = 10
-            feedback_msgs.append("You have very few skills listed. Add more technical and soft skills to improve visibility.")
+            # No target role — count-based scoring (original behavior)
+            if skill_count >= 10:
+                breakdown["skills"]["score"] = 25
+            elif skill_count >= 5:
+                breakdown["skills"]["score"] = 15
+            else:
+                breakdown["skills"]["score"] = 10
+                feedback_msgs.append("You have very few skills listed. Add more technical and soft skills to improve visibility.")
         
         breakdown["skills"]["status"] = "present"
         breakdown["skills"]["evidence"] = skills[:8]

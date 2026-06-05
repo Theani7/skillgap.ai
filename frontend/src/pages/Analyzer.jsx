@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UploadCloud, Sparkles, Briefcase, FileText, X, CheckCircle2, Clock, Zap,
 } from 'lucide-react';
-import ResultsDisplay from '../components/ResultsDisplay';
 
 const targetRoles = [
   'Data Science', 'Web Development', 'Android Development', 'IOS Development',
@@ -22,10 +22,10 @@ const formatFileSize = (bytes) => {
 };
 
 const Analyzer = () => {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [targetRole, setTargetRole] = useState('Data Science');
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState(null);
   const [error, setError] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
@@ -69,20 +69,18 @@ const Analyzer = () => {
     formData.append('file', file);
     formData.append('target_role', targetRole);
     try {
-      const response = await api.post('/api/analyze', formData, {
+      await api.post('/api/analyze', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setResults(response.data);
+      // The result is now persisted in user_data.analysis_data.
+      // Hand off to the persistent analysis page (loads from DB, no Gemini call).
+      navigate('/analysis', { replace: true });
     } catch (err) {
       setError(err.response?.data?.detail || 'An error occurred during analysis.');
     } finally {
       setLoading(false);
     }
   };
-
-  if (results) {
-    return <ResultsDisplay data={results} onReset={() => { setResults(null); setFile(null); }} />;
-  }
 
   return (
     <div style={{

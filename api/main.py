@@ -54,7 +54,7 @@ from api.job_hunt_services import (
     rewrite_resume_fallback,
     generate_roadmap_fallback,
 )
-from api.exceptions import SkillGapException, ResumeParseException
+from api.exceptions import SkillGapException, ResumeParseException, LLMServiceException
 import json
 
 app = FastAPI(title="AI Resume Analyzer API")
@@ -96,10 +96,14 @@ async def general_exception_handler(request: Request, exc: Exception):
 logger = logging.getLogger("resume-analyzer")
 logging.basicConfig(level=logging.INFO)
 
+# Bump this when scoring/parsing logic changes to auto-invalidate stale cache entries.
+_CACHE_VERSION = 2
+
 
 def get_content_hash(data: bytes) -> str:
-    """Generate SHA-256 hash of file content for caching."""
-    return hashlib.sha256(data).hexdigest()
+    """Generate SHA-256 hash of file content for caching.
+    Includes _CACHE_VERSION so bumping it auto-invalidates all old entries."""
+    return hashlib.sha256(f"{_CACHE_VERSION}:".encode() + data).hexdigest()
 
 
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
@@ -337,18 +341,27 @@ async def request_logging_and_rate_limit(request: Request, call_next):
             (request_id, request.method, request.url.path, response.status_code, elapsed_ms),
         )
         conn.commit()
-        conn.close()
-    except Exception:
-        pass
+    except Exception as log_err:
+        logger.warning(f"Failed to log request: {log_err}")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
     return response
 
 @app.get("/api/auth/check-username/{username}")
 def check_username(username: str):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
-    exists = cursor.fetchone() is not None
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        exists = cursor.fetchone() is not None
+    finally:
+        conn.close()
     return {"available": not exists}
 
 @app.post("/api/auth/register")
@@ -376,6 +389,7 @@ def register_user(user: UserRegister):
         )
         conn.commit()
     except Exception as e:
+        logger.error(f"Registration DB error for {user.username}: {e}")
         conn.close()
         raise HTTPException(status_code=500, detail="Database Error")
     
@@ -388,64 +402,66 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Resp
     now = int(time.time())
 
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Check for existing lockout
-    cursor.execute("SELECT * FROM login_attempts WHERE username = ?", (username,))
-    attempt_row = cursor.fetchone()
-    
-    if attempt_row:
-        if attempt_row["locked_until"] and now < attempt_row["locked_until"]:
-            remaining = int(attempt_row["locked_until"] - now)
+    try:
+        cursor = conn.cursor()
+        
+        # Check for existing lockout
+        cursor.execute("SELECT * FROM login_attempts WHERE username = ?", (username,))
+        attempt_row = cursor.fetchone()
+        
+        if attempt_row:
+            if attempt_row["locked_until"] and now < attempt_row["locked_until"]:
+                remaining = int(attempt_row["locked_until"] - now)
+                conn.close()
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Too many failed attempts. Try again in {remaining} seconds."
+                )
+
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
+
+        if not user or not verify_password(form_data.password, user["hashed_password"]):
+            # Increment failed attempts
+            if attempt_row:
+                attempts = attempt_row["attempts"] + 1
+                locked_until = now + (LOGIN_LOCKOUT_MINUTES * 60) if attempts >= MAX_LOGIN_ATTEMPTS else 0
+                cursor.execute(
+                    "UPDATE login_attempts SET attempts = ?, locked_until = ? WHERE username = ?",
+                    (attempts, locked_until, username)
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO login_attempts (username, attempts, first_attempt, locked_until) VALUES (?, ?, ?, ?)",
+                    (username, 1, now, 0)
+                )
+            conn.commit()
             conn.close()
             raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Too many failed attempts. Try again in {remaining} seconds."
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
             )
+            
+        user_dict = dict(user)
 
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-
-    if not user or not verify_password(form_data.password, user["hashed_password"]):
-        # Increment failed attempts
-        if attempt_row:
-            attempts = attempt_row["attempts"] + 1
-            locked_until = now + (LOGIN_LOCKOUT_MINUTES * 60) if attempts >= MAX_LOGIN_ATTEMPTS else 0
-            cursor.execute(
-                "UPDATE login_attempts SET attempts = ?, locked_until = ? WHERE username = ?",
-                (attempts, locked_until, username)
-            )
-        else:
-            cursor.execute(
-                "INSERT INTO login_attempts (username, attempts, first_attempt, locked_until) VALUES (?, ?, ?, ?)",
-                (username, 1, now, 0)
-            )
+        cursor.execute("DELETE FROM login_attempts WHERE username = ?", (username,))
+        cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_dict["id"],))
         conn.commit()
-        conn.close()
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+
+        access_token = create_access_token(
+            data={"sub": user_dict["username"]}, expires_delta=timedelta(minutes=30)
         )
-        
-    user_dict = dict(user)
-
-    cursor.execute("DELETE FROM login_attempts WHERE username = ?", (username,))
-    cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_dict["id"],))
-    conn.commit()
-
-    access_token = create_access_token(
-        data={"sub": user_dict["username"]}, expires_delta=timedelta(minutes=30)
-    )
-    refresh_token = create_refresh_token(data={"sub": user_dict["username"]})
-    refresh_payload = decode_token(refresh_token)
-    token_hash = hash_token(refresh_token)
-    cursor.execute(
-        "INSERT INTO refresh_tokens(token, user_id, expires_at) VALUES (?, ?, ?)",
-        (token_hash, user_dict["id"], int(refresh_payload["exp"])),
-    )
-    conn.commit()
-    conn.close()
+        refresh_token = create_refresh_token(data={"sub": user_dict["username"]})
+        refresh_payload = decode_token(refresh_token)
+        token_hash = hash_token(refresh_token)
+        cursor.execute(
+            "INSERT INTO refresh_tokens(token, user_id, expires_at) VALUES (?, ?, ?)",
+            (token_hash, user_dict["id"], int(refresh_payload["exp"])),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
     response.set_cookie(
         key=COOKIE_NAME,
@@ -483,9 +499,11 @@ def read_root():
 @app.get("/api/health")
 def health_check():
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT 1")
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+    finally:
+        conn.close()
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat() + "Z"}
 
 
@@ -500,11 +518,15 @@ def logout(request: Request, response: Response):
             username = None
         if username:
             conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM refresh_tokens WHERE token = ? AND user_id = (SELECT id FROM users WHERE username = ?)",
-                           (hash_token(refresh), username))
-            conn.commit()
-            conn.close()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM refresh_tokens WHERE token = ? AND user_id = (SELECT id FROM users WHERE username = ?)",
+                               (hash_token(refresh), username))
+                conn.commit()
+            except Exception as logout_err:
+                logger.error(f"Logout DB error for {username}: {logout_err}")
+            finally:
+                conn.close()
     response.delete_cookie(key=COOKIE_NAME, path="/")
     response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/auth")
     return {"message": "Logged out successfully"}
@@ -546,34 +568,34 @@ def refresh_access_token(request: Request, payload: RefreshTokenRequest, respons
 
     token_hash = hash_token(refresh_token)
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT user_id, expires_at FROM refresh_tokens WHERE token = ?",
-        (token_hash,),
-    )
-    row = cursor.fetchone()
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=401, detail="Refresh token not recognized")
-    if int(row["expires_at"]) < int(time.time()):
-        cursor.execute("DELETE FROM refresh_tokens WHERE token = ?", (token_hash,))
-        conn.commit()
-        conn.close()
-        raise HTTPException(status_code=401, detail="Refresh token expired")
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT user_id, expires_at FROM refresh_tokens WHERE token = ?",
+            (token_hash,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=401, detail="Refresh token not recognized")
+        if int(row["expires_at"]) < int(time.time()):
+            cursor.execute("DELETE FROM refresh_tokens WHERE token = ?", (token_hash,))
+            conn.commit()
+            raise HTTPException(status_code=401, detail="Refresh token expired")
 
-    new_access_token = create_access_token(
-        data={"sub": decoded.get("sub")},
-        expires_delta=timedelta(minutes=30),
-    )
-    new_refresh_token = create_refresh_token(data={"sub": decoded.get("sub")})
-    new_payload = decode_token(new_refresh_token)
-    cursor.execute("DELETE FROM refresh_tokens WHERE token = ?", (token_hash,))
-    cursor.execute(
-        "INSERT INTO refresh_tokens(token, user_id, expires_at) VALUES (?, ?, ?)",
-        (hash_token(new_refresh_token), row["user_id"], int(new_payload["exp"])),
-    )
-    conn.commit()
-    conn.close()
+        new_access_token = create_access_token(
+            data={"sub": decoded.get("sub")},
+            expires_delta=timedelta(minutes=30),
+        )
+        new_refresh_token = create_refresh_token(data={"sub": decoded.get("sub")})
+        new_payload = decode_token(new_refresh_token)
+        cursor.execute("DELETE FROM refresh_tokens WHERE token = ?", (token_hash,))
+        cursor.execute(
+            "INSERT INTO refresh_tokens(token, user_id, expires_at) VALUES (?, ?, ?)",
+            (hash_token(new_refresh_token), row["user_id"], int(new_payload["exp"])),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
     if response:
         response.set_cookie(
@@ -643,9 +665,53 @@ async def analyze_resume(
     )
     cache_row = cursor.fetchone()
     if cache_row:
-        conn.close()
-        logger.info(f"Serving cached result for {safe_filename}")
-        return json.loads(cache_row["result_json"])
+        # Cache hit — reuse the result but STILL insert a new user_data row
+        # so that /api/user/latest-analysis always reflects the latest upload.
+        final_response_payload = json.loads(cache_row["result_json"])
+        logger.info(f"Cache hit for {safe_filename} — reusing result, saving new user_data row")
+        try:
+            sec_token = secrets.token_hex(16)
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            u_id = current_user['id'] if current_user and 'id' in current_user else -1
+            resume_data_c = final_response_payload.get("data", {})
+            skills_c = resume_data_c.get('skills', [])
+            recommended_skills_c = final_response_payload.get("recommended_skills", [])
+            missing_skills_c = final_response_payload.get("missing_skill_names", [])
+            missing_skills_str_c = ", ".join(missing_skills_c) if missing_skills_c else ""
+            resume_score_c = final_response_payload.get("resume_score", 0)
+            predicted_field_c = final_response_payload.get("predicted_field", "")
+            cursor.execute(
+                """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    sec_token,
+                    resume_data_c.get('name') or 'N/A',
+                    resume_data_c.get('email') or 'N/A',
+                    resume_data_c.get('mobile_number') or 'N/A',
+                    resume_data_c.get('name') or 'N/A',
+                    resume_data_c.get('email') or 'N/A',
+                    str(resume_score_c),
+                    timestamp,
+                    str(resume_data_c.get('no_of_pages', 1)),
+                    predicted_field_c,
+                    "Unknown Level",
+                    ", ".join(skills_c) if skills_c else "",
+                    ", ".join(recommended_skills_c) if recommended_skills_c else "",
+                    "Courses mapped via API",
+                    safe_filename,
+                    t_role,
+                    missing_skills_str_c,
+                    u_id,
+                    json.dumps(final_response_payload)
+                )
+            )
+            conn.commit()
+        except Exception as db_error:
+            conn.rollback()
+            logger.error(f"Cache-hit user_data insert failed: {db_error}")
+        finally:
+            conn.close()
+        return final_response_payload
 
     tmp_path = None
     try:
@@ -666,30 +732,43 @@ async def analyze_resume(
             raise ResumeParseException("Could not extract any text from the uploaded file.")
 
         # Step 2: Attempt Local Hybrid Parsing First (Fast, Free)
-        local_data = parse_resume_fallback(resume_text, target_role)
-        
+        local_data = parse_resume_fallback(resume_text, target_role, file_path=tmp_path)
+
         # Step 3: Conditional LLM Parsing
-        # If local parser is highly confident (e.g. >= 80%), we can potentially skip Gemini
-        # For now, let's use a threshold of 85% to be safe.
-        if local_data.get("confidence_score", 0) >= 85:
-            logger.info(f"Using high-confidence local parse for {file.filename}")
+        # If local parser is highly confident (>= 70%), we skip Gemini.
+        # The local parser (v3) is structured enough — title/company/dates, degree/institution/year,
+        # tightened phone, real match score, ROLE_SYNONYMS-based target matching — that 70%
+        # is a safe threshold for skipping the slower, quota-limited Gemini call.
+        if local_data.get("confidence_score", 0) >= 70:
+            logger.info(
+                f"Using high-confidence local parse for {file.filename} "
+                f"(confidence={local_data.get('confidence_score')}%, "
+                f"skills={len(local_data.get('skills', []))}, "
+                f"experience={len(local_data.get('experience_blocks', []))}, "
+                f"education={len(local_data.get('education_blocks', []))})"
+            )
             resume_data = local_data
         else:
             logger.info(f"Low confidence ({local_data.get('confidence_score')}%) in local parse. Invoking Gemini...")
             try:
                 resume_data = parse_resume_with_gemini(tmp_path, target_role)
-                # Merge local links if Gemini missed them
+                # Merge local fields if Gemini missed them
                 if not resume_data.get('email') and local_data.get('email'):
                     resume_data['email'] = local_data['email']
+                if not resume_data.get('mobile_number') and local_data.get('mobile_number'):
+                    resume_data['mobile_number'] = local_data['mobile_number']
+                if not resume_data.get('no_of_pages') or resume_data.get('no_of_pages') == 1:
+                    if local_data.get('no_of_pages', 1) > 1:
+                        resume_data['no_of_pages'] = local_data['no_of_pages']
             except Exception as e:
                 logger.warning(f"Gemini parse failed, using local hybrid fallback: {e}")
                 resume_data = local_data
         
         if not resume_data:
-            raise ResumeParseException("Gemini returned no data and fallback failed.")
+            raise LLMServiceException("AI service returned no data and local fallback failed.")
         
         # Explainable scoring with evidence
-        resume_score, feedback_msgs, score_breakdown = compute_resume_score_breakdown(resume_data)
+        resume_score, feedback_msgs, score_breakdown = compute_resume_score_breakdown(resume_data, target_role)
             
         # Advanced Field Prediction based on keyword density
         skills = resume_data.get('skills', [])
@@ -735,7 +814,12 @@ async def analyze_resume(
         mapping_field = target_role if target_role else predicted_field
 
         if mapping_field != "Unknown":
-            recommended_skills = SKILL_RECOMMENDATIONS.get(mapping_field, [])
+            # Personalized recommendations: only suggest skills the user is actually missing
+            all_field_skills = SKILL_RECOMMENDATIONS.get(mapping_field, [])
+            found_skills_lower = {s.lower() for s in (resume_data.get("skills") or [])}
+            recommended_skills = [s for s in all_field_skills if s.lower() not in found_skills_lower]
+            if not recommended_skills:
+                recommended_skills = all_field_skills[:5]
             
             # Fetch field-specific courses
             cursor.execute("SELECT course_name, course_url FROM courses WHERE field = ?", (mapping_field,))
@@ -749,12 +833,12 @@ async def analyze_resume(
             trends = get_market_trends_for_role(mapping_field)
             dynamic_resume_videos = RESUME_VIDEOS.get(mapping_field, RESUME_VIDEOS['General'])
             dynamic_interview_videos = INTERVIEW_VIDEOS.get(mapping_field, INTERVIEW_VIDEOS['General'])
-            # Generate personalized youtube links for their recommended skills
-            skill_videos = generate_youtube_search_links(recommended_skills)
+            # Generate personalized youtube links for missing skills specifically
+            skill_videos = generate_youtube_search_links(recommended_skills[:6])
             
         # Generate course links specifically for missing skills if they exist
         if missing_skills:
-             missing_skills_videos = generate_youtube_search_links(missing_skills)
+             missing_skills_videos = generate_youtube_search_links(missing_skills[:6])
             
         sec_token = secrets.token_hex(10)
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -841,15 +925,17 @@ async def analyze_resume(
 @app.post("/api/feedback")
 def submit_feedback(feedback: Feedback, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    cursor.execute(
-        "INSERT INTO user_feedback (feed_name, feed_email, feed_score, comments, Timestamp) VALUES (?, ?, ?, ?, ?)",
-        (feedback.name, feedback.email, feedback.score, feedback.comments, timestamp)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        cursor.execute(
+            "INSERT INTO user_feedback (feed_name, feed_email, feed_score, comments, Timestamp) VALUES (?, ?, ?, ?, ?)",
+            (feedback.name, feedback.email, feedback.score, feedback.comments, timestamp)
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": "Feedback saved."}
 
 @app.get("/api/trends/status")
@@ -866,48 +952,56 @@ def trigger_simulated_scrape(current_admin: dict = Depends(get_current_admin)):
 @app.get("/api/admin/users")
 def get_admin_users(current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM user_data ORDER BY ID DESC")
-    rows = cursor.fetchall()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM user_data ORDER BY ID DESC")
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
     return {"users": [dict(r) for r in rows]}
 
 @app.get("/api/admin/feedback")
 def get_admin_feedback(current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM user_feedback ORDER BY ID DESC")
-    rows = cursor.fetchall()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM user_feedback ORDER BY ID DESC")
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
     return {"feedback": [dict(r) for r in rows]}
 
 @app.delete("/api/admin/users/{user_id}")
 def delete_admin_user(user_id: int, current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM user_data WHERE ID = ?", (user_id,))
-    cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM job_applications WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM subscriptions WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM shared_reports WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM login_attempts WHERE username = (SELECT username FROM users WHERE id = ?)", (user_id,))
-    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM user_data WHERE ID = ?", (user_id,))
+        cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM job_applications WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM subscriptions WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM shared_reports WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM login_attempts WHERE username = (SELECT username FROM users WHERE id = ?)", (user_id,))
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": f"User {user_id} deleted."}
 
 @app.delete("/api/admin/feedback/{feedback_id}")
 def delete_admin_feedback(feedback_id: int, current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM user_feedback WHERE ID = ?", (feedback_id,))
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM user_feedback WHERE ID = ?", (feedback_id,))
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": f"Feedback {feedback_id} deleted."}
 
 
@@ -917,30 +1011,34 @@ def delete_admin_feedback(feedback_id: int, current_admin: dict = Depends(get_cu
 def get_registered_users(current_admin: dict = Depends(get_current_admin)):
     """Fetch all actual registered users (not anonymous uploads)."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, username, email, role FROM users ORDER BY id DESC")
-    rows = cursor.fetchall()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username, email, role FROM users ORDER BY id DESC")
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
     return {"users": [dict(r) for r in rows]}
 
 @app.delete("/api/admin/registered-users/{user_id}")
 def delete_registered_user(user_id: int, current_admin: dict = Depends(get_current_admin)):
     """Delete (ban) a registered user and cascade-delete their data."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM job_applications WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM subscriptions WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM shared_reports WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM login_attempts WHERE username = (SELECT username FROM users WHERE id = ?)", (user_id,))
-    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM job_applications WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM subscriptions WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM shared_reports WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM login_attempts WHERE username = (SELECT username FROM users WHERE id = ?)", (user_id,))
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": f"User {user_id} deleted."}
 
 class CourseInput(BaseModel):
@@ -951,69 +1049,150 @@ class CourseInput(BaseModel):
 @app.get("/api/admin/courses")
 def get_all_courses(current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM courses ORDER BY field, id DESC")
-    rows = cursor.fetchall()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM courses ORDER BY field, id DESC")
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
     return {"courses": [dict(r) for r in rows]}
 
 @app.post("/api/admin/courses")
 def add_course(course: CourseInput, current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO courses (field, course_name, course_url) VALUES (?, ?, ?)",
-        (course.field, course.course_name, course.course_url)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO courses (field, course_name, course_url) VALUES (?, ?, ?)",
+            (course.field, course.course_name, course.course_url)
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": "Course added successfully."}
 
 @app.delete("/api/admin/courses/{course_id}")
 def delete_course(course_id: int, current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM courses WHERE id = ?", (course_id,))
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM courses WHERE id = ?", (course_id,))
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": "Course deleted."}
 
 @app.get("/api/admin/analytics")
 def get_advanced_analytics(current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # 1. Most Sought-After Role
-    cursor.execute('''
-        SELECT target_role, COUNT(*) as count 
-        FROM user_data 
-        WHERE target_role != 'Unknown' AND target_role != 'None' AND target_role != ''
-        GROUP BY target_role 
-        ORDER BY count DESC 
-        LIMIT 1
-    ''')
-    top_role_row = cursor.fetchone()
-    top_role = top_role_row['target_role'] if top_role_row else "Insufficient Data"
-    
-    # 2. Most Common Missing Skill
-    cursor.execute("SELECT missing_skills FROM user_data WHERE missing_skills != ''")
-    all_missing_skills_rows = cursor.fetchall()
-    skill_counts = {}
-    for row in all_missing_skills_rows:
-        skills = [s.strip() for s in row['missing_skills'].split(',') if s.strip()]
-        for s in skills:
-            skill_counts[s] = skill_counts.get(s, 0) + 1
-            
-    top_skill = "Insufficient Data"
-    if skill_counts:
-        top_skill = max(skill_counts, key=skill_counts.get)
-
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        
+        # 1. Most Sought-After Role
+        cursor.execute('''
+            SELECT target_role, COUNT(*) as count 
+            FROM user_data 
+            WHERE target_role != 'Unknown' AND target_role != 'None' AND target_role != ''
+            GROUP BY target_role 
+            ORDER BY count DESC 
+            LIMIT 1
+        ''')
+        top_role_row = cursor.fetchone()
+        top_role = top_role_row['target_role'] if top_role_row else "Insufficient Data"
+        
+        # 2. Most Common Missing Skill
+        cursor.execute("SELECT missing_skills FROM user_data WHERE missing_skills != ''")
+        all_missing_skills_rows = cursor.fetchall()
+        skill_counts = {}
+        for row in all_missing_skills_rows:
+            skills = [s.strip() for s in row['missing_skills'].split(',') if s.strip()]
+            for s in skills:
+                skill_counts[s] = skill_counts.get(s, 0) + 1
+                
+        top_skill = "Insufficient Data"
+        if skill_counts:
+            top_skill = max(skill_counts, key=skill_counts.get)
+    finally:
+        conn.close()
     return {
         "most_sought_role": top_role,
         "most_common_missing_skill": top_skill
     }
     
+@app.get("/api/user/latest-analysis")
+def get_latest_analysis(current_user: dict = Depends(get_current_user)):
+    """
+    Return the most recent saved analysis for the logged-in user.
+    Reads from the user_data table only — never re-invokes the AI.
+    Use this to render the persistent "My Analysis" view in the sidebar
+    without consuming Gemini tokens.
+    """
+    if not current_user or 'id' not in current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized request")
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            '''
+            SELECT ID, Timestamp, Predicted_Field, resume_score, target_role,
+                   missing_skills, Actual_skills, Recommended_skills,
+                   pdf_name, analysis_data
+            FROM user_data
+            WHERE user_id = ?
+            ORDER BY ID DESC
+            LIMIT 1
+            ''',
+            (current_user['id'],),
+        )
+        row = cursor.fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        return {"found": False}
+
+    payload = None
+    if row['analysis_data']:
+        try:
+            payload = json.loads(row['analysis_data'])
+        except (json.JSONDecodeError, TypeError):
+            payload = None
+
+    if payload is None:
+        # Old rows without full analysis_data JSON — synthesize from columns
+        payload = {
+            "status": "success",
+            "data": {
+                "name": "",
+                "email": "",
+                "skills": row['Actual_skills'].split(',') if row['Actual_skills'] else [],
+                "no_of_pages": 1,
+            },
+            "target_role": row['target_role'],
+            "predicted_field": row['Predicted_Field'],
+            "resume_score": float(row['resume_score']) if row['resume_score'] else 0,
+            "missing_skill_names": row['missing_skills'].split(',') if row['missing_skills'] else [],
+            "missing_skills": [],
+            "feedback": [],
+            "videos": {"resume": [], "interview": [], "tutorials": []},
+            "roadmap": [],
+            "trends": None,
+            "score_breakdown": {},
+        }
+
+    return {
+        "found": True,
+        "id": row['ID'],
+        "timestamp": row['Timestamp'],
+        "pdf_name": row['pdf_name'],
+        "predicted_field": row['Predicted_Field'],
+        "target_role": row['target_role'],
+        "resume_score": float(row['resume_score']) if row['resume_score'] else 0,
+        "analysis": payload,
+    }
+
+
 @app.get("/api/user/history")
 def get_user_history(current_user: dict = Depends(get_current_user)):
     """Fetch all past resume analyses for the logged-in user."""
@@ -1021,15 +1200,17 @@ def get_user_history(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=401, detail="Unauthorized request")
         
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT ID, Timestamp, Predicted_Field, resume_score, target_role, missing_skills, Actual_skills, Recommended_skills, analysis_data
-        FROM user_data
-        WHERE user_id = ?
-        ORDER BY ID DESC
-    ''', (current_user['id'],))
-    rows = cursor.fetchall()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT ID, Timestamp, Predicted_Field, resume_score, target_role, missing_skills, Actual_skills, Recommended_skills, analysis_data
+            FROM user_data
+            WHERE user_id = ?
+            ORDER BY ID DESC
+        ''', (current_user['id'],))
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
     
     # Format the data for the frontend
     history = []
@@ -1063,70 +1244,97 @@ def delete_user_history(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=401, detail="Unauthorized request")
 
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM user_data WHERE user_id = ?", (current_user['id'],))
-    deleted = cursor.rowcount
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM user_data WHERE user_id = ?", (current_user['id'],))
+        deleted = cursor.rowcount
+        conn.commit()
+    finally:
+        conn.close()
+    return {"status": "success", "deleted": deleted}
+
+
+@app.delete("/api/user/analysis/{analysis_id}")
+def delete_user_analysis(analysis_id: int, current_user: dict = Depends(get_current_user)):
+    """Delete a single analysis by ID. Ownership-checked."""
+    if not current_user or 'id' not in current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized request")
+    if not isinstance(analysis_id, int) or analysis_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid analysis id")
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM user_data WHERE ID = ? AND user_id = ?",
+            (analysis_id, current_user['id']),
+        )
+        deleted = cursor.rowcount
+        conn.commit()
+    finally:
+        conn.close()
+    if deleted == 0:
+        raise HTTPException(status_code=404, detail="Analysis not found")
     return {"status": "success", "deleted": deleted}
 
 
 @app.post("/api/auth/request-password-reset")
 def request_password_reset(payload: PasswordResetRequest):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM users WHERE email = ?", (payload.email,))
-    user = cursor.fetchone()
-    if user:
-        cooldown_cutoff = int(time.time()) - RESET_COOLDOWN_SECONDS
-        cursor.execute(
-            "SELECT created_at FROM password_reset_tokens WHERE user_id = ? ORDER BY id DESC LIMIT 1",
-            (user["id"],),
-        )
-        last = cursor.fetchone()
-        if last:
-            try:
-                last_ts = int(datetime.fromisoformat(str(last["created_at"]).replace(" ", "T")).timestamp())
-            except (ValueError, TypeError):
-                last_ts = 0
-            if last_ts and last_ts > cooldown_cutoff:
-                conn.close()
-                return {"status": "success", "message": "If the email exists, a reset flow has been created."}
-        token = secrets.token_urlsafe(32)
-        expires_at = int(time.time()) + (60 * 30)
-        cursor.execute(
-            "INSERT OR REPLACE INTO password_reset_tokens(token, user_id, expires_at, used) VALUES (?, ?, ?, 0)",
-            (token, user["id"], expires_at),
-        )
-        conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE email = ?", (payload.email,))
+        user = cursor.fetchone()
+        if user:
+            cooldown_cutoff = int(time.time()) - RESET_COOLDOWN_SECONDS
+            cursor.execute(
+                "SELECT created_at FROM password_reset_tokens WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+                (user["id"],),
+            )
+            last = cursor.fetchone()
+            if last:
+                try:
+                    last_ts = int(datetime.fromisoformat(str(last["created_at"]).replace(" ", "T")).timestamp())
+                except (ValueError, TypeError):
+                    last_ts = 0
+                if last_ts and last_ts > cooldown_cutoff:
+                    return {"status": "success", "message": "If the email exists, a reset flow has been created."}
+            token = secrets.token_urlsafe(32)
+            expires_at = int(time.time()) + (60 * 30)
+            cursor.execute(
+                "INSERT OR REPLACE INTO password_reset_tokens(token, user_id, expires_at, used) VALUES (?, ?, ?, 0)",
+                (token, user["id"], expires_at),
+            )
+            conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": "If the email exists, a reset flow has been created."}
 
 
 @app.post("/api/auth/reset-password")
 def reset_password(payload: PasswordResetConfirm):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT token, user_id, expires_at, used FROM password_reset_tokens WHERE token = ?",
-        (payload.token,),
-    )
-    row = cursor.fetchone()
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Invalid token")
-    if int(row["used"]) == 1 or int(row["expires_at"]) < int(time.time()):
-        conn.close()
-        raise HTTPException(status_code=400, detail="Token expired or already used")
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT token, user_id, expires_at, used FROM password_reset_tokens WHERE token = ?",
+            (payload.token,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=400, detail="Invalid token")
+        if int(row["used"]) == 1 or int(row["expires_at"]) < int(time.time()):
+            raise HTTPException(status_code=400, detail="Token expired or already used")
 
-    cursor.execute(
-        "UPDATE users SET hashed_password = ? WHERE id = ?",
-        (get_password_hash(payload.new_password), row["user_id"]),
-    )
-    cursor.execute("UPDATE password_reset_tokens SET used = 1 WHERE token = ?", (payload.token,))
-    cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (row["user_id"],))
-    conn.commit()
-    conn.close()
+        cursor.execute(
+            "UPDATE users SET hashed_password = ? WHERE id = ?",
+            (get_password_hash(payload.new_password), row["user_id"]),
+        )
+        cursor.execute("UPDATE password_reset_tokens SET used = 1 WHERE token = ?", (payload.token,))
+        cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (row["user_id"],))
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": "Password reset successful"}
 
 
@@ -1168,74 +1376,81 @@ def team_rank_candidates(payload: CandidateRankRequest, current_user: dict = Dep
 @app.post("/api/jobs/applications")
 def create_application(payload: ApplicationInput, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO job_applications(user_id, company, role, status, follow_up_date, location, salary, url, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            current_user["id"], payload.company, payload.role, payload.status,
-            payload.follow_up_date, payload.location, payload.salary, payload.url, payload.notes,
-        ),
-    )
-    app_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO job_applications(user_id, company, role, status, follow_up_date, location, salary, url, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                current_user["id"], payload.company, payload.role, payload.status,
+                payload.follow_up_date, payload.location, payload.salary, payload.url, payload.notes,
+            ),
+        )
+        app_id = cursor.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "application_id": app_id}
 
 
 @app.get("/api/jobs/applications")
 def list_applications(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM job_applications WHERE user_id = ? ORDER BY id DESC",
-        (current_user["id"],),
-    )
-    rows = [dict(r) for r in cursor.fetchall()]
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM job_applications WHERE user_id = ? ORDER BY id DESC",
+            (current_user["id"],),
+        )
+        rows = [dict(r) for r in cursor.fetchall()]
+    finally:
+        conn.close()
     return {"applications": rows}
 
 
 @app.patch("/api/jobs/applications/{application_id}")
 def update_application(application_id: int, payload: ApplicationUpdate, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM job_applications WHERE id = ? AND user_id = ?",
-        (application_id, current_user["id"]),
-    )
-    row = cursor.fetchone()
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Application not found")
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM job_applications WHERE id = ? AND user_id = ?",
+            (application_id, current_user["id"]),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Application not found")
 
-    status_value = payload.status if payload.status is not None else row["status"]
-    follow_up_value = payload.follow_up_date if payload.follow_up_date is not None else row["follow_up_date"]
-    location_value = payload.location if payload.location is not None else row["location"]
-    salary_value = payload.salary if payload.salary is not None else row["salary"]
-    url_value = payload.url if payload.url is not None else row["url"]
-    notes_value = payload.notes if payload.notes is not None else row["notes"]
-    cursor.execute(
-        """UPDATE job_applications
-           SET status = ?, follow_up_date = ?, location = ?, salary = ?, url = ?, notes = ?
-           WHERE id = ? AND user_id = ?""",
-        (status_value, follow_up_value, location_value, salary_value, url_value,
-         notes_value, application_id, current_user["id"]),
-    )
-    conn.commit()
-    conn.close()
+        status_value = payload.status if payload.status is not None else row["status"]
+        follow_up_value = payload.follow_up_date if payload.follow_up_date is not None else row["follow_up_date"]
+        location_value = payload.location if payload.location is not None else row["location"]
+        salary_value = payload.salary if payload.salary is not None else row["salary"]
+        url_value = payload.url if payload.url is not None else row["url"]
+        notes_value = payload.notes if payload.notes is not None else row["notes"]
+        cursor.execute(
+            """UPDATE job_applications
+               SET status = ?, follow_up_date = ?, location = ?, salary = ?, url = ?, notes = ?
+               WHERE id = ? AND user_id = ?""",
+            (status_value, follow_up_value, location_value, salary_value, url_value,
+             notes_value, application_id, current_user["id"]),
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success"}
 
 
 @app.delete("/api/jobs/applications/{application_id}")
 def delete_application(application_id: int, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM job_applications WHERE id = ? AND user_id = ?", (application_id, current_user["id"]))
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM job_applications WHERE id = ? AND user_id = ?", (application_id, current_user["id"]))
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success"}
 
 
@@ -1266,43 +1481,44 @@ def project_recommendations(payload: ProjectRecommendationRequest, current_user:
 @app.post("/api/reports/share")
 def create_share_link(payload: ShareReportRequest, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT 1 FROM user_data WHERE ID = ? AND user_id = ?",
-        (payload.analysis_id, current_user["id"]),
-    )
-    if cursor.fetchone() is None:
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT 1 FROM user_data WHERE ID = ? AND user_id = ?",
+            (payload.analysis_id, current_user["id"]),
+        )
+        if cursor.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Analysis not found")
+        token = secrets.token_urlsafe(24)
+        expires_at = int(time.time()) + (payload.expires_in_hours * 3600)
+        cursor.execute(
+            """
+            INSERT INTO shared_reports(token, user_id, analysis_id, expires_at, is_public)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (token, current_user["id"], payload.analysis_id, expires_at, int(payload.is_public)),
+        )
+        conn.commit()
+    finally:
         conn.close()
-        raise HTTPException(status_code=404, detail="Analysis not found")
-    token = secrets.token_urlsafe(24)
-    expires_at = int(time.time()) + (payload.expires_in_hours * 3600)
-    cursor.execute(
-        """
-        INSERT INTO shared_reports(token, user_id, analysis_id, expires_at, is_public)
-        VALUES (?, ?, ?, ?, ?)
-        """,
-        (token, current_user["id"], payload.analysis_id, expires_at, int(payload.is_public)),
-    )
-    conn.commit()
-    conn.close()
     return {"share_token": token, "expires_at": expires_at}
 
 
 @app.get("/api/reports/share/{token}")
 def get_shared_report(token: str):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM shared_reports WHERE token = ?", (token,))
-    share = cursor.fetchone()
-    if not share:
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM shared_reports WHERE token = ?", (token,))
+        share = cursor.fetchone()
+        if not share:
+            raise HTTPException(status_code=404, detail="Share link not found")
+        if int(share["expires_at"]) < int(time.time()):
+            raise HTTPException(status_code=410, detail="Share link expired")
+        cursor.execute("SELECT analysis_data FROM user_data WHERE ID = ?", (share["analysis_id"],))
+        row = cursor.fetchone()
+    finally:
         conn.close()
-        raise HTTPException(status_code=404, detail="Share link not found")
-    if int(share["expires_at"]) < int(time.time()):
-        conn.close()
-        raise HTTPException(status_code=410, detail="Share link expired")
-    cursor.execute("SELECT analysis_data FROM user_data WHERE ID = ?", (share["analysis_id"],))
-    row = cursor.fetchone()
-    conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="Analysis not found")
     try:
@@ -1315,75 +1531,83 @@ def get_shared_report(token: str):
 @app.get("/api/user/profile")
 def get_user_profile(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM user_profiles WHERE user_id = ?", (current_user["id"],))
-    row = cursor.fetchone()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM user_profiles WHERE user_id = ?", (current_user["id"],))
+        row = cursor.fetchone()
+    finally:
+        conn.close()
     return {"profile": dict(row) if row else {}}
 
 @app.put("/api/user/profile")
 def update_user_profile(profile: UserProfileUpdate, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO user_profiles(user_id, full_name, phone, location, bio, current_role, experience_years, linkedin_url, github_url, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(user_id) DO UPDATE SET
-            full_name = excluded.full_name,
-            phone = excluded.phone,
-            location = excluded.location,
-            bio = excluded.bio,
-            current_role = excluded.current_role,
-            experience_years = excluded.experience_years,
-            linkedin_url = excluded.linkedin_url,
-            github_url = excluded.github_url,
-            updated_at = CURRENT_TIMESTAMP
-        """,
-        (current_user["id"], profile.full_name, profile.phone, profile.location, profile.bio, 
-         profile.current_role, profile.experience_years, profile.linkedin_url, profile.github_url)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO user_profiles(user_id, full_name, phone, location, bio, current_role, experience_years, linkedin_url, github_url, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id) DO UPDATE SET
+                full_name = excluded.full_name,
+                phone = excluded.phone,
+                location = excluded.location,
+                bio = excluded.bio,
+                current_role = excluded.current_role,
+                experience_years = excluded.experience_years,
+                linkedin_url = excluded.linkedin_url,
+                github_url = excluded.github_url,
+                updated_at = CURRENT_TIMESTAMP
+            """,
+            (current_user["id"], profile.full_name, profile.phone, profile.location, profile.bio, 
+             profile.current_role, profile.experience_years, profile.linkedin_url, profile.github_url)
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return {"message": "Profile updated successfully"}
 
 @app.get("/api/user/preferences")
 def get_preferences(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM user_preferences WHERE user_id = ?", (current_user["id"],))
-    row = cursor.fetchone()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM user_preferences WHERE user_id = ?", (current_user["id"],))
+        row = cursor.fetchone()
+    finally:
+        conn.close()
     return {"preferences": dict(row) if row else {}}
 
 
 @app.put("/api/user/preferences")
 def update_preferences(payload: PreferencesInput, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO user_preferences(user_id, target_role, timeline_months, preferred_location, salary_target, locale, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(user_id) DO UPDATE SET
-            target_role = excluded.target_role,
-            timeline_months = excluded.timeline_months,
-            preferred_location = excluded.preferred_location,
-            salary_target = excluded.salary_target,
-            locale = excluded.locale,
-            updated_at = CURRENT_TIMESTAMP
-        """,
-        (
-            current_user["id"],
-            payload.target_role,
-            payload.timeline_months,
-            payload.preferred_location,
-            payload.salary_target,
-            payload.locale,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO user_preferences(user_id, target_role, timeline_months, preferred_location, salary_target, locale, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id) DO UPDATE SET
+                target_role = excluded.target_role,
+                timeline_months = excluded.timeline_months,
+                preferred_location = excluded.preferred_location,
+                salary_target = excluded.salary_target,
+                locale = excluded.locale,
+                updated_at = CURRENT_TIMESTAMP
+            """,
+            (
+                current_user["id"],
+                payload.target_role,
+                payload.timeline_months,
+                payload.preferred_location,
+                payload.salary_target,
+                payload.locale,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success"}
 
 
@@ -1405,31 +1629,35 @@ def subscribe_plan(payload: BillingSubscribeRequest, current_user: dict = Depend
         raise HTTPException(status_code=400, detail="Invalid plan")
     renews_at = int(time.time()) + (30 * 24 * 3600)
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO subscriptions(user_id, plan, status, renews_at, updated_at)
-        VALUES (?, ?, 'active', ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(user_id) DO UPDATE SET
-            plan = excluded.plan,
-            status = 'active',
-            renews_at = excluded.renews_at,
-            updated_at = CURRENT_TIMESTAMP
-        """,
-        (current_user["id"], payload.plan, renews_at),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO subscriptions(user_id, plan, status, renews_at, updated_at)
+            VALUES (?, ?, 'active', ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id) DO UPDATE SET
+                plan = excluded.plan,
+                status = 'active',
+                renews_at = excluded.renews_at,
+                updated_at = CURRENT_TIMESTAMP
+            """,
+            (current_user["id"], payload.plan, renews_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "plan": payload.plan, "renews_at": renews_at}
 
 
 @app.get("/api/billing/subscription")
 def get_subscription(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM subscriptions WHERE user_id = ?", (current_user["id"],))
-    row = cursor.fetchone()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM subscriptions WHERE user_id = ?", (current_user["id"],))
+        row = cursor.fetchone()
+    finally:
+        conn.close()
     if not row:
         return {"subscription": {"plan": "free", "status": "active"}}
     return {"subscription": dict(row)}
@@ -1438,37 +1666,43 @@ def get_subscription(current_user: dict = Depends(get_current_user)):
 @app.post("/api/notifications")
 def create_notification(payload: NotificationInput, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO notifications(user_id, channel, message, status, send_at) VALUES (?, ?, ?, 'pending', ?)",
-        (current_user["id"], payload.channel, payload.message, payload.send_at),
-    )
-    notification_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO notifications(user_id, channel, message, status, send_at) VALUES (?, ?, ?, 'pending', ?)",
+            (current_user["id"], payload.channel, payload.message, payload.send_at),
+        )
+        notification_id = cursor.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "notification_id": notification_id}
 
 
 @app.get("/api/notifications")
 def list_notifications(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC", (current_user["id"],))
-    rows = [dict(r) for r in cursor.fetchall()]
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC", (current_user["id"],))
+        rows = [dict(r) for r in cursor.fetchall()]
+    finally:
+        conn.close()
     return {"notifications": rows}
 
 
 @app.post("/api/notifications/{notification_id}/send")
 def send_notification(notification_id: int, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE notifications SET status = 'sent' WHERE id = ? AND user_id = ?",
-        (notification_id, current_user["id"]),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE notifications SET status = 'sent' WHERE id = ? AND user_id = ?",
+            (notification_id, current_user["id"]),
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "success", "message": "Notification marked as sent"}
 
 
@@ -1480,18 +1714,20 @@ def get_i18n_translations(payload: TranslationRequest):
 @app.get("/api/admin/quality-metrics")
 def quality_metrics(current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) as total_requests FROM request_logs")
-    total_requests = cursor.fetchone()["total_requests"]
-    cursor.execute("SELECT COUNT(*) as errors FROM request_logs WHERE status_code >= 500")
-    errors = cursor.fetchone()["errors"]
-    cursor.execute("SELECT AVG(elapsed_ms) as avg_latency FROM request_logs")
-    avg_latency = cursor.fetchone()["avg_latency"] or 0
-    cursor.execute("SELECT COUNT(*) as uploads FROM user_data")
-    uploads = cursor.fetchone()["uploads"]
-    cursor.execute("SELECT COUNT(*) as feedback_count FROM user_feedback")
-    feedback_count = cursor.fetchone()["feedback_count"]
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) as total_requests FROM request_logs")
+        total_requests = cursor.fetchone()["total_requests"]
+        cursor.execute("SELECT COUNT(*) as errors FROM request_logs WHERE status_code >= 500")
+        errors = cursor.fetchone()["errors"]
+        cursor.execute("SELECT AVG(elapsed_ms) as avg_latency FROM request_logs")
+        avg_latency = cursor.fetchone()["avg_latency"] or 0
+        cursor.execute("SELECT COUNT(*) as uploads FROM user_data")
+        uploads = cursor.fetchone()["uploads"]
+        cursor.execute("SELECT COUNT(*) as feedback_count FROM user_feedback")
+        feedback_count = cursor.fetchone()["feedback_count"]
+    finally:
+        conn.close()
     return {
         "total_requests": total_requests,
         "server_errors": errors,
