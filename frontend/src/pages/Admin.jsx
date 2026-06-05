@@ -77,33 +77,38 @@ const Admin = () => {
     toastTimerRef.current = setTimeout(() => setToast(null), 3500);
   };
 
-  const fetchAdminData = useCallback(async () => {
+  const fetchAdminData = useCallback(async (signal) => {
     setLoading(true);
     try {
       const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes] = await Promise.all([
-        api.get('/api/admin/users'),
-        api.get('/api/admin/feedback'),
-        api.get('/api/admin/registered-users'),
-        api.get('/api/admin/courses'),
-        api.get('/api/admin/analytics'),
-        api.get('/api/admin/quality-metrics').catch(() => ({ data: null })),
+        api.get('/api/admin/users', { signal }),
+        api.get('/api/admin/feedback', { signal }),
+        api.get('/api/admin/registered-users', { signal }),
+        api.get('/api/admin/courses', { signal }),
+        api.get('/api/admin/analytics', { signal }),
+        api.get('/api/admin/quality-metrics', { signal }).catch(() => ({ data: null })),
       ]);
-      setResumes(usersRes.data.users);
-      setFeedback(feedbackRes.data.feedback);
-      setRegisteredUsers(regUsersRes.data.users);
-      setCourses(coursesRes.data.courses);
+      setResumes(usersRes.data.users || []);
+      setFeedback(feedbackRes.data.feedback || []);
+      setRegisteredUsers(regUsersRes.data.users || []);
+      setCourses(coursesRes.data.courses || []);
       setAnalytics(analyticsRes.data);
       setQualityMetrics(qualityRes.data);
     } catch (_err) {
-      console.error(_err);
-      showToast('error', 'Failed to load admin data.');
+      if (_err?.name !== 'CanceledError' && _err?.code !== 'ERR_CANCELED') {
+        console.error(_err);
+        showToast('error', 'Failed to load admin data.');
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (user?.username) fetchAdminData();
+    if (!user?.username) return;
+    const controller = new AbortController();
+    fetchAdminData(controller.signal);
+    return () => controller.abort();
   }, [user?.username, fetchAdminData]);
 
   const runAction = async (label, fn, successMessage) => {

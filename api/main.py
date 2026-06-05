@@ -151,9 +151,37 @@ def get_content_hash(data: bytes) -> str:
 
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
 RESET_COOLDOWN_SECONDS = 5 * 60
+AUTH_RATE_LIMIT_PER_MINUTE = 20
 
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_LOCKOUT_MINUTES = 15
+
+
+def _check_strict_rate_limit(key: str, limit: int = AUTH_RATE_LIMIT_PER_MINUTE):
+    """Per-endpoint rate limit (stricter than global). Raises 429 if exceeded."""
+    now_minute = int(time.time() // 60)
+    bucket = f"{key}:{now_minute}"
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO rate_limits (key, count, updated_at) VALUES (?, 1, ?) "
+            "ON CONFLICT(key) DO UPDATE SET count = count + 1, updated_at = ?",
+            (bucket, now_minute, now_minute),
+        )
+        cursor.execute("SELECT count FROM rate_limits WHERE key = ?", (bucket,))
+        row = cursor.fetchone()
+        count = row["count"] if row else 1
+        conn.commit()
+        if count > limit:
+            raise HTTPException(status_code=429, detail="Too many requests. Try again in a minute.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Auth rate limit error: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 ENV = os.getenv("ENV", "development").lower()
 IS_PROD = ENV in ("production", "prod")
@@ -338,17 +366,14 @@ async def request_logging_and_rate_limit(request: Request, call_next):
     try:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM rate_limits WHERE updated_at < ?", (now_minute,))
+        cursor.execute(
+            "INSERT INTO rate_limits (key, count, updated_at) VALUES (?, 1, ?) "
+            "ON CONFLICT(key) DO UPDATE SET count = count + 1, updated_at = ?",
+            (bucket_key, now_minute, now_minute),
+        )
         cursor.execute("SELECT count FROM rate_limits WHERE key = ?", (bucket_key,))
         row = cursor.fetchone()
-        if row:
-            count = row["count"] + 1
-            cursor.execute("UPDATE rate_limits SET count = ? WHERE key = ?", (count, bucket_key))
-        else:
-            count = 1
-            cursor.execute(
-                "INSERT INTO rate_limits (key, count, updated_at) VALUES (?, ?, ?)",
-                (bucket_key, count, now_minute),
-            )
+        count = row["count"] if row else 1
         conn.commit()
         if count > RATE_LIMIT_PER_MINUTE:
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in a minute.")
@@ -397,7 +422,8 @@ async def request_logging_and_rate_limit(request: Request, call_next):
     return response
 
 @app.get("/api/auth/check-username/{username}")
-def check_username(username: str):
+def check_username(username: str, request: Request):
+    _check_strict_rate_limit(f"username-check:{_client_ip(request)}")
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -408,39 +434,40 @@ def check_username(username: str):
     return {"available": not exists}
 
 @app.post("/api/auth/register")
-def register_user(user: UserRegister):
+def register_user(user: UserRegister, request: Request):
+    _check_strict_rate_limit(f"register:{_client_ip(request)}")
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Check if username exists
-    cursor.execute("SELECT * FROM users WHERE username = ?", (user.username,))
-    if cursor.fetchone():
-        conn.close()
-        raise HTTPException(status_code=400, detail="Username already registered")
-    
-    # Check if email exists
-    cursor.execute("SELECT * FROM users WHERE email = ?", (user.email,))
-    if cursor.fetchone():
-        conn.close()
-        raise HTTPException(status_code=400, detail="Email already registered")
-        
-    hashed_password = get_password_hash(user.password)
     try:
+        cursor = conn.cursor()
+        
+        # Check if username exists
+        cursor.execute("SELECT * FROM users WHERE username = ?", (user.username,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Username already registered")
+        
+        # Check if email exists
+        cursor.execute("SELECT * FROM users WHERE email = ?", (user.email,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Email already registered")
+            
+        hashed_password = get_password_hash(user.password)
         cursor.execute(
             "INSERT INTO users (username, email, full_name, hashed_password, role) VALUES (?, ?, ?, ?, 'user')",
             (user.username, user.email, user.full_name, hashed_password)
         )
         conn.commit()
+        return {"message": "User registered successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Registration DB error for {user.username}: {e}")
-        conn.close()
         raise HTTPException(status_code=500, detail="Database Error")
-    
-    conn.close()
-    return {"message": "User registered successfully"}
+    finally:
+        conn.close()
 
 @app.post("/api/auth/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Response = None):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Response = None, request: Request = None):
+    _check_strict_rate_limit(f"login:{_client_ip(request) if request else 'unknown'}")
     username = form_data.username
     now = int(time.time())
 
@@ -526,9 +553,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Resp
     )
 
     return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
         "role": user_dict["role"],
         "full_name": user_dict.get("full_name", user_dict["username"]),
         "username": user_dict["username"]
@@ -660,7 +684,7 @@ def refresh_access_token(request: Request, payload: RefreshTokenRequest, respons
             path="/api/auth",
         )
 
-    return {"access_token": new_access_token, "refresh_token": new_refresh_token, "token_type": "bearer"}
+    return {"token_type": "bearer", "role": current_user.get("role", "user")}
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -710,8 +734,15 @@ async def analyze_resume(
     if cache_row:
         # Cache hit — reuse the result but STILL insert a new user_data row
         # so that /api/user/latest-analysis always reflects the latest upload.
-        final_response_payload = json.loads(cache_row["result_json"])
-        logger.info(f"Cache hit for {safe_filename} — reusing result, saving new user_data row")
+        try:
+            final_response_payload = json.loads(cache_row["result_json"])
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(f"Corrupt cache entry for {safe_filename}, deleting and re-parsing")
+            cursor.execute("DELETE FROM analysis_cache WHERE content_hash = ? AND target_role = ?", (content_hash, t_role))
+            conn.commit()
+            cache_row = None
+        else:
+            logger.info(f"Cache hit for {safe_filename} — reusing result, saving new user_data row")
         try:
             sec_token = secrets.token_hex(16)
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -915,50 +946,47 @@ async def analyze_resume(
             }
         }
 
-        try:
-            cache_expires = int(time.time()) + 7 * 24 * 3600
-            cursor.execute(
-                "INSERT INTO analysis_cache (content_hash, target_role, result_json, expires_at) VALUES (?, ?, ?, ?) "
-                "ON CONFLICT(content_hash, target_role) DO UPDATE SET result_json = excluded.result_json, expires_at = excluded.expires_at",
-                (content_hash, t_role, json.dumps(final_response_payload), cache_expires),
-            )
+        cache_expires = int(time.time()) + 7 * 24 * 3600
+        cursor.execute(
+            "INSERT INTO analysis_cache (content_hash, target_role, result_json, expires_at) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(content_hash, target_role) DO UPDATE SET result_json = excluded.result_json, expires_at = excluded.expires_at",
+            (content_hash, t_role, json.dumps(final_response_payload), cache_expires),
+        )
 
-            cursor.execute(
-                """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    sec_token,
-                    resume_data.get('name') or 'N/A',
-                    resume_data.get('email') or 'N/A',
-                    resume_data.get('mobile_number') or 'N/A',
-                    resume_data.get('name') or 'N/A',
-                    resume_data.get('email') or 'N/A',
-                    str(resume_score),
-                    timestamp,
-                    str(resume_data.get('no_of_pages', 1)),
-                    predicted_field,
-                    "Unknown Level",
-                    ", ".join(skills) if skills else "",
-                    ", ".join(recommended_skills) if recommended_skills else "",
-                    "Courses mapped via API",
-                    safe_filename,
-                    t_role,
-                    missing_skills_str,
-                    u_id,
-                    json.dumps(final_response_payload)
-                )
+        cursor.execute(
+            """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                sec_token,
+                resume_data.get('name') or 'N/A',
+                resume_data.get('email') or 'N/A',
+                resume_data.get('mobile_number') or 'N/A',
+                resume_data.get('name') or 'N/A',
+                resume_data.get('email') or 'N/A',
+                str(resume_score),
+                timestamp,
+                str(resume_data.get('no_of_pages', 1)),
+                predicted_field,
+                "Unknown Level",
+                ", ".join(skills) if skills else "",
+                ", ".join(recommended_skills) if recommended_skills else "",
+                "Courses mapped via API",
+                safe_filename,
+                t_role,
+                missing_skills_str,
+                u_id,
+                json.dumps(final_response_payload)
             )
-            conn.commit()
-        except Exception as db_error:
-            conn.rollback()
-            logger.error(f"Database error during analysis: {db_error}")
-            raise HTTPException(status_code=500, detail="An error occurred processing your resume.")
-        finally:
-            conn.close()
+        )
+        conn.commit()
 
         return final_response_payload
 
+    except Exception as parse_error:
+        logger.error(f"Analysis error for {safe_filename}: {parse_error}")
+        raise
     finally:
+        conn.close()
         if tmp_path and os.path.exists(tmp_path):
             try:
                 os.remove(tmp_path)
@@ -1270,7 +1298,7 @@ def get_user_history(current_user: dict = Depends(get_current_user)):
             "timestamp": row['Timestamp'],
             "predicted_field": row['Predicted_Field'],
             "target_role": row['target_role'],
-            "resume_score": float(row['resume_score']),
+            "resume_score": float(row['resume_score']) if row['resume_score'] else 0,
             "missing_skills": row['missing_skills'].split(',') if row['missing_skills'] else [],
             "actual_skills": row['Actual_skills'].split(',') if row['Actual_skills'] else [],
             "recommended_skills": row['Recommended_skills'].split(',') if row['Recommended_skills'] else [],
@@ -1322,7 +1350,8 @@ def delete_user_analysis(analysis_id: int, current_user: dict = Depends(get_curr
 
 
 @app.post("/api/auth/request-password-reset")
-def request_password_reset(payload: PasswordResetRequest):
+def request_password_reset(payload: PasswordResetRequest, request: Request):
+    _check_strict_rate_limit(f"pwd-reset:{_client_ip(request)}")
     conn = get_db_connection()
     try:
         cursor = conn.cursor()

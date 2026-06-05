@@ -6,7 +6,9 @@ COPY api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY api/ ./api/
-COPY .env* ./
+
+RUN adduser --disabled-password --no-create-home appuser
+USER appuser
 
 EXPOSE 8000
 

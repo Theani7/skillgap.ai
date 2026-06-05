@@ -63,7 +63,7 @@ const Layout = () => {
         background: 'var(--color-bg)',
       }}
     >
-      {user ? <Sidebar /> : <Navigate to="/login" replace />}
+      {user ? <ErrorBoundary><Sidebar /></ErrorBoundary> : <Navigate to="/login" replace />}
       <main
         style={{
           flex: 1, minWidth: 0,
