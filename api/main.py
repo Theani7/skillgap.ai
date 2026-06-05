@@ -96,7 +96,6 @@ def _validate_env():
         logger.error(msg)
         raise RuntimeError(msg)
 
-_validate_env()
 # ---------------------------------------------------------------------------
 
 app = FastAPI(title="AI Resume Analyzer API")
@@ -137,6 +136,8 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 logger = logging.getLogger("resume-analyzer")
 logging.basicConfig(level=logging.INFO)
+
+_validate_env()
 
 # Bump this when scoring/parsing logic changes to auto-invalidate stale cache entries.
 _CACHE_VERSION = 2
