@@ -1,21 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { API_URL } from '../services/env';
-import { UserPlus, Zap, Eye, EyeOff, Check, X, Loader } from 'lucide-react';
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 14px',
-  border: '1px solid var(--color-border)',
-  borderRadius: 'var(--radius-lg)',
-  fontSize: 'var(--text-sm)',
-  color: 'var(--color-text)',
-  background: 'var(--color-surface)',
-  outline: 'none',
-  transition: 'border-color 150ms ease, box-shadow 150ms ease',
-  height: '44px',
-  boxSizing: 'border-box',
-};
+import {
+  ArrowRight, UserPlus, Mail, Lock, User,
+  Check, X, Eye, EyeOff, CheckCircle,
+} from 'lucide-react';
+import AuthShell from '../components/AuthShell';
 
 const getStrength = (pw) => {
   let score = 0;
@@ -29,7 +19,7 @@ const getStrength = (pw) => {
 };
 
 const strengthLabel = ['', 'Weak', 'Weak', 'Fair', 'Good', 'Strong'];
-const strengthColor = ['', 'var(--color-error)', 'var(--color-error)', 'var(--color-warning)', '#4F46E5', 'var(--color-success)'];
+const strengthColor = ['', 'var(--color-error)', 'var(--color-error)', 'var(--color-warning)', 'var(--color-primary)', 'var(--color-success)'];
 
 const Register = () => {
   const [firstName, setFirstName] = useState('');
@@ -37,17 +27,17 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [usernameStatus, setUsernameStatus] = useState('idle'); // idle | checking | available | taken
+  const [usernameStatus, setUsernameStatus] = useState('idle');
   const navigate = useNavigate();
 
-  // Debounced username check
   useEffect(() => {
     if (username.length < 3) {
       setUsernameStatus('idle');
-      return;
+      return undefined;
     }
     const timer = setTimeout(async () => {
       setUsernameStatus('checking');
@@ -55,7 +45,7 @@ const Register = () => {
         const res = await fetch(`${API_URL}/api/auth/check-username/${encodeURIComponent(username)}`);
         const data = await res.json();
         setUsernameStatus(data.available ? 'available' : 'taken');
-      } catch {
+      } catch (_err) {
         setUsernameStatus('idle');
       }
     }, 400);
@@ -65,12 +55,17 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (usernameStatus === 'taken') return;
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
     setError('');
     setLoading(true);
 
     try {
       const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username,
@@ -81,315 +76,274 @@ const Register = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        navigate('/login');
+        navigate('/login', { state: { justRegistered: true } });
       } else {
-        setError(data.detail?.[0]?.msg || data.detail || 'Registration failed');
+        setError(data.detail?.[0]?.msg || data.detail || 'Registration failed. Check your details and try again.');
       }
-    } catch {
-      setError('Unable to connect to server. Please try again.');
+    } catch (_err) {
+      setError('Unable to reach the server. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const strength = getStrength(password);
-  const canSubmit = username.length >= 3 && usernameStatus === 'available' && password.length >= 6 && firstName && lastName && email;
+  const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
+  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+
+  const canSubmit =
+    username.length >= 3 &&
+    usernameStatus === 'available' &&
+    password.length >= 6 &&
+    passwordsMatch &&
+    firstName && lastName && email &&
+    !loading;
+
+  const footer = (
+    <>
+      Already have an account?{' '}
+      <Link to="/login">Sign in →</Link>
+    </>
+  );
+
+  const usernameBorderColor =
+    usernameStatus === 'taken' ? 'var(--color-error)'
+    : usernameStatus === 'available' ? 'var(--color-success)'
+    : undefined;
+
+  const confirmBorderColor =
+    passwordsMatch ? 'var(--color-success)'
+    : passwordsMismatch ? 'var(--color-error)'
+    : undefined;
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'var(--color-bg)',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      {/* Subtle background glow */}
-      <div style={{
-        position: 'absolute', top: '-120px', right: '-120px', width: '400px', height: '400px',
-        borderRadius: '50%', opacity: 0.08, pointerEvents: 'none',
-        background: 'radial-gradient(circle, var(--color-primary) 0%, transparent 70%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-120px', left: '-120px', width: '400px', height: '400px',
-        borderRadius: '50%', opacity: 0.06, pointerEvents: 'none',
-        background: 'radial-gradient(circle, var(--color-secondary) 0%, transparent 70%)',
-      }} />
+    <AuthShell
+      eyebrow="Create account"
+      title="Set up your workspace"
+      subtitle="One account, free to use. Your analyses and job tracker stay tied to this email."
+      footer={footer}
+    >
+      {error && (
+        <div className="auth-error" role="alert">
+          <span className="auth-error-icon" aria-hidden="true">!</span>
+          <span>{error}</span>
+        </div>
+      )}
 
-      {/* Top bar */}
-      <div style={{
-        borderBottom: '1px solid var(--color-border)',
-        background: 'var(--color-surface)',
-        position: 'relative',
-        zIndex: 1,
-      }}>
-        <div className="container flex items-center justify-between" style={{ height: '56px' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <div style={{
-              width: '26px', height: '26px', borderRadius: '5px',
-              background: 'var(--color-primary)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Zap size={13} color="white" />
+      <form onSubmit={handleSubmit} className="auth-form-stack" noValidate>
+        <div className="auth-row-2">
+          <div className="auth-field">
+            <label className="auth-field-label" htmlFor="reg-first">First name</label>
+            <div className="auth-input-wrap">
+              <input
+                id="reg-first" type="text" value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required autoComplete="given-name"
+                placeholder="First"
+                className="auth-input has-icon"
+                style={{ paddingLeft: '40px' }}
+              />
+              <User size={16} style={{
+                position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
+                color: 'var(--color-text-light)', pointerEvents: 'none',
+              }} />
             </div>
-            <span style={{ fontWeight: 'var(--font-extrabold)', fontSize: '15px', color: 'var(--color-text)', letterSpacing: 'var(--tracking-tight)' }}>
-              SkillGap.ai
-            </span>
-          </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link to="/login" style={{
-              fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)',
-              color: 'white', background: 'var(--color-text)',
-              padding: '8px 18px', borderRadius: 'var(--radius-lg)', textDecoration: 'none',
-            }}>
-              Sign In
-            </Link>
+          </div>
+
+          <div className="auth-field">
+            <label className="auth-field-label" htmlFor="reg-last">Last name</label>
+            <div className="auth-input-wrap">
+              <input
+                id="reg-last" type="text" value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required autoComplete="family-name"
+                placeholder="Last"
+                className="auth-input has-icon"
+                style={{ paddingLeft: '40px' }}
+              />
+              <User size={16} style={{
+                position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
+                color: 'var(--color-text-light)', pointerEvents: 'none',
+              }} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px',
-        position: 'relative', zIndex: 1,
-      }}>
-        <div style={{ width: '100%', maxWidth: '440px' }}>
-          <div className="card" style={{ padding: '36px 32px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-              <h1 style={{
-                fontSize: '22px', fontWeight: 700, color: 'var(--color-text)',
-                margin: '0 0 4px',
-              }}>
-                Create account
-              </h1>
-              <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', margin: 0 }}>
-                Start your career transformation
-              </p>
-            </div>
-
-            {error && (
-              <div style={{
-                background: 'var(--color-error-light)',
-                color: 'var(--color-error)',
-                fontSize: '13px', fontWeight: 500,
-                padding: '10px 14px', borderRadius: 'var(--radius-lg)',
-                marginBottom: '20px', textAlign: 'center',
-              }}>
-                {error}
-              </div>
+        <div className="auth-field">
+          <label className="auth-field-label" htmlFor="reg-username">
+            Username
+            {usernameStatus === 'available' && (
+              <span className="auth-hint auth-hint-success" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Check size={11} /> Available
+              </span>
             )}
+            {usernameStatus === 'taken' && (
+              <span className="auth-hint auth-hint-error" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <X size={11} /> Taken
+              </span>
+            )}
+          </label>
+          <div className="auth-input-wrap">
+            <input
+              id="reg-username" type="text" value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required minLength={3} autoComplete="username"
+              placeholder="choose-a-handle"
+              className="auth-input has-icon"
+              style={{
+                paddingLeft: '40px', paddingRight: usernameStatus === 'idle' ? '14px' : '40px',
+                borderColor: usernameBorderColor,
+              }}
+            />
+            <span style={{
+              position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
+              color: 'var(--color-text-light)', pointerEvents: 'none', fontWeight: 600, fontSize: '14px',
+            }}>@</span>
+            <div className="auth-input-status">
+              {usernameStatus === 'checking' && <span className="spinner" />}
+              {usernameStatus === 'available' && <Check size={16} color="var(--color-success)" />}
+              {usernameStatus === 'taken' && <X size={16} color="var(--color-error)" />}
+            </div>
+          </div>
+          {usernameStatus === 'idle' && username.length > 0 && username.length < 3 && (
+            <p className="auth-hint auth-hint-muted">Minimum 3 characters.</p>
+          )}
+        </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              {/* First + Last Name */}
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{ flex: 1 }}>
-                  <label className="label">First Name</label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    placeholder="First"
-                    style={inputStyle}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label className="label">Last Name</label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                    placeholder="Last"
-                    style={inputStyle}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
-                  />
-                </div>
-              </div>
+        <div className="auth-field">
+          <label className="auth-field-label" htmlFor="reg-email">Email</label>
+          <div className="auth-input-wrap">
+            <input
+              id="reg-email" type="email" value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required autoComplete="email"
+              placeholder="you@example.com"
+              className="auth-input has-icon"
+              style={{ paddingLeft: '40px' }}
+            />
+            <Mail size={16} style={{
+              position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
+              color: 'var(--color-text-light)', pointerEvents: 'none',
+            }} />
+          </div>
+        </div>
 
-              {/* Username with availability */}
-              <div>
-                <label className="label">Username</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    minLength={3}
-                    placeholder="Choose a username"
-                    style={{
-                      ...inputStyle,
-                      paddingRight: '40px',
-                      borderColor: usernameStatus === 'taken' ? 'var(--color-error)' :
-                                   usernameStatus === 'available' ? 'var(--color-success)' :
-                                   username.length >= 3 && usernameStatus === 'idle' ? 'var(--color-border)' : 'var(--color-border)',
-                    }}
-                    onFocus={(e) => {
-                      if (usernameStatus !== 'taken' && usernameStatus !== 'available') {
-                        e.target.style.borderColor = 'var(--color-primary)';
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (usernameStatus !== 'taken' && usernameStatus !== 'available') {
-                        e.target.style.borderColor = 'var(--color-border)';
-                      }
-                    }}
-                  />
-                  {/* Status icon */}
-                  <div style={{
-                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                    pointerEvents: 'none',
-                  }}>
-                    {usernameStatus === 'checking' && (
-                      <Loader size={16} style={{ animation: 'spin 0.8s linear infinite', color: 'var(--color-text-light)' }} />
-                    )}
-                    {usernameStatus === 'available' && (
-                      <Check size={16} color="var(--color-success)" />
-                    )}
-                    {usernameStatus === 'taken' && (
-                      <X size={16} color="var(--color-error)" />
-                    )}
-                  </div>
-                </div>
-                {usernameStatus === 'taken' && (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-error)' }}>
-                    Username is already taken
-                  </p>
-                )}
-                {usernameStatus === 'available' && (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-success)' }}>
-                    Username is available
-                  </p>
-                )}
-                {username.length > 0 && username.length < 3 && usernameStatus === 'idle' && (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-light)' }}>
-                    Minimum 3 characters
-                  </p>
-                )}
-              </div>
+        <div className="auth-field">
+          <label className="auth-field-label" htmlFor="reg-password">
+            Password
+            <button
+              type="button"
+              onClick={() => setShowPasswords((s) => !s)}
+              className="auth-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              tabIndex={-1}
+            >
+              {showPasswords ? <EyeOff size={12} /> : <Eye size={12} />}
+              {showPasswords ? 'Hide' : 'Show'}
+            </button>
+          </label>
+          <div className="auth-input-wrap">
+            <input
+              id="reg-password"
+              type={showPasswords ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required minLength={6} autoComplete="new-password"
+              placeholder="At least 6 characters"
+              className="auth-input has-icon"
+              style={{ paddingLeft: '40px' }}
+            />
+            <Lock size={16} style={{
+              position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
+              color: 'var(--color-text-light)', pointerEvents: 'none',
+            }} />
+          </div>
 
-              {/* Email */}
-              <div>
-                <label className="label">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="Enter your email"
-                  style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
+          {password.length > 0 && (
+            <div style={{ marginTop: '6px' }}>
+              <div className="auth-password-strength">
+                <div
+                  className="auth-password-strength-bar"
+                  style={{
+                    width: `${(strength / 5) * 100}%`,
+                    background: strengthColor[strength],
+                  }}
                 />
               </div>
-
-              {/* Password with strength */}
-              <div>
-                <label className="label">Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    placeholder="Create a password"
-                    style={{
-                      ...inputStyle,
-                      paddingRight: '40px',
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--color-text-light)', padding: '4px',
-                      display: 'flex', alignItems: 'center',
-                    }}
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-
-                {/* Strength bar */}
-                {password.length > 0 && (
-                  <div style={{ marginTop: '8px' }}>
-                    <div style={{
-                      height: '4px', borderRadius: '2px', background: 'var(--color-border)',
-                      overflow: 'hidden', marginBottom: '4px',
-                    }}>
-                      <div style={{
-                        height: '100%', borderRadius: '2px',
-                        width: `${(strength / 5) * 100}%`,
-                        background: strengthColor[strength],
-                        transition: 'width 200ms ease, background 200ms ease',
-                      }} />
-                    </div>
-                    <p style={{
-                      margin: 0, fontSize: '11px', fontWeight: 500,
-                      color: strengthColor[strength] || 'var(--color-text-light)',
-                    }}>
-                      {strengthLabel[strength]}
-                      {strength < 5 && strength > 0 && ` — add uppercase, numbers, or symbols for a stronger password`}
-                    </p>
-                  </div>
+              <p className="auth-hint" style={{ color: strengthColor[strength] || 'var(--color-text-light)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {strength >= 4 ? <CheckCircle size={12} /> : null}
+                {strengthLabel[strength]}
+                {strength < 5 && strength > 0 && (
+                  <span className="auth-hint-muted">— try mixing uppercase, numbers, and symbols.</span>
                 )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || !canSubmit}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  width: '100%', height: '44px', padding: '0 20px',
-                  borderRadius: 'var(--radius-lg)', border: 'none',
-                  background: !canSubmit ? 'var(--color-border)' :
-                              loading ? 'var(--color-text-light)' : 'var(--color-text)',
-                  color: !canSubmit ? 'var(--color-text-light)' : 'white',
-                  fontWeight: 600, fontSize: '14px',
-                  cursor: !canSubmit || loading ? 'not-allowed' : 'pointer',
-                  transition: 'background 150ms ease',
-                  marginTop: '4px',
-                }}
-              >
-                {loading ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{
-                      width: '14px', height: '14px',
-                      border: '2px solid rgba(255,255,255,0.3)',
-                      borderTopColor: 'white', borderRadius: '50%',
-                      display: 'inline-block',
-                      animation: 'spin 0.8s linear infinite',
-                    }} />
-                    Creating account...
-                  </span>
-                ) : (
-                  <><UserPlus size={15} /> Create Account</>
-                )}
-              </button>
-
-              <p style={{
-                textAlign: 'center', fontSize: '13px',
-                color: 'var(--color-text-muted)', margin: '4px 0 0',
-              }}>
-                Already have an account?{' '}
-                <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none' }}>
-                  Sign In
-                </Link>
               </p>
-            </form>
-          </div>
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+
+        <div className="auth-field">
+          <label className="auth-field-label" htmlFor="reg-confirm">
+            Confirm password
+            {passwordsMatch && (
+              <span className="auth-hint auth-hint-success" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Check size={11} /> Matches
+              </span>
+            )}
+            {passwordsMismatch && (
+              <span className="auth-hint auth-hint-error" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <X size={11} /> Doesn't match
+              </span>
+            )}
+          </label>
+          <div className="auth-input-wrap">
+            <input
+              id="reg-confirm"
+              type={showPasswords ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required minLength={6} autoComplete="new-password"
+              placeholder="Re-enter your password"
+              className="auth-input has-icon"
+              style={{
+                paddingLeft: '40px',
+                paddingRight: (passwordsMatch || passwordsMismatch) ? '40px' : '14px',
+                borderColor: confirmBorderColor,
+              }}
+            />
+            <Lock size={16} style={{
+              position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
+              color: 'var(--color-text-light)', pointerEvents: 'none',
+            }} />
+            <div className="auth-input-status">
+              {passwordsMatch && <Check size={16} color="var(--color-success)" />}
+              {passwordsMismatch && <X size={16} color="var(--color-error)" />}
+            </div>
+          </div>
+          {passwordsMismatch && (
+            <p className="auth-hint auth-hint-error">Passwords do not match — please re-enter.</p>
+          )}
+        </div>
+
+        <button type="submit" className="auth-submit" disabled={!canSubmit}>
+          {loading ? (
+            <>
+              <span className="spinner-btn" aria-hidden="true" />
+              Creating your account...
+            </>
+          ) : (
+            <>
+              <UserPlus size={16} />
+              Create account
+              <ArrowRight size={16} />
+            </>
+          )}
+        </button>
+
+        <p className="auth-terms">
+          By creating an account you agree to our Terms of Service and Privacy Policy. Free to use, no subscription, no card.
+        </p>
+      </form>
+    </AuthShell>
   );
 };
 

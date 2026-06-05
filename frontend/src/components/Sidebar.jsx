@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Zap, Sparkles, Briefcase, FileText, Settings, User, Shield, LogOut,
-  Menu, X, ChevronLeft, ChevronRight, BarChart3,
+  Menu, X, BarChart3, FileSearch, AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
@@ -15,6 +15,7 @@ const SECTIONS = [
     label: 'Analyze',
     items: [
       { path: '/app', icon: Sparkles, label: 'Resume Analyzer' },
+      { path: '/analysis', icon: FileSearch, label: 'Latest Analysis' },
       { path: '/cover-letter', icon: FileText, label: 'Cover Letter' },
     ],
   },
@@ -41,6 +42,7 @@ const Sidebar = () => {
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const userMenuRef = useRef(null);
 
   useEffect(() => {
@@ -303,7 +305,7 @@ const Sidebar = () => {
               </Link>
               <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 0' }} />
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutConfirm(true)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   padding: '8px 10px', borderRadius: 'var(--radius-md)',
@@ -419,6 +421,77 @@ const Sidebar = () => {
           .sidebar-mobile-trigger { display: flex !important; }
         }
       `}</style>
+
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowLogoutConfirm(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 910,
+              background: 'rgba(15, 15, 30, 0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '24px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#FFFFFF', border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '380px',
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.3)', padding: '28px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{
+                width: 52, height: 52, borderRadius: 14,
+                background: 'var(--color-error-light)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 16,
+              }}>
+                <AlertTriangle size={24} color="var(--color-error)" />
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 }}>
+                Log out of your account?
+              </h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 24, lineHeight: 1.5 }}>
+                You'll need to sign in again to access your analyses and saved data.
+              </p>
+              <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 10,
+                    border: '1.5px solid var(--color-border)', background: '#FFFFFF',
+                    color: 'var(--color-text)', fontWeight: 600, fontSize: '0.9rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 10,
+                    border: 'none', background: 'var(--color-error)',
+                    color: 'white', fontWeight: 600, fontSize: '0.9rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Log out
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

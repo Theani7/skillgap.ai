@@ -37,3 +37,10 @@ build/
 .idea/
 .vscode/
 *.swp
+
+# Agent config files
+CLAUDE.md
+claude.md
+GEMINI.md
+gemini.md
+docs/superpowers

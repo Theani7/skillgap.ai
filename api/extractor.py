@@ -76,6 +76,12 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
     Determine what crucial skills the candidate is missing for that role, and return them as an array of strings in 'missing_skills'.
     Estimate how well the candidate's qualifications match the target role as an integer percentage (0-100) in 'match_score'. If no target role is explicitly provided, evaluate them based on their most prominent apparent field.
 
+    CRITICAL — STRUCTURED EXPERIENCE & EDUCATION:
+    You MUST populate 'experience_blocks' and 'education_blocks' as structured arrays.
+    For each experience entry, extract: title, company, start_date, end_date, bullets (array of strings).
+    For each education entry, extract: degree, institution, year.
+    These structured fields are required by the frontend. Do NOT leave them empty if the resume contains experience or education.
+
     CRITICAL NEW INSTRUCTION - ROADMAP:
     Generate a highly personalized, 4-phase chronological learning path aimed at helping the user master their 'missing_skills' and secure the target role (or next logical career step). 
     Return this in the 'roadmap' array. Each phase must include specific 'action_items'. Make the advice practical and actionable.
@@ -100,12 +106,44 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
             "education": {
                 "type": "ARRAY",
                 "items": {"type": "STRING"},
-                "description": "List of degrees, universities, and graduation years."
+                "description": "List of degrees, universities, and graduation years (flat strings for backward compat)."
+            },
+            "education_blocks": {
+                "type": "ARRAY",
+                "items": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "degree": {"type": "STRING", "description": "e.g. B.S., M.S., MBA, Ph.D."},
+                        "institution": {"type": "STRING", "description": "University or college name"},
+                        "year": {"type": "STRING", "description": "Graduation year, e.g. 2020"}
+                    },
+                    "required": ["degree", "institution", "year"]
+                },
+                "description": "Structured education entries."
             },
             "experience": {
                 "type": "ARRAY",
                 "items": {"type": "STRING"},
-                "description": "List of roles, companies, and descriptions."
+                "description": "List of roles, companies, and descriptions (flat strings for backward compat)."
+            },
+            "experience_blocks": {
+                "type": "ARRAY",
+                "items": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "title": {"type": "STRING", "description": "Job title"},
+                        "company": {"type": "STRING", "description": "Company name"},
+                        "start_date": {"type": "STRING", "description": "e.g. Jan 2020"},
+                        "end_date": {"type": "STRING", "description": "e.g. Present, Dec 2023"},
+                        "bullets": {
+                            "type": "ARRAY",
+                            "items": {"type": "STRING"},
+                            "description": "Bullet-point accomplishments for this role"
+                        }
+                    },
+                    "required": ["title", "company", "start_date", "end_date", "bullets"]
+                },
+                "description": "Structured experience entries with title, company, dates, and bullet points."
             },
             "company_names": {
                 "type": "ARRAY",
@@ -151,7 +189,7 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
                 "description": "A 4-phase personalized chronological learning path."
             }
         },
-        "required": ["name", "email", "skills", "education", "experience", "roadmap"]
+        "required": ["name", "email", "skills", "education", "experience", "experience_blocks", "education_blocks", "roadmap"]
     }
 
     try:

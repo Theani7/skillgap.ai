@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Briefcase, Plus, Trash2, Edit2, Save, X, MapPin, DollarSign, ExternalLink,
   CheckCircle, Clock, XCircle, AlertCircle, Send, Search, Sparkles, Calendar, FileText, TrendingUp, ArrowUpRight,
+  AlertTriangle, AlertOctagon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageLoader from '../components/Skeleton';
@@ -432,6 +433,8 @@ const Jobs = () => {
   const [editingJob, setEditingJob] = useState(null);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -446,6 +449,7 @@ const Jobs = () => {
       setApplications(res.data.applications || []);
     } catch (err) {
       console.error(err);
+      setError('Failed to load applications. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -479,9 +483,11 @@ const Jobs = () => {
       }
       setShowForm(false);
       setEditingJob(null);
+      setError('');
       fetchApplications();
     } catch (err) {
       console.error(err);
+      setError(editingJob ? 'Failed to update application.' : 'Failed to save application.');
     }
   };
 
@@ -494,19 +500,29 @@ const Jobs = () => {
     try {
       await api.patch(`/api/jobs/applications/${appId}`, { status: newStatus });
       setApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, status: newStatus } : a)));
+      setError('');
     } catch (err) {
       console.error(err);
+      setError('Failed to update status.');
       fetchApplications();
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this application?')) return;
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget;
+    setDeleteTarget(null);
     try {
       await api.delete(`/api/jobs/applications/${id}`);
       setApplications((prev) => prev.filter((a) => a.id !== id));
+      setError('');
     } catch (err) {
       console.error(err);
+      setError('Failed to delete application.');
     }
   };
 
@@ -598,6 +614,34 @@ const Jobs = () => {
             </button>
           </div>
         </motion.div>
+
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              style={{
+                padding: '12px 16px', marginBottom: '20px',
+                background: 'var(--color-error-light)', color: 'var(--color-error)',
+                border: '1px solid #FECACA', borderRadius: 'var(--radius-lg)',
+                fontSize: '14px', fontWeight: 'var(--font-semibold)',
+                display: 'flex', alignItems: 'center', gap: '8px',
+              }}
+            >
+              <AlertOctagon size={16} />
+              {error}
+              <button
+                onClick={() => setError('')}
+                style={{
+                  marginLeft: 'auto', background: 'transparent', border: 'none',
+                  color: 'var(--color-error)', cursor: 'pointer', padding: '2px',
+                  display: 'flex', alignItems: 'center',
+                }}
+              >
+                <X size={14} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {matches.length > 0 && (
           <motion.div
@@ -931,6 +975,77 @@ const Jobs = () => {
           initialData={editingAppData}
           editingId={editingJob}
         />
+
+        <AnimatePresence>
+          {deleteTarget && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteTarget(null)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 910,
+                background: 'rgba(15, 15, 30, 0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '24px',
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2 }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: '#FFFFFF', border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '380px',
+                  boxShadow: '0 24px 64px rgba(0, 0, 0, 0.3)', padding: '28px',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{
+                  width: 52, height: 52, borderRadius: 14,
+                  background: 'var(--color-error-light)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginBottom: 16,
+                }}>
+                  <AlertTriangle size={24} color="var(--color-error)" />
+                </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 }}>
+                  Delete this application?
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 24, lineHeight: 1.5 }}>
+                  This action can't be undone. The application record will be permanently removed.
+                </p>
+                <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+                  <button
+                    onClick={() => setDeleteTarget(null)}
+                    style={{
+                      flex: 1, padding: '10px 0', borderRadius: 10,
+                      border: '1.5px solid var(--color-border)', background: '#FFFFFF',
+                      color: 'var(--color-text)', fontWeight: 600, fontSize: '0.9rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    style={{
+                      flex: 1, padding: '10px 0', borderRadius: 10,
+                      border: 'none', background: 'var(--color-error)',
+                      color: 'white', fontWeight: 600, fontSize: '0.9rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

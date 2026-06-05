@@ -174,7 +174,10 @@ const CoverLetter = () => {
     await generate(nextTone, length);
   };
 
-  const setField = (key) => (value) => setFormData((prev) => ({ ...prev, [key]: value }));
+  const setField = (key) => (e) => {
+    const value = e?.target ? e.target.value : e;
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
 
   return (
     <div style={{
