@@ -178,17 +178,37 @@ AI-Resume-Analyzer/
 
 ### Prerequisites
 
-- **Node.js** (v16 or higher)
-- **Python** (v3.9 or higher)
+- **Node.js** v22 (see `.node-version`)
+- **Python** v3.11 (see `.python-version`)
 - **Google Gemini API Key** (Available free at [Google AI Studio](https://aistudio.google.com/))
 
-### Step 1: Clone and Navigate
+> **Tip:** Use [nvm](https://github.com/nvm-sh nvm) and [pyenv](https://github.com/pyenv/pyenv) to match the exact versions.
+
+### Option A: Docker (recommended)
+
+One command gets everything running:
 
 ```bash
-cd AI-Resume-Analyzer
+docker compose up --build
 ```
 
-### Step 2: Configure Environment
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8000`
+
+To stop and remove volumes:
+
+```bash
+docker compose down -v
+```
+
+### Option B: Manual Setup
+
+#### Step 1: Clone and Configure
+
+```bash
+cd skillgap.ai
+cp .env.example .env   # or create .env manually
+```
 
 Create a `.env` file in the root directory:
 
@@ -215,11 +235,11 @@ THEIRSTACK_RESULT_LIMIT=5
 RATE_LIMIT_PER_MINUTE=120
 ```
 
-### Step 3: Set Up Backend
+#### Step 2: Set Up Backend
 
 ```bash
 # Create and activate virtual environment
-python -m venv venvapp
+python3 -m venv venvapp
 source venvapp/bin/activate  # macOS/Linux
 # venvapp\Scripts\activate  # Windows
 
@@ -232,7 +252,7 @@ uvicorn api.main:app --reload --port 8000
 
 The backend runs at `http://localhost:8000`
 
-### Step 4: Set Up Frontend
+#### Step 3: Set Up Frontend
 
 Open a new terminal:
 
