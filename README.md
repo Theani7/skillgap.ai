@@ -222,19 +222,6 @@ ENV=development
 
 `JWT_SECRET_KEY` is required in production. In development a per-process random key is used (sessions reset on restart).
 
-Optional - Enable live job market trends:
-
-```env
-MARKET_DATA_PROVIDER=theirstack
-THEIRSTACK_API_KEY=your_theirstack_api_key_here
-THEIRSTACK_BASE_URL=https://api.theirstack.com/v1
-THEIRSTACK_TRENDS_ENDPOINT=/market/trends
-THEIRSTACK_CACHE_TTL_SECONDS=21600
-THEIRSTACK_TIMEOUT_SECONDS=15
-THEIRSTACK_RESULT_LIMIT=5
-RATE_LIMIT_PER_MINUTE=120
-```
-
 #### Step 2: Set Up Backend
 
 ```bash
