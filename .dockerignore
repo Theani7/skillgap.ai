@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+venvapp
+api/cv.db
+api/cv.db-wal
+api/cv.db-shm
+__pycache__
+*.pyc
+.env
+*.log
+frontend/dist
+.pytest_cache
+docs

@@ -58,3 +58,29 @@ jobs:
           JWT_SECRET_KEY: ci-test-secret-key-at-least-32-chars
           DB_FILE: ":memory:"
           ENV: development
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [frontend, backend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -f Dockerfile.backend -t skillgap-backend .
+
+      - name: Build frontend image
+        run: docker build -f Dockerfile.frontend -t skillgap-frontend .
+
+      - name: Smoke test backend container
+        run: |
+          docker run -d --name backend-test \
+            -e GEMINI_API_KEY=test-key \
+            -e JWT_SECRET_KEY=ci-test-secret-key-at-least-32-chars \
+            -e DB_FILE=:memory: \
+            -e ENV=development \
+            -e CORS_ORIGINS=http://localhost:5173 \
+            -p 8000:8000 \
+            skillgap-backend
+          sleep 5
+          curl -sf http://localhost:8000/api/health || exit 1
+          docker stop backend-test
