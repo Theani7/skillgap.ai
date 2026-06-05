@@ -76,11 +76,12 @@ jobs:
           docker run -d --name backend-test \
             -e GEMINI_API_KEY=test-key \
             -e JWT_SECRET_KEY=ci-test-secret-key-at-least-32-chars \
-            -e DB_FILE=:memory: \
+            -e DB_FILE=":memory:" \
             -e ENV=development \
             -e CORS_ORIGINS=http://localhost:5173 \
             -p 8000:8000 \
             skillgap-backend
-          sleep 5
+          sleep 8
+          docker logs backend-test
           curl -sf http://localhost:8000/api/health || exit 1
           docker stop backend-test
