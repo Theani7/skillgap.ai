@@ -58,10 +58,16 @@ def _load_user(username: str) -> Optional[dict]:
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT id, username, email, full_name, role, created_at FROM users WHERE username = ?",
-            (username,),
-        )
+        try:
+            cursor.execute(
+                "SELECT id, username, email, full_name, role, created_at FROM users WHERE username = ?",
+                (username,),
+            )
+        except Exception:
+            cursor.execute(
+                "SELECT id, username, email, full_name, role FROM users WHERE username = ?",
+                (username,),
+            )
         user = cursor.fetchone()
         return dict(user) if user else None
     finally:
