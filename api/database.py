@@ -116,7 +116,7 @@ def init_db():
             )
         ''')
 
-        _ensure_column(cursor, 'users', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        _ensure_column(cursor, 'users', 'created_at', 'TEXT')
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS market_trends_cache (
