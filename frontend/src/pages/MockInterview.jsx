@@ -23,11 +23,19 @@ export default function MockInterview() {
 
   useEffect(() => {
     if (!selectedRole) return;
-    setLoading(true);
-    setExpanded({});
-    axios.get(`${API}/api/mock-interview/${encodeURIComponent(selectedRole)}`)
-      .then(res => setQuestions(res.data.questions))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    const load = async () => {
+      setExpanded({});
+      setLoading(true);
+      try {
+        const res = await axios.get(`${API}/api/mock-interview/${encodeURIComponent(selectedRole)}`);
+        if (!cancelled) setQuestions(res.data.questions);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, [selectedRole]);
 
   const toggle = (id) => {
