@@ -32,7 +32,7 @@ const PublicTopBar = () => {
             width: '32px', height: '32px', borderRadius: 'var(--radius-md)',
             background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
+            boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
           }}>
             <Zap size={16} color="white" />
           </div>

@@ -17,7 +17,7 @@ const PageLoader = () => (
       style={{
         width: '36px', height: '36px',
         borderRadius: '50%',
-        border: '3px solid var(--indigo-100)',
+        border: '3px solid var(--navy-100)',
         borderTopColor: 'var(--color-primary)',
       }}
     />

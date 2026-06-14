@@ -59,7 +59,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 const TrendDashboard = ({ trends }) => {
   if (!trends || (!trends.growth && !trends.top_skills)) return null;
 
-  const COLORS = ['#4F46E5', '#7C3AED', '#818CF8', '#A78BFA'];
+  const COLORS = ['#0a1628', '#ff6b35', '#1a2d4a', '#22c55e'];
 
   return (
     <div style={{
@@ -78,8 +78,8 @@ const TrendDashboard = ({ trends }) => {
               <AreaChart data={trends.growth} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
                 <defs>
                   <linearGradient id="trendDemandGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#4F46E5" stopOpacity={0.02} />
+                    <stop offset="0%" stopColor="#0a1628" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="#0a1628" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
@@ -100,11 +100,11 @@ const TrendDashboard = ({ trends }) => {
                 <Area
                   type="monotone"
                   dataKey="demand"
-                  stroke="#4F46E5"
+                  stroke="#0a1628"
                   fillOpacity={1}
                   fill="url(#trendDemandGrad)"
                   strokeWidth={2.5}
-                  activeDot={{ r: 5, fill: '#4F46E5', stroke: 'white', strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: '#ff6b35', stroke: 'white', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -140,7 +140,7 @@ const TrendDashboard = ({ trends }) => {
                   content={<CustomTooltip />}
                   cursor={{ fill: 'var(--color-bg)' }}
                 />
-                <Bar dataKey="salary" fill="#7C3AED" radius={[4, 4, 0, 0]} barSize={28} />
+                <Bar dataKey="salary" fill="#0a1628" radius={[4, 4, 0, 0]} barSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -226,7 +226,7 @@ const TrendDashboard = ({ trends }) => {
                   content={<CustomTooltip />}
                   cursor={{ fill: 'var(--color-bg)' }}
                 />
-                <Bar dataKey="salary" fill="#818CF8" radius={[0, 4, 4, 0]} barSize={18} />
+                <Bar dataKey="salary" fill="#ff6b35" radius={[0, 4, 4, 0]} barSize={18} />
               </BarChart>
             </ResponsiveContainer>
           </div>
