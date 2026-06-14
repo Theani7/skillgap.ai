@@ -1,75 +1,101 @@
 :root {
-  /* Corporate Trust Design Tokens */
+  /* Launchpad Academy Design Tokens */
 
   /* Colors */
-  --color-bg: #F8FAFC;
+  --color-bg: #f8f6f3;
   --color-surface: #FFFFFF;
-  --color-primary: #4F46E5;
-  --color-primary-light: #818CF8;
-  --color-primary-dark: #4338CA;
-  --color-secondary: #7C3AED;
-  --color-secondary-light: #A78BFA;
-  --color-secondary-dark: #6D28D9;
-  --color-text: #0F172A;
-  --color-text-muted: #64748B;
-  --color-text-light: #94A3B8;
-  --color-success: #10B981;
-  --color-success-light: #D1FAE5;
+  --color-primary: #0a1628;
+  --color-primary-light: #1a2d4a;
+  --color-primary-dark: #050b14;
+  --color-secondary: #ff6b35;
+  --color-secondary-light: #ff8a5c;
+  --color-secondary-dark: #e55a2b;
+  --color-text: #0a1628;
+  --color-text-muted: #5a6577;
+  --color-text-light: #8b95a5;
+  --color-success: #22c55e;
+  --color-success-light: #dcfce7;
   --color-warning: #F59E0B;
   --color-warning-light: #FEF3C7;
   --color-error: #EF4444;
   --color-error-light: #FEE2E2;
-  --color-border: #E2E8F0;
-  --color-border-light: #F1F5F9;
+  --color-border: #e5e2dc;
+  --color-border-light: #f0ede8;
 
-  /* Indigo scale */
-  --indigo-50: #EEF2FF;
-  --indigo-100: #E0E7FF;
-  --indigo-200: #C7D2FE;
-  --indigo-300: #A5B4FC;
-  --indigo-400: #818CF8;
-  --indigo-500: #6366F1;
-  --indigo-600: #4F46E5;
-  --indigo-700: #4338CA;
-  --indigo-800: #3730A3;
-  --indigo-900: #312E81;
-  --indigo-950: #1E1B4B;
+  /* Navy scale (replaces indigo) */
+  --navy-50: #f0f4f8;
+  --navy-100: #d9e2ec;
+  --navy-200: #bcccdc;
+  --navy-300: #9fb3c8;
+  --navy-400: #829ab1;
+  --navy-500: #627d98;
+  --navy-600: #486581;
+  --navy-700: #334e68;
+  --navy-800: #243b53;
+  --navy-900: #102a43;
+  --navy-950: #0a1628;
 
-  /* Violet scale */
-  --violet-50: #F5F3FF;
-  --violet-100: #EDE9FE;
-  --violet-200: #DDD6FE;
-  --violet-300: #C4B5FD;
-  --violet-400: #A78BFA;
-  --violet-500: #8B5CF6;
-  --violet-600: #7C3AED;
-  --violet-700: #6D28D9;
-  --violet-800: #5B21B6;
-  --violet-900: #4C1D95;
-  --violet-950: #2E1065;
+  /* Orange scale (replaces violet) */
+  --orange-50: #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-200: #fed7aa;
+  --orange-300: #fdba74;
+  --orange-400: #fb923c;
+  --orange-500: #ff6b35;
+  --orange-600: #ea580c;
+  --orange-700: #c2410c;
+
+  /* Green scale */
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-500: #22c55e;
 
   /* Slate scale */
-  --slate-50: #F8FAFC;
-  --slate-100: #F1F5F9;
-  --slate-200: #E2E8F0;
-  --slate-300: #CBD5E1;
-  --slate-400: #94A3B8;
-  --slate-500: #64748B;
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
   --slate-600: #475569;
   --slate-700: #334155;
-  --slate-800: #1E293B;
-  --slate-900: #0F172A;
-  --slate-950: #020617;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
 
   /* Emerald scale */
-  --emerald-50: #ECFDF5;
-  --emerald-100: #D1FAE5;
-  --emerald-200: #A7F3D0;
-  --emerald-500: #10B981;
+  --emerald-50: #f0fdf4;
+  --emerald-100: #dcfce7;
+  --emerald-200: #bbf7d0;
+  --emerald-500: #22c55e;
+
+  /* Backwards compat aliases (old code references indigo/violet) */
+  --indigo-50: var(--navy-50);
+  --indigo-100: var(--navy-100);
+  --indigo-200: var(--navy-200);
+  --indigo-300: var(--navy-300);
+  --indigo-400: var(--navy-400);
+  --indigo-500: var(--navy-500);
+  --indigo-600: var(--navy-600);
+  --indigo-700: var(--navy-700);
+  --indigo-800: var(--navy-800);
+  --indigo-900: var(--navy-900);
+  --indigo-950: var(--navy-950);
+  --violet-50: var(--orange-50);
+  --violet-100: var(--orange-100);
+  --violet-200: var(--orange-200);
+  --violet-300: var(--orange-300);
+  --violet-400: var(--orange-400);
+  --violet-500: var(--orange-500);
+  --violet-600: var(--orange-600);
+  --violet-700: var(--orange-700);
+  --violet-800: var(--orange-700);
+  --violet-900: var(--orange-700);
+  --violet-950: var(--orange-700);
 
   /* Typography */
-  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-family: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 
   /* Font sizes */
@@ -139,11 +165,11 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
 
-  /* Colored shadows (Corporate Trust signature) */
-  --shadow-card: 0 4px 20px -2px rgba(79, 70, 229, 0.1);
-  --shadow-card-hover: 0 10px 25px -5px rgba(79, 70, 229, 0.15), 0 8px 10px -6px rgba(79, 70, 229, 0.1);
-  --shadow-button: 0 4px 14px 0 rgba(79, 70, 229, 0.3);
-  --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.5);
+  /* Colored shadows (Launchpad signature) */
+  --shadow-card: 0 4px 20px -2px rgba(10, 22, 40, 0.08);
+  --shadow-card-hover: 0 10px 25px -5px rgba(10, 22, 40, 0.12), 0 8px 10px -6px rgba(255, 107, 53, 0.1);
+  --shadow-button: 0 4px 14px 0 rgba(255, 107, 53, 0.3);
+  --shadow-glow: 0 0 20px rgba(255, 107, 53, 0.5);
 
   /* Transitions */
   --transition-fast: 150ms ease-out;
