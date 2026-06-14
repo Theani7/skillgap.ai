@@ -2,22 +2,30 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  ArrowRight, CheckCircle, Zap, Upload, Target, BookOpen,
-  Briefcase, PenLine, Shield, Sparkles, ChevronDown,
-  FileText, Map, Send, Brain, Lock, Clock, Github, Twitter, Mail,
+  CheckCircle, Zap, Upload, Target, BookOpen,
+  Shield, Sparkles, ChevronDown, FileText, Map, Brain,
+  Lock, Clock, Rocket,
 } from 'lucide-react';
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 32 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
-    transition: { duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.6, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] },
   }),
 };
 
 const stagger = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+};
+
+const launch = {
+  hidden: { opacity: 0, y: 60, scale: 0.95 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0, scale: 1,
+    transition: { duration: 0.7, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] },
+  }),
 };
 
 const VIEW = { once: true, margin: '-80px' };
@@ -25,48 +33,42 @@ const VIEW = { once: true, margin: '-80px' };
 const matchSkills = ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'AWS', 'REST APIs'];
 const gapSkills = ['Kubernetes', 'Terraform'];
 
-const bento = [
+const features = [
   {
     icon: FileText,
     title: 'Resume analysis in seconds',
     body: 'Drop a PDF or DOCX. We extract every skill, project, and signal, then score your fit against the role you want.',
-    size: 'lg',
-    accent: 'primary',
+    status: 'ACTIVE',
   },
   {
     icon: Target,
     title: 'Skill gap detection',
     body: 'See exactly which skills you are missing, ranked by how much each one moves your match score.',
-    size: 'md',
-    accent: 'secondary',
+    status: 'SCANNING',
   },
   {
     icon: BookOpen,
     title: 'Personalized learning roadmap',
-    body: 'A step-by-step plan with courses, projects, and resources to close each gap — not a generic curriculum.',
-    size: 'md',
-    accent: 'primary',
+    body: 'A step-by-step plan with courses, projects, and resources to close each gap.',
+    status: 'READY',
   },
   {
-    icon: Briefcase,
-    title: 'Job application tracker',
-    body: 'Log every application with status, follow-ups, salary, and notes. See your full pipeline at a glance.',
-    size: 'md',
-    accent: 'secondary',
+    icon: Sparkles,
+    title: 'Role-fit recommendations',
+    body: 'See job-role matches based on your current skills and the gaps that matter most.',
+    status: 'ANALYZING',
   },
   {
-    icon: PenLine,
-    title: 'Cover letter copilot',
-    body: 'Generate a tailored letter that mirrors the job description. Pick the tone and length.',
-    size: 'md',
-    accent: 'primary',
+    icon: Clock,
+    title: 'Progress history',
+    body: 'Track resume scores over time and revisit earlier analyses whenever you need.',
+    status: 'TRACKING',
   },
   {
     icon: Shield,
     title: 'Private by default',
     body: 'Your resume stays in your account. We never sell your data, and you can delete everything in one click.',
-    size: 'md',
-    accent: 'secondary',
+    status: 'SECURED',
   },
 ];
 
@@ -74,17 +76,17 @@ const steps = [
   { num: '01', icon: Upload, title: 'Upload your resume', body: 'PDF or DOCX. We parse it locally first, then enrich with AI when needed.' },
   { num: '02', icon: Brain, title: 'Pick a target role', body: 'Choose from a list or write your own. We benchmark your skills against it.' },
   { num: '03', icon: Map, title: 'Get your roadmap', body: 'A personalized plan with the exact skills to learn, in what order, with what resources.' },
-  { num: '04', icon: Send, title: 'Apply with confidence', body: 'Track every application and send tailored cover letters from the same place.' },
+  { num: '04', icon: CheckCircle, title: 'Measure progress', body: 'Upload again later and compare your new score, gaps, and recommendations.' },
 ];
 
 const faqs = [
   {
     q: 'How much does this cost?',
-    a: 'It is free to use. Create an account, run as many resume analyses as you want, and keep your job tracker open indefinitely. There is no subscription, no trial, and no paywall on the core toolkit.',
+    a: 'It is free to use. Create an account, run as many resume analyses as you want, and keep your progress history tied to your profile. There is no subscription, no trial, and no paywall on the core toolkit.',
   },
   {
     q: 'Is my resume kept private?',
-    a: 'Yes. Your resume is stored in your account only. The only external system it touches is the AI model that parses and analyzes it — and you can delete your account and all associated data at any time from Settings.',
+    a: 'Yes. Your resume is stored in your account only. The only external system it touches is the AI model that parses and analyzes it - and you can delete your account and all associated data at any time from Settings.',
   },
   {
     q: 'Which roles does the analyzer support?',
@@ -100,251 +102,397 @@ const faqs = [
   },
 ];
 
-const accentVar = (a) => a === 'primary' ? 'var(--color-primary)' : 'var(--color-secondary)';
-const accentBg = (a) => a === 'primary' ? 'var(--indigo-50)' : 'var(--violet-50)';
-
 const Landing = () => {
   const [openFaq, setOpenFaq] = useState(0);
 
   return (
-    <div className="landing-root" style={{ background: 'var(--color-bg)' }}>
+    <div className="landing-root">
       <style>{`
+        .landing-root {
+          background: var(--color-bg);
+          font-family: var(--font-body);
+        }
         .landing-root h1, .landing-root h2, .landing-root h3, .landing-root h4 {
           font-family: var(--font-display);
         }
-        .landing-gradient-text {
-          background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+
+        /* Mission Control Grid Lines */
+        .mc-grid-bg {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image:
+            linear-gradient(rgba(10, 22, 40, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(10, 22, 40, 0.04) 1px, transparent 1px);
+          background-size: 40px 40px;
+          mask-image: radial-gradient(ellipse 60% 50% at 50% 30%, black 0%, transparent 80%);
+          -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 30%, black 0%, transparent 80%);
+          opacity: 0.6;
+        }
+
+        .mc-status {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 12px;
+          border-radius: var(--radius-full);
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          font-family: var(--font-display);
+        }
+        .mc-status-active {
+          background: var(--green-50);
+          color: var(--color-success);
+          border: 1px solid var(--green-100);
+        }
+        .mc-status-active::before {
+          content: '';
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--color-success);
+          animation: mc-pulse 2s infinite;
+        }
+        @keyframes mc-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .mc-card {
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-2xl);
+          position: relative;
+          overflow: hidden;
+          transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .mc-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, var(--color-secondary), var(--color-success));
+          opacity: 0;
+          transition: opacity 300ms ease;
+        }
+        .mc-card:hover {
+          transform: translateY(-4px);
+          box-shadow: var(--shadow-card-hover);
+          border-color: var(--navy-200);
+        }
+        .mc-card:hover::before {
+          opacity: 1;
+        }
+
+        .mc-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          background: var(--navy-950);
+          border-bottom: 1px solid var(--navy-800);
+        }
+        .mc-header-dots {
+          display: flex;
+          gap: 6px;
+        }
+        .mc-header-dots span {
+          width: 10px; height: 10px;
+          border-radius: 50%;
+        }
+        .mc-header-dots span:nth-child(1) { background: #ef4444; }
+        .mc-header-dots span:nth-child(2) { background: #f59e0b; }
+        .mc-header-dots span:nth-child(3) { background: #22c55e; }
+        .mc-header-title {
+          font-family: var(--font-display);
+          font-size: 11px; font-weight: 600;
+          color: rgba(255,255,255,0.6);
+          letter-spacing: 0.1em; text-transform: uppercase;
+        }
+        .mc-header-status {
+          display: flex; align-items: center; gap: 6px;
+          font-size: 10px; color: var(--color-success); font-weight: 600;
+        }
+        .mc-header-status::before {
+          content: '';
+          width: 5px; height: 5px; border-radius: 50%;
+          background: var(--color-success);
+          animation: mc-pulse 2s infinite;
+        }
+
+        .mc-gradient {
+          background: linear-gradient(135deg, var(--color-secondary) 0%, #ff8a5c 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        .landing-eyebrow {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 5px 12px; border-radius: var(--radius-full);
-          font-size: 12px; font-weight: 600;
-          color: var(--color-primary); background: var(--indigo-50);
-          border: 1px solid var(--indigo-100);
-        }
-        .landing-card {
+
+        .mc-step {
+          position: relative;
+          padding: 24px;
           background: var(--color-surface);
           border: 1px solid var(--color-border);
-          border-radius: var(--radius-2xl);
-          box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+          border-radius: var(--radius-xl);
+          transition: all 300ms ease;
         }
-        .landing-bento {
+        .mc-step:hover {
+          border-color: var(--navy-200);
+          box-shadow: var(--shadow-md);
+        }
+        .mc-step-num {
+          font-family: var(--font-display);
+          font-size: 40px; font-weight: 700;
+          color: var(--navy-100); line-height: 1;
+          margin-bottom: 16px;
+        }
+        .mc-step:hover .mc-step-num {
+          color: var(--orange-300);
+        }
+
+        .mc-bento {
           display: grid;
           grid-template-columns: 1fr;
           gap: 16px;
         }
         @media (min-width: 720px) {
-          .landing-bento { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+          .mc-bento { grid-template-columns: repeat(2, 1fr); }
         }
         @media (min-width: 1024px) {
-          .landing-bento { grid-template-columns: repeat(3, 1fr); gap: 24px; }
-          .landing-bento-feature.lg { grid-column: span 2; }
+          .mc-bento { grid-template-columns: repeat(3, 1fr); }
         }
-        .landing-bento-feature {
+
+        .mc-feature {
+          padding: 24px;
           position: relative;
-          padding: 28px;
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-2xl);
-          transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
-          overflow: hidden;
         }
-        .landing-bento-feature:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 28px -8px rgba(79, 70, 229, 0.15);
-          border-color: var(--indigo-200);
-        }
-        .landing-bento-feature::after {
-          content: '';
-          position: absolute; inset: 0;
-          background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 0%), rgba(79,70,229,0.06), transparent 40%);
-          opacity: 0; transition: opacity 200ms ease; pointer-events: none;
-        }
-        .landing-bento-feature:hover::after { opacity: 1; }
-        .landing-bento-feature.lg { padding: 36px; }
-        .landing-bento-icon {
-          width: 44px; height: 44px; border-radius: 12px;
+        .mc-feature-icon {
+          width: 48px; height: 48px;
+          border-radius: 12px;
           display: flex; align-items: center; justify-content: center;
-          margin-bottom: 18px;
+          margin-bottom: 16px;
+          background: var(--navy-950);
+          color: var(--orange-400);
         }
-        .landing-bento-feature.lg .landing-bento-icon { width: 56px; height: 56px; border-radius: 14px; }
-        .landing-step {
-          position: relative;
-          padding: 28px 24px;
+        .mc-feature-status {
+          position: absolute;
+          top: 16px; right: 16px;
+          font-family: var(--font-display);
+          font-size: 9px; font-weight: 700;
+          letter-spacing: 0.1em;
+          color: var(--navy-300);
+          text-transform: uppercase;
+        }
+
+        .mc-btn {
+          display: inline-flex;
+          align-items: center; gap: 10px;
+          padding: 16px 28px;
+          background: var(--color-secondary);
+          color: white;
+          border-radius: var(--radius-xl);
+          font-family: var(--font-display);
+          font-weight: 700; font-size: 15px;
+          text-decoration: none;
+          transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1);
+          box-shadow: var(--shadow-button);
+          border: none; cursor: pointer;
+        }
+        .mc-btn:hover {
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 0 8px 24px rgba(255, 107, 53, 0.4);
+          color: white;
+        }
+        .mc-btn-secondary {
+          background: var(--color-surface);
+          color: var(--color-text);
+          border: 2px solid var(--color-border);
+          box-shadow: none;
+        }
+        .mc-btn-secondary:hover {
+          background: var(--navy-50);
+          border-color: var(--navy-200);
+          box-shadow: none;
+        }
+
+        .mc-stats {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        @media (min-width: 640px) {
+          .mc-stats { grid-template-columns: repeat(4, 1fr); }
+        }
+        .mc-stat {
+          padding: 16px;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          text-align: center;
+        }
+        .mc-stat-value {
+          font-family: var(--font-display);
+          font-size: 28px; font-weight: 700;
+          color: var(--color-text); line-height: 1;
+        }
+        .mc-stat-label {
+          font-size: 11px; color: var(--color-text-muted);
+          text-transform: uppercase; letter-spacing: 0.08em;
+          margin-top: 4px;
+        }
+
+        .mc-mock {
           background: var(--color-surface);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-2xl);
-        }
-        .landing-step-rail {
-          display: none;
-        }
-        @media (min-width: 1024px) {
-          .landing-step-rail {
-            display: block;
-            position: absolute; top: 44px;
-            left: calc(50% + 32px); right: calc(-50% + 32px);
-            height: 2px;
-            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-            opacity: 0.25;
-          }
-        }
-        .landing-mock {
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-2xl);
-          box-shadow: 0 20px 50px -20px rgba(15, 23, 42, 0.12);
           overflow: hidden;
+          box-shadow: var(--shadow-lg);
         }
-        .landing-mock-bar {
-          display: flex; align-items: center; gap: 6px;
-          padding: 12px 16px;
-          background: var(--color-bg);
-          border-bottom: 1px solid var(--color-border);
-        }
-        .landing-mock-bar span {
-          width: 10px; height: 10px; border-radius: 50%;
-          background: var(--color-border);
-        }
-        .landing-mock-bar span:nth-child(1) { background: #FCA5A5; }
-        .landing-mock-bar span:nth-child(2) { background: #FCD34D; }
-        .landing-mock-bar span:nth-child(3) { background: #6EE7B7; }
-        .landing-tag {
-          display: inline-flex; align-items: center; gap: 4px;
-          padding: 3px 9px; border-radius: var(--radius-full);
-          font-size: 11px; font-weight: 600;
-        }
-        .landing-faq {
+
+        .mc-faq {
+          background: var(--color-surface);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-xl);
-          background: var(--color-surface);
           overflow: hidden;
         }
-        .landing-faq-item { border-bottom: 1px solid var(--color-border); }
-        .landing-faq-item:last-child { border-bottom: none; }
-        .landing-faq-trigger {
+        .mc-faq-item {
+          border-bottom: 1px solid var(--color-border);
+        }
+        .mc-faq-item:last-child {
+          border-bottom: none;
+        }
+        .mc-faq-trigger {
           width: 100%;
-          display: flex; align-items: center; justify-content: space-between; gap: 16px;
-          padding: 20px 24px;
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 16px; padding: 20px 24px;
           background: none; border: none;
           text-align: left; cursor: pointer;
-          font-family: var(--font-body);
+          font-family: var(--font-body); font-weight: 600;
           color: var(--color-text);
+          transition: background 200ms ease;
         }
-        .landing-faq-trigger:hover { background: var(--slate-50); }
-        .landing-faq-content {
+        .mc-faq-trigger:hover {
+          background: var(--navy-50);
+        }
+        .mc-faq-content {
           max-height: 0; overflow: hidden;
-          transition: max-height 280ms cubic-bezier(0.22, 1, 0.36, 1);
+          transition: max-height 300ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .landing-faq-content-inner {
-          padding: 0 24px 22px;
+        .mc-faq-content-inner {
+          padding: 0 24px 20px;
           color: var(--color-text-muted);
-          font-size: 15px; line-height: 1.65;
+          font-size: 15px; line-height: 1.7;
         }
-        .landing-hero-grid {
+
+        .mc-float {
+          position: absolute;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-xl);
+          padding: 12px 16px;
+          box-shadow: var(--shadow-lg);
+          display: flex; align-items: center; gap: 10px;
+          font-size: 12px;
+        }
+
+        .mc-doodle {
+          position: absolute;
+          font-family: 'Comic Sans MS', cursive;
+          color: var(--color-secondary);
+          font-size: 12px;
+          transform: rotate(-5deg);
+          opacity: 0;
+          transition: opacity 300ms ease;
+          pointer-events: none;
+        }
+        .mc-card:hover .mc-doodle {
+          opacity: 1;
+        }
+
+        .mc-hero-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 56px;
+          gap: 48px;
           align-items: center;
         }
         @media (min-width: 1024px) {
-          .landing-hero-grid { grid-template-columns: 1.05fr 0.95fr; gap: 64px; }
+          .mc-hero-grid { grid-template-columns: 1.1fr 0.9fr; gap: 64px; }
         }
-        .landing-pill {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 6px 14px; border-radius: var(--radius-full);
+
+        .mc-cta {
+          position: relative;
+          background: var(--navy-950);
+          border-radius: var(--radius-3xl);
+          padding: 64px 32px;
+          overflow: hidden;
+          color: white;
+        }
+        .mc-cta::before {
+          content: '';
+          position: absolute; inset: 0;
+          background:
+            radial-gradient(600px circle at 20% 30%, rgba(255, 107, 53, 0.15), transparent 50%),
+            radial-gradient(400px circle at 80% 70%, rgba(34, 197, 94, 0.1), transparent 50%);
+          pointer-events: none;
+        }
+        .mc-cta > * {
+          position: relative;
+        }
+
+        .mc-divider {
+          height: 1px;
+          background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+        }
+
+        .mc-pill {
+          display: inline-flex;
+          align-items: center; gap: 8px;
+          padding: 8px 16px;
+          border-radius: var(--radius-full);
           background: var(--color-surface);
           border: 1px solid var(--color-border);
           font-size: 13px; font-weight: 500;
           color: var(--color-text-muted);
         }
-        .landing-pill-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: var(--color-success);
-          box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
-        }
-        .landing-cta-band {
-          position: relative;
-          background: linear-gradient(135deg, var(--color-text) 0%, #1E1B4B 100%);
-          border-radius: var(--radius-3xl);
-          padding: 64px 32px;
-          overflow: hidden;
-        }
-        .landing-cta-band::before {
-          content: '';
-          position: absolute; inset: 0;
-          background: radial-gradient(800px circle at 20% 20%, rgba(124,58,237,0.25), transparent 50%),
-                      radial-gradient(600px circle at 80% 80%, rgba(79,70,229,0.25), transparent 50%);
-          pointer-events: none;
-        }
-        .landing-cta-band > * { position: relative; }
-        .landing-divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, var(--color-border), transparent);
-        }
-        .landing-step-num {
-          font-family: var(--font-display);
-          font-size: 11px; font-weight: 700;
-          color: var(--color-text-light);
-          letter-spacing: 0.12em;
-        }
-        .landing-stats {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
-        }
-        @media (min-width: 720px) {
-          .landing-stats { grid-template-columns: repeat(4, 1fr); }
-        }
-        .landing-stat {
-          padding: 18px 20px;
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-xl);
-        }
       `}</style>
 
       {/* HERO */}
       <section style={{ padding: '80px 0 96px', position: 'relative', overflow: 'hidden' }}>
+        <div className="mc-grid-bg" />
         <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          backgroundImage: 'radial-gradient(circle at 1px 1px, var(--color-border) 1px, transparent 0)',
-          backgroundSize: '32px 32px',
-          maskImage: 'radial-gradient(ellipse 60% 50% at 50% 30%, black 0%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 60% 50% at 50% 30%, black 0%, transparent 80%)',
-          opacity: 0.5,
+          position: 'absolute', top: '-200px', right: '-150px',
+          width: '500px', height: '500px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255, 107, 53, 0.12), transparent 70%)',
+          filter: 'blur(40px)', pointerEvents: 'none',
         }} />
         <div style={{
-          position: 'absolute', top: '-160px', right: '-100px',
-          width: '420px', height: '420px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(124,58,237,0.18), transparent 70%)',
-          filter: 'blur(20px)', pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '-160px', left: '-100px',
-          width: '420px', height: '420px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(79,70,229,0.18), transparent 70%)',
-          filter: 'blur(20px)', pointerEvents: 'none',
+          position: 'absolute', bottom: '-200px', left: '-150px',
+          width: '500px', height: '500px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(10, 22, 40, 0.08), transparent 70%)',
+          filter: 'blur(40px)', pointerEvents: 'none',
         }} />
 
         <div className="container" style={{ position: 'relative' }}>
-          <div className="landing-hero-grid">
+          <div className="mc-hero-grid">
             <motion.div initial="hidden" animate="visible" variants={stagger}>
+              <motion.div variants={fadeUp} style={{ marginBottom: '20px' }}>
+                <span className="mc-status mc-status-active">Mission Control Online</span>
+              </motion.div>
+              
               <motion.h1
                 variants={fadeUp}
                 style={{
-                  fontSize: 'clamp(40px, 6vw, 72px)',
-                  fontWeight: 800,
-                  letterSpacing: '-0.03em',
-                  lineHeight: 1.02,
+                  fontSize: 'clamp(42px, 6vw, 76px)',
+                  fontWeight: 700,
+                  letterSpacing: '-0.04em',
+                  lineHeight: 1,
                   color: 'var(--color-text)',
-                  marginBottom: '20px',
+                  marginBottom: '24px',
                 }}
               >
                 Know exactly{' '}
-                <span className="landing-gradient-text">what stands</span>
+                <span className="mc-gradient">what stands</span>
                 <br />
                 between you and the role.
               </motion.h1>
@@ -352,256 +500,270 @@ const Landing = () => {
               <motion.p
                 variants={fadeUp}
                 style={{
-                  fontSize: 'clamp(16px, 1.4vw, 19px)',
+                  fontSize: 'clamp(16px, 1.4vw, 18px)',
                   color: 'var(--color-text-muted)',
-                  lineHeight: 1.6,
-                  maxWidth: '520px',
+                  lineHeight: 1.7,
+                  maxWidth: '500px',
                   marginBottom: '32px',
                 }}
               >
                 SkillGap.ai reads your resume, compares it to a target role, and
-                hands you a clear, personalized plan to close the gap — usually
-                in under a minute.
+                hands you a clear, personalized plan to close the gap.
               </motion.p>
 
               <motion.div
                 variants={fadeUp}
-                style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}
+                style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}
               >
-                <Link
-                  to="/register"
-                  className="btn btn-primary"
-                  style={{ padding: '14px 24px', fontSize: '15px', minHeight: '48px' }}
-                >
-                  Create your account
-                  <ArrowRight size={16} />
+                <Link to="/register" className="mc-btn">
+                  <Rocket size={18} />
+                  Launch Your Analysis
                 </Link>
-                <Link
-                  to="/login"
-                  className="btn btn-secondary"
-                  style={{ padding: '14px 24px', fontSize: '15px', minHeight: '48px' }}
-                >
-                  Sign in
+                <Link to="/login" className="mc-btn mc-btn-secondary">
+                  Sign In
                 </Link>
               </motion.div>
 
               <motion.div
                 variants={fadeUp}
-                style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}
+                style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}
               >
-                <span className="landing-pill">
-                  <span className="landing-pill-dot" />
+                <span className="mc-pill">
+                  <Zap size={14} color="var(--color-secondary)" />
                   Powered by Gemini
                 </span>
-                <span className="landing-pill">
-                  <Lock size={12} />
+                <span className="mc-pill">
+                  <Lock size={14} />
                   Private by default
                 </span>
-                <span className="landing-pill">
-                  <Clock size={12} />
-                  Analysis in ~30 seconds
+                <span className="mc-pill">
+                  <Clock size={14} />
+                  ~30 seconds
                 </span>
               </motion.div>
             </motion.div>
 
-            {/* Hero mockup card */}
+            {/* Hero Dashboard Mock */}
             <motion.div
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0, y: 40, rotate: -1 }}
+              animate={{ opacity: 1, y: 0, rotate: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               style={{ position: 'relative' }}
             >
-              <div className="landing-mock" style={{ transform: 'rotate(-0.5deg)' }}>
-                <div className="landing-mock-bar">
-                  <span /><span /><span />
-                  <div style={{ marginLeft: '12px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                    skillgap.ai / analyzer
+              <div className="mc-mock" style={{ transform: 'rotate(-1deg)' }}>
+                <div className="mc-header">
+                  <div className="mc-header-dots">
+                    <span /><span /><span />
                   </div>
+                  <span className="mc-header-title">skillgap.ai / analyzer</span>
+                  <span className="mc-header-status">LIVE</span>
                 </div>
                 <div style={{ padding: '28px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
                     <div>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                        Target role
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-text-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                        Target Role
                       </div>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text)', marginTop: '2px' }}>
+                      <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text)', marginTop: '4px' }}>
                         Senior Frontend Engineer
                       </div>
                     </div>
-                    <span className="landing-tag" style={{ background: 'var(--emerald-50)', color: 'var(--color-success)' }}>
-                      <CheckCircle size={11} /> Analyzed
+                    <span className="mc-status mc-status-active" style={{ fontSize: '9px', padding: '4px 10px' }}>
+                      <CheckCircle size={10} /> Analyzed
                     </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-                    <div style={{ position: 'relative', width: '92px', height: '92px', flexShrink: 0 }}>
-                      <svg width="92" height="92" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-                        <defs>
-                          <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="var(--color-primary)" />
-                            <stop offset="100%" stopColor="var(--color-secondary)" />
-                          </linearGradient>
-                        </defs>
-                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border)" strokeWidth="7" />
+                    <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
+                      <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border)" strokeWidth="8" />
                         <motion.circle
                           cx="50" cy="50" r="42" fill="none"
-                          stroke="url(#heroGrad)" strokeWidth="7"
+                          stroke="var(--color-secondary)" strokeWidth="8"
                           strokeLinecap="round"
                           strokeDasharray="264"
                           initial={{ strokeDashoffset: 264 }}
                           animate={{ strokeDashoffset: 264 - (264 * 0.82) }}
-                          transition={{ duration: 1.4, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                          transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         />
                       </svg>
                       <div style={{
                         position: 'absolute', inset: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <span className="landing-gradient-text" style={{ fontSize: '26px', fontWeight: 800 }}>82</span>
+                        <span style={{ fontSize: '28px', fontWeight: 700, color: 'var(--color-text)' }}>82</span>
                       </div>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-light)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
-                        Match score
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-text-light)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>
+                        Match Score
                       </div>
-                      <div style={{ fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-                        Strong fit. Two skills are pulling the score down — both are learnable in a few weeks.
+                      <div style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                        Strong fit. Two skills are pulling the score down.
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>Matched skills</span>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-success)' }}>6/8</span>
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-muted)' }}>Matched Skills</span>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-success)' }}>6/8</span>
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                         {matchSkills.map(s => (
-                          <span key={s} className="landing-tag" style={{ background: 'var(--emerald-50)', color: 'var(--color-success)' }}>{s}</span>
+                          <span key={s} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '3px',
+                            padding: '3px 8px', borderRadius: 'var(--radius-full)',
+                            fontSize: '10px', fontWeight: 600,
+                            background: 'var(--green-50)', color: 'var(--color-success)',
+                          }}>{s}</span>
                         ))}
                       </div>
                     </div>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>Skill gaps</span>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-error)' }}>2/8</span>
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-muted)' }}>Skill Gaps</span>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-error)' }}>2/8</span>
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                         {gapSkills.map(s => (
-                          <span key={s} className="landing-tag" style={{ background: 'var(--color-error-light)', color: 'var(--color-error)' }}>{s}</span>
+                          <span key={s} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '3px',
+                            padding: '3px 8px', borderRadius: 'var(--radius-full)',
+                            fontSize: '10px', fontWeight: 600,
+                            background: 'var(--color-error-light)', color: 'var(--color-error)',
+                          }}>{s}</span>
                         ))}
                       </div>
                     </div>
                   </div>
 
                   <div style={{
-                    background: 'var(--indigo-50)', border: '1px solid var(--indigo-100)',
-                    borderRadius: 'var(--radius-lg)', padding: '14px 16px',
+                    background: 'var(--navy-950)', borderRadius: 'var(--radius-lg)', padding: '14px 16px',
                     display: 'flex', alignItems: 'flex-start', gap: '10px',
                   }}>
-                    <Sparkles size={16} color="var(--color-primary)" style={{ marginTop: '2px', flexShrink: 0 }} />
+                    <Rocket size={16} color="var(--color-secondary)" style={{ marginTop: '2px', flexShrink: 0 }} />
                     <div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '2px' }}>
-                        Recommended next step
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-secondary)', marginBottom: '2px' }}>
+                        Next Launch
                       </div>
-                      <div style={{ fontSize: '13px', color: 'var(--slate-700)', lineHeight: 1.5 }}>
-                        Learn Kubernetes basics — closes your biggest gap and unlocks 3 of 5 priority roles.
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
+                        Learn Kubernetes - closes your biggest gap.
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Floating card */}
+              {/* Floating Score Badge */}
               <motion.div
-                initial={{ opacity: 0, x: 20, y: 10 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.7 }}
-                style={{
-                  position: 'absolute', right: '-12px', top: '40%',
-                  background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-xl)',
-                  padding: '14px 16px',
-                  boxShadow: '0 12px 28px -8px rgba(15, 23, 42, 0.12)',
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  transform: 'rotate(2deg)',
-                }}
-                className="landing-floating-card"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="mc-float"
+                style={{ right: '-20px', top: '35%', transform: 'rotate(3deg)' }}
               >
                 <div style={{
-                  width: '36px', height: '36px', borderRadius: '10px',
-                  background: 'var(--emerald-50)', color: 'var(--color-success)',
+                  width: '40px', height: '40px', borderRadius: '10px',
+                  background: 'var(--green-50)', color: 'var(--color-success)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <CheckCircle size={18} />
+                  <CheckCircle size={20} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text)' }}>+12 score</div>
-                  <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>after learning Kubernetes</div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text)' }}>+12 score</div>
+                  <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>after learning K8s</div>
                 </div>
               </motion.div>
+
+              {/* Hand-drawn doodle */}
+              <div className="mc-doodle" style={{ bottom: '20px', left: '-40px' }}>
+                ← so cool!
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      <div className="landing-divider" />
+      <div className="mc-divider" />
 
-      {/* BENTO FEATURES */}
+      {/* STATS BAND */}
+      <section style={{ padding: '48px 0' }}>
+        <div className="container">
+          <motion.div
+            className="mc-stats"
+            initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
+          >
+            {[
+              { value: '2,847', label: 'Resumes Analyzed' },
+              { value: '82%', label: 'Avg Match Score' },
+              { value: '<30s', label: 'Analysis Time' },
+              { value: '100%', label: 'Free Forever' },
+            ].map((s) => (
+              <motion.div key={s.label} variants={fadeUp} className="mc-stat">
+                <div className="mc-stat-value">{s.value}</div>
+                <div className="mc-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <div className="mc-divider" />
+
+      {/* FEATURES */}
       <section className="section">
         <div className="container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
             style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '640px', margin: '0 auto 48px' }}
           >
-            <motion.div variants={fadeUp} style={{ marginBottom: '14px' }}>
-              <span className="landing-eyebrow">What you get</span>
+            <motion.div variants={fadeUp} style={{ marginBottom: '16px' }}>
+              <span className="mc-status mc-status-active">System Status</span>
             </motion.div>
             <motion.h2 variants={fadeUp} style={{
-              fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 800,
-              letterSpacing: '-0.02em', color: 'var(--color-text)', marginBottom: '12px',
+              fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 700,
+              letterSpacing: '-0.03em', color: 'var(--color-text)', marginBottom: '12px',
             }}>
-              A complete career toolkit,
+              Mission Control Dashboard,
               <br />
-              <span className="landing-gradient-text">not just a resume parser.</span>
+              <span className="mc-gradient">for your career.</span>
             </motion.h2>
             <motion.p variants={fadeUp} style={{
-              fontSize: '16px', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: 0,
+              fontSize: '16px', color: 'var(--color-text-muted)', lineHeight: 1.7, margin: 0,
             }}>
-              Built around the actual job-search loop: analyze, learn, apply, follow up. Everything talks to everything else.
+              Every tool you need to analyze, plan, and track your job search - 
+              all in one place. No subscription, no paywall.
             </motion.p>
           </motion.div>
 
           <motion.div
-            className="landing-bento"
+            className="mc-bento"
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
           >
-            {bento.map((f) => {
+            {features.map((f, i) => {
               const Icon = f.icon;
               return (
                 <motion.div
                   key={f.title}
-                  variants={fadeUp}
-                  className={`landing-bento-feature ${f.size}`}
+                  variants={launch}
+                  custom={i}
+                  className="mc-card mc-feature"
                 >
-                  <div
-                    className="landing-bento-icon"
-                    style={{ background: accentBg(f.accent), color: accentVar(f.accent) }}
-                  >
-                    <Icon size={f.size === 'lg' ? 28 : 22} />
+                  <span className="mc-feature-status">{f.status}</span>
+                  <div className="mc-feature-icon">
+                    <Icon size={24} />
                   </div>
                   <h3 style={{
-                    fontSize: f.size === 'lg' ? '24px' : '18px',
-                    fontWeight: 700, color: 'var(--color-text)',
+                    fontSize: '18px', fontWeight: 700, color: 'var(--color-text)',
                     marginBottom: '8px', letterSpacing: '-0.01em',
                   }}>
                     {f.title}
                   </h3>
                   <p style={{
-                    fontSize: '15px', color: 'var(--color-text-muted)',
-                    lineHeight: 1.6, margin: 0, maxWidth: f.size === 'lg' ? '420px' : 'none',
+                    fontSize: '14px', color: 'var(--color-text-muted)',
+                    lineHeight: 1.6, margin: 0,
                   }}>
                     {f.body}
                   </p>
@@ -613,23 +775,25 @@ const Landing = () => {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="section" style={{ background: 'var(--color-surface)', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
+      <section className="section" style={{ background: 'var(--navy-950)', color: 'white' }}>
         <div className="container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
             style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '560px', margin: '0 auto 48px' }}
           >
-            <motion.div variants={fadeUp} style={{ marginBottom: '14px' }}>
-              <span className="landing-eyebrow">The loop</span>
+            <motion.div variants={fadeUp} style={{ marginBottom: '16px' }}>
+              <span className="mc-status" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--color-secondary)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                Launch Sequence
+              </span>
             </motion.div>
             <motion.h2 variants={fadeUp} style={{
-              fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 800,
-              letterSpacing: '-0.02em', color: 'var(--color-text)', marginBottom: '12px',
+              fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 700,
+              letterSpacing: '-0.03em', color: 'white', marginBottom: '12px',
             }}>
-              Four steps, end to end.
+              Four steps to launch.
             </motion.h2>
             <motion.p variants={fadeUp} style={{
-              fontSize: '16px', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: 0,
+              fontSize: '16px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: 0,
             }}>
               From a fresh PDF to a tracked application, with a real plan in between.
             </motion.p>
@@ -637,41 +801,39 @@ const Landing = () => {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
             gap: '20px',
-            position: 'relative',
           }}>
             {steps.map((s, i) => {
               const Icon = s.icon;
               return (
                 <motion.div
                   key={s.num}
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={VIEW}
-                  transition={{ delay: i * 0.1 }}
-                  className="landing-step"
+                  transition={{ delay: i * 0.12 }}
+                  className="mc-step"
+                  style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
                 >
-                  {i < steps.length - 1 && <div className="landing-step-rail" />}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                    <div style={{
-                      width: '40px', height: '40px', borderRadius: '10px',
-                      background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
-                      color: 'white',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Icon size={18} />
-                    </div>
-                    <span className="landing-step-num">STEP {s.num}</span>
+                  <div className="mc-step-num">{s.num}</div>
+                  <div style={{
+                    width: '44px', height: '44px', borderRadius: '12px',
+                    background: 'var(--color-secondary)',
+                    color: 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: '16px',
+                  }}>
+                    <Icon size={20} />
                   </div>
                   <h3 style={{
                     fontSize: '17px', fontWeight: 700,
-                    color: 'var(--color-text)', marginBottom: '6px',
+                    color: 'white', marginBottom: '8px',
                   }}>
                     {s.title}
                   </h3>
                   <p style={{
-                    fontSize: '14px', color: 'var(--color-text-muted)',
+                    fontSize: '14px', color: 'rgba(255,255,255,0.6)',
                     lineHeight: 1.6, margin: 0,
                   }}>
                     {s.body}
@@ -683,295 +845,50 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* INSIDE THE APP - MOCKS */}
+      {/* WHY SKILLGAP.AI */}
       <section className="section">
         <div className="container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
             style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '600px', margin: '0 auto 48px' }}
           >
-            <motion.div variants={fadeUp} style={{ marginBottom: '14px' }}>
-              <span className="landing-eyebrow">Inside the app</span>
+            <motion.div variants={fadeUp} style={{ marginBottom: '16px' }}>
+              <span className="mc-status mc-status-active">Mission Brief</span>
             </motion.div>
             <motion.h2 variants={fadeUp} style={{
-              fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 800,
-              letterSpacing: '-0.02em', color: 'var(--color-text)', marginBottom: '12px',
+              fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 700,
+              letterSpacing: '-0.03em', color: 'var(--color-text)', marginBottom: '12px',
             }}>
-              The four screens you will actually use.
+              Built like a tool,
+              <br />
+              <span className="mc-gradient">not a marketing site.</span>
             </motion.h2>
           </motion.div>
 
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '24px',
-          }}>
-            {/* Mock 1: Skill match */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={VIEW} transition={{ duration: 0.5 }}
-              className="landing-mock"
-            >
-              <div className="landing-mock-bar">
-                <span /><span /><span />
-                <div style={{ marginLeft: '12px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                  Skill match
-                </div>
-              </div>
-              <div style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '18px' }}>
-                  <div style={{
-                    width: '64px', height: '64px', borderRadius: '50%',
-                    background: 'conic-gradient(var(--color-primary) 0% 82%, var(--color-border) 82% 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <div style={{
-                      width: '52px', height: '52px', borderRadius: '50%',
-                      background: 'var(--color-surface)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '18px', fontWeight: 800, color: 'var(--color-primary)',
-                    }}>82</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text)' }}>Backend Engineer</div>
-                    <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>8 of 10 priority skills matched</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { label: 'Go', val: 92 },
-                    { label: 'PostgreSQL', val: 88 },
-                    { label: 'Docker', val: 76 },
-                    { label: 'Kubernetes', val: 41 },
-                  ].map(b => (
-                    <div key={b.label}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
-                        <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>{b.label}</span>
-                        <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{b.val}%</span>
-                      </div>
-                      <div style={{ height: '6px', borderRadius: '3px', background: 'var(--color-border)', overflow: 'hidden' }}>
-                        <div style={{
-                          width: `${b.val}%`, height: '100%',
-                          background: b.val < 60
-                            ? 'var(--color-error)'
-                            : 'linear-gradient(90deg, var(--color-primary), var(--color-secondary))',
-                          borderRadius: '3px',
-                        }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Mock 2: Roadmap */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={VIEW} transition={{ duration: 0.5, delay: 0.1 }}
-              className="landing-mock"
-            >
-              <div className="landing-mock-bar">
-                <span /><span /><span />
-                <div style={{ marginLeft: '12px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                  Learning roadmap
-                </div>
-              </div>
-              <div style={{ padding: '24px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '4px' }}>
-                  Kubernetes fundamentals
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '18px' }}>
-                  Estimated 3 weeks · 4 steps
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {[
-                    { n: 1, t: 'Pods, services, and deployments', d: '~2 hrs', done: true },
-                    { n: 2, t: 'ConfigMaps and Secrets', d: '~1.5 hrs', done: true },
-                    { n: 3, t: 'Helm charts and templating', d: '~3 hrs', done: false, current: true },
-                    { n: 4, t: 'Project: deploy a microservice', d: '~5 hrs', done: false },
-                  ].map(s => (
-                    <div key={s.n} style={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      padding: '10px 12px', borderRadius: 'var(--radius-lg)',
-                      background: s.current ? 'var(--indigo-50)' : 'transparent',
-                      border: s.current ? '1px solid var(--indigo-100)' : '1px solid transparent',
-                    }}>
-                      <div style={{
-                        width: '24px', height: '24px', borderRadius: '50%',
-                        background: s.done ? 'var(--color-success)' : s.current ? 'var(--color-primary)' : 'var(--color-border)',
-                        color: s.done || s.current ? 'white' : 'var(--color-text-muted)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '12px', fontWeight: 700, flexShrink: 0,
-                      }}>
-                        {s.done ? '✓' : s.n}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          fontSize: '13px', fontWeight: 600, color: 'var(--color-text)',
-                          textDecoration: s.done ? 'line-through' : 'none',
-                          opacity: s.done ? 0.7 : 1,
-                        }}>{s.t}</div>
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: 500, flexShrink: 0 }}>{s.d}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Mock 3: Job tracker */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={VIEW} transition={{ duration: 0.5, delay: 0.2 }}
-              className="landing-mock"
-            >
-              <div className="landing-mock-bar">
-                <span /><span /><span />
-                <div style={{ marginLeft: '12px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                  Application tracker
-                </div>
-              </div>
-              <div style={{ padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
-                  <div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Active</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-text)' }}>7</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Interviews</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-text)' }}>3</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Offers</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-success)' }}>1</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { c: 'Stripe', r: 'Sr. Backend', s: 'Interview', color: 'primary' },
-                    { c: 'Linear', r: 'Platform Eng.', s: 'Applied', color: 'slate' },
-                    { c: 'Notion', r: 'Full-stack', s: 'Phone screen', color: 'warning' },
-                    { c: 'Vercel', r: 'Infra Engineer', s: 'Offer', color: 'success' },
-                  ].map(j => (
-                    <div key={j.c} style={{
-                      display: 'flex', alignItems: 'center', gap: '10px',
-                      padding: '10px 12px', borderRadius: 'var(--radius-lg)',
-                      border: '1px solid var(--color-border)',
-                    }}>
-                      <div style={{
-                        width: '30px', height: '30px', borderRadius: '8px',
-                        background: 'linear-gradient(135deg, var(--indigo-100), var(--violet-100))',
-                        color: 'var(--color-primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '12px', fontWeight: 800,
-                      }}>{j.c[0]}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>{j.c}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{j.r}</div>
-                      </div>
-                      <span className="landing-tag" style={{
-                        background: j.color === 'success' ? 'var(--emerald-50)'
-                                  : j.color === 'warning' ? 'var(--color-warning-light)'
-                                  : j.color === 'primary' ? 'var(--indigo-50)'
-                                  : 'var(--color-bg)',
-                        color:      j.color === 'success' ? 'var(--color-success)'
-                                  : j.color === 'warning' ? 'var(--color-warning)'
-                                  : j.color === 'primary' ? 'var(--color-primary)'
-                                  : 'var(--color-text-muted)',
-                      }}>{j.s}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Mock 4: Cover letter */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={VIEW} transition={{ duration: 0.5, delay: 0.3 }}
-              className="landing-mock"
-            >
-              <div className="landing-mock-bar">
-                <span /><span /><span />
-                <div style={{ marginLeft: '12px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                  Cover letter
-                </div>
-              </div>
-              <div style={{ padding: '22px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                  <span className="landing-tag" style={{ background: 'var(--indigo-50)', color: 'var(--color-primary)' }}>Tone: Confident</span>
-                  <span className="landing-tag" style={{ background: 'var(--violet-50)', color: 'var(--color-secondary)' }}>Length: Medium</span>
-                </div>
-                <div style={{
-                  fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.6,
-                  padding: '14px', borderRadius: 'var(--radius-lg)',
-                  background: 'var(--color-bg)', border: '1px dashed var(--color-border)',
-                }}>
-                  <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>Dear Hiring Team,</span>
-                  <br /><br />
-                  Your work on the Linear sync engine caught my attention — I have shipped
-                  three real-time collaboration features in the last 18 months, and the
-                  challenges you describe in the job post look like a great match for
-                  that experience...
-                </div>
-                <div style={{
-                  marginTop: '14px', fontSize: '12px', color: 'var(--color-text-muted)',
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                }}>
-                  <Sparkles size={12} color="var(--color-primary)" />
-                  Mirrors 4 keywords from the job description
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY SKILLGAP.AI */}
-      <section className="section" style={{ background: 'var(--color-surface)', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
-        <div className="container">
-          <motion.div
-            initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
-            style={{ textAlign: 'center', marginBottom: '48px', maxWidth: '600px', margin: '0 auto 48px' }}
-          >
-            <motion.div variants={fadeUp} style={{ marginBottom: '14px' }}>
-              <span className="landing-eyebrow">Why this exists</span>
-            </motion.div>
-            <motion.h2 variants={fadeUp} style={{
-              fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 800,
-              letterSpacing: '-0.02em', color: 'var(--color-text)', marginBottom: '12px',
-            }}>
-              Built like a tool, not a marketing site.
-            </motion.h2>
-          </motion.div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '20px',
           }}>
             {[
               { icon: Zap, t: 'Fast where it matters', b: 'Most analyses finish in under 30 seconds. Local parsing handles the common case so the AI is reserved for the hard parts.' },
               { icon: Lock, t: 'Your data stays yours', b: 'Resumes are stored against your account only. Nothing is sold, nothing is shared with third parties, and one click deletes everything.' },
-              { icon: Sparkles, t: 'Personal, not generic', b: 'Every recommendation is built from your actual skills and the role you pick — no boilerplate "follow these 5 steps" content.' },
+              { icon: Sparkles, t: 'Personal, not generic', b: 'Every recommendation is built from your actual skills and the role you pick - no boilerplate content.' },
             ].map((d, i) => {
               const Icon = d.icon;
               return (
                 <motion.div
                   key={d.t}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={VIEW}
-                  transition={{ delay: i * 0.08 }}
-                  className="landing-bento-feature"
+                  transition={{ delay: i * 0.1 }}
+                  className="mc-card mc-feature"
                 >
-                  <div
-                    className="landing-bento-icon"
-                    style={{ background: 'var(--indigo-50)', color: 'var(--color-primary)' }}
-                  >
+                  <div className="mc-feature-icon" style={{ background: 'var(--color-secondary)', color: 'white' }}>
                     <Icon size={22} />
                   </div>
-                  <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '8px' }}>{d.t}</h3>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '8px' }}>{d.t}</h3>
                   <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: 0 }}>{d.b}</p>
                 </motion.div>
               );
@@ -981,144 +898,84 @@ const Landing = () => {
       </section>
 
       {/* FAQ */}
-      <section className="section">
-        <div className="container">
+      <section className="section" style={{ background: 'var(--navy-50)' }}>
+        <div className="container" style={{ maxWidth: '720px' }}>
           <motion.div
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
-            style={{ textAlign: 'center', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px' }}
+            style={{ textAlign: 'center', marginBottom: '48px' }}
           >
-            <motion.div variants={fadeUp} style={{ marginBottom: '14px' }}>
-              <span className="landing-eyebrow">FAQ</span>
+            <motion.div variants={fadeUp} style={{ marginBottom: '16px' }}>
+              <span className="mc-status mc-status-active">Intel Center</span>
             </motion.div>
             <motion.h2 variants={fadeUp} style={{
-              fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 800,
-              letterSpacing: '-0.02em', color: 'var(--color-text)', marginBottom: '12px',
+              fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 700,
+              letterSpacing: '-0.03em', color: 'var(--color-text)', marginBottom: '12px',
             }}>
-              The honest answers.
+              Mission Briefing
             </motion.h2>
           </motion.div>
 
           <motion.div
-            initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
-            style={{ maxWidth: '760px', margin: '0 auto' }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={VIEW}
+            className="mc-faq"
           >
-            <div className="landing-faq">
-              {faqs.map((item, i) => {
-                const open = openFaq === i;
-                return (
-                  <motion.div key={item.q} variants={fadeUp} className="landing-faq-item">
-                    <button
-                      className="landing-faq-trigger"
-                      onClick={() => setOpenFaq(open ? -1 : i)}
-                      aria-expanded={open}
-                      aria-controls={`faq-${i}`}
-                    >
-                      <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text)' }}>{item.q}</span>
-                      <motion.span
-                        animate={{ rotate: open ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}
-                      >
-                        <ChevronDown size={18} />
-                      </motion.span>
-                    </button>
-                    <div
-                      id={`faq-${i}`}
-                      className="landing-faq-content"
-                      style={{ maxHeight: open ? '400px' : 0 }}
-                    >
-                      <div className="landing-faq-content-inner">{item.a}</div>
-                    </div>
+            {faqs.map((faq, i) => (
+              <div key={i} className="mc-faq-item">
+                <button
+                  className="mc-faq-trigger"
+                  onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
+                >
+                  <span>{faq.q}</span>
+                  <motion.div
+                    animate={{ rotate: openFaq === i ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} color="var(--color-text-muted)" />
                   </motion.div>
-                );
-              })}
-            </div>
+                </button>
+                <div className="mc-faq-content" style={{ maxHeight: openFaq === i ? '200px' : '0' }}>
+                  <div className="mc-faq-content-inner">{faq.a}</div>
+                </div>
+              </div>
+            ))}
           </motion.div>
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section style={{ padding: '64px 0 96px' }}>
+      {/* CTA */}
+      <section className="section">
         <div className="container">
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 32 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={VIEW}
-            transition={{ duration: 0.6 }}
-            className="landing-cta-band"
+            className="mc-cta"
+            style={{ textAlign: 'center' }}
           >
-            <div style={{ maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <span className="landing-eyebrow" style={{ background: 'rgba(255,255,255,0.08)', color: 'white', borderColor: 'rgba(255,255,255,0.18)' }}>
-                  <Sparkles size={12} />
-                  Your next role
+            <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+              <motion.div variants={fadeUp} style={{ marginBottom: '16px' }}>
+                <span className="mc-status" style={{ background: 'rgba(255,107,53,0.15)', color: 'var(--color-secondary)', border: '1px solid rgba(255,107,53,0.3)' }}>
+                  Ready for Launch
                 </span>
-              </div>
+              </motion.div>
               <h2 style={{
-                fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 800,
-                letterSpacing: '-0.02em', color: 'white', marginBottom: '14px', lineHeight: 1.1,
+                fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 700,
+                letterSpacing: '-0.03em', color: 'white', marginBottom: '16px',
               }}>
-                Stop wondering what to do next.
+                Your career deserves a <span style={{ color: 'var(--color-secondary)' }}>mission plan</span>, not guesswork.
               </h2>
               <p style={{
-                fontSize: '16px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6,
-                margin: '0 auto 32px', maxWidth: '440px',
+                fontSize: '16px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7,
+                marginBottom: '32px',
               }}>
-                Create an account, upload your resume, and see your full skill map in under a minute.
+                Join thousands of job seekers who know exactly what they need to learn next.
               </p>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Link
-                  to="/register"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '8px',
-                    padding: '14px 24px', borderRadius: 'var(--radius-lg)',
-                    background: 'white', color: 'var(--color-text)',
-                    fontWeight: 600, fontSize: '15px', textDecoration: 'none',
-                    minHeight: '48px', transition: 'transform 200ms ease, box-shadow 200ms ease, background 200ms ease',
-                    boxShadow: '0 8px 24px -8px rgba(255,255,255,0.4)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--slate-50)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 12px 32px -8px rgba(255,255,255,0.5)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px -8px rgba(255,255,255,0.4)';
-                  }}
-                >
-                  Create your account
-                  <ArrowRight size={16} />
-                </Link>
-                <Link
-                  to="/login"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center',
-                    padding: '14px 24px', borderRadius: 'var(--radius-lg)',
-                    color: 'white', fontWeight: 600, fontSize: '15px',
-                    textDecoration: 'none', minHeight: '48px',
-                    border: '1px solid rgba(255,255,255,0.25)',
-                    background: 'transparent',
-                    transition: 'background 200ms ease, border-color 200ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)';
-                  }}
-                >
-                  Sign in
-                </Link>
-              </div>
-              <p style={{
-                fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '20px 0 0',
-              }}>
-                Free, no subscription, no card. One account, all of your analyses.
-              </p>
+              <Link to="/register" className="mc-btn" style={{ fontSize: '16px', padding: '18px 36px' }}>
+                <Rocket size={20} />
+                Start Your Mission
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -1143,14 +1000,13 @@ const Landing = () => {
               }}>
                 <div style={{
                   width: '32px', height: '32px', borderRadius: '8px',
-                  background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+                  background: 'var(--navy-950)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
                 }}>
-                  <Zap size={16} color="white" />
+                  <Zap size={16} color="var(--color-secondary)" />
                 </div>
-                <span style={{ fontWeight: 800, fontSize: '16px', letterSpacing: '-0.02em' }}>
-                  SkillGap<span style={{ color: 'var(--color-primary)' }}>.ai</span>
+                <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.02em', fontFamily: 'var(--font-display)' }}>
+                  SkillGap<span style={{ color: 'var(--color-secondary)' }}>.ai</span>
                 </span>
               </Link>
               <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: 0, maxWidth: '260px' }}>
@@ -1159,7 +1015,7 @@ const Landing = () => {
             </div>
 
             <div>
-              <h4 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>Product</h4>
+              <h4 style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px', fontFamily: 'var(--font-display)' }}>Product</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <li><a href="#features" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>Features</a></li>
                 <li><a href="#how-it-works" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>How it works</a></li>
@@ -1168,53 +1024,22 @@ const Landing = () => {
             </div>
 
             <div>
-              <h4 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>Account</h4>
+              <h4 style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px', fontFamily: 'var(--font-display)' }}>Account</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <li><Link to="/login" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>Sign in</Link></li>
                 <li><Link to="/register" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>Create account</Link></li>
               </ul>
             </div>
-
-            <div>
-              <h4 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>Get in touch</h4>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                {[
-                  { icon: Github, label: 'GitHub' },
-                  { icon: Twitter, label: 'Twitter' },
-                  { icon: Mail, label: 'Email' },
-                ].map((entry) => {
-                  const { icon: Icon, label } = entry;
-                  return (
-                    <a
-                      key={label}
-                      href="#"
-                      aria-label={label}
-                      style={{
-                        width: '36px', height: '36px', borderRadius: '10px',
-                        background: 'var(--color-bg)',
-                        border: '1px solid var(--color-border)',
-                        color: 'var(--color-text-muted)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        textDecoration: 'none',
-                        transition: 'all 200ms ease',
-                      }}
-                    >
-                      <Icon size={16} />
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
-          <div className="landing-divider" style={{ marginBottom: '24px' }} />
+          <div className="mc-divider" style={{ marginBottom: '24px' }} />
 
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             flexWrap: 'wrap', gap: '12px',
           }}>
             <p style={{ fontSize: '12px', color: 'var(--color-text-light)', margin: 0 }}>
-              © {new Date().getFullYear()} SkillGap.ai — Built for serious job seekers.
+              © {new Date().getFullYear()} SkillGap.ai - Built for serious job seekers.
             </p>
             <p style={{ fontSize: '12px', color: 'var(--color-text-light)', margin: 0 }}>
               No subscription. No ads. No data selling.
