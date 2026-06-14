@@ -45,6 +45,7 @@ from api.mock_interview import router as mock_interview_router
 from api.routes.auth import router as auth_router
 from api.routes.analysis import router as analysis_router
 from api.routes.admin import router as admin_router
+from api.routes.health import router as health_router
 import json
 
 # ---------------------------------------------------------------------------
@@ -128,6 +129,7 @@ app.include_router(mock_interview_router)
 app.include_router(auth_router)
 app.include_router(analysis_router)
 app.include_router(admin_router)
+app.include_router(health_router)
 
 logger = logging.getLogger("resume-analyzer")
 logging.basicConfig(level=logging.INFO)
@@ -330,21 +332,6 @@ async def request_logging_and_rate_limit(request: Request, call_next):
         response.headers["Cache-Control"] = "no-store"
         response.headers["Pragma"] = "no-cache"
     return response
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to AI Resume Analyzer API"}
-
-
-@app.get("/api/health")
-def health_check():
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-    finally:
-        conn.close()
-    return {"status": "ok", "timestamp": datetime.utcnow().isoformat() + "Z"}
 
 
 @app.get("/api/trends/status")
