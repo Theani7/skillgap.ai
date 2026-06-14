@@ -1,0 +1,368 @@
+{
+  "roles": {
+    "Data Science": [
+      {
+        "id": 1,
+        "question": "What is the difference between supervised and unsupervised learning?",
+        "answer": "Supervised learning uses labeled training data where both input and output are known, allowing the model to learn a mapping function. Common examples include classification and regression. Unsupervised learning works with unlabeled data, discovering hidden patterns or structures like clusters or associations without predefined outputs."
+      },
+      {
+        "id": 2,
+        "question": "Explain the bias-variance tradeoff.",
+        "answer": "Bias is the error from overly simplistic assumptions in the learning algorithm, leading to underfitting. Variance is the error from sensitivity to small fluctuations in the training set, leading to overfitting. The tradeoff means reducing one typically increases the other. The goal is to find a model complexity that minimizes total error by balancing both."
+      },
+      {
+        "id": 3,
+        "question": "How do you handle missing data in a dataset?",
+        "answer": "Common approaches include: deletion (removing rows or columns with missing values), imputation (filling with mean, median, mode, or using algorithms like KNN imputation), using models that handle missing values natively (like XGBoost), or creating a separate 'missing' category for categorical variables. The choice depends on the amount and mechanism of missingness (MCAR, MAR, MNAR)."
+      },
+      {
+        "id": 4,
+        "question": "What is cross-validation and why is it important?",
+        "answer": "Cross-validation is a technique for assessing model performance by partitioning data into multiple folds, training on some folds and testing on others. K-fold CV splits data into K subsets, rotating the test set. It provides a more reliable estimate of model performance on unseen data than a single train-test split, helps detect overfitting, and makes better use of limited data."
+      },
+      {
+        "id": 5,
+        "question": "Explain the ROC-AUC curve.",
+        "answer": "The ROC curve plots True Positive Rate (sensitivity) against False Positive Rate (1-specificity) at various classification thresholds. AUC (Area Under the Curve) measures the probability that a randomly chosen positive instance is ranked higher than a randomly chosen negative instance. AUC of 0.5 means random guessing; 1.0 means perfect classification. It's threshold-independent and useful for imbalanced datasets."
+      },
+      {
+        "id": 6,
+        "question": "What is feature engineering? Give examples.",
+        "answer": "Feature engineering is the process of creating new input variables from raw data to improve model performance. Examples include: creating polynomial features, binning continuous variables, encoding categorical variables (one-hot, label encoding), extracting date components (day, month, year), text vectorization (TF-IDF, word embeddings), log transformations for skewed data, and interaction features (combining two or more variables)."
+      },
+      {
+        "id": 7,
+        "question": "What is the curse of dimensionality?",
+        "answer": "As the number of features (dimensions) increases, the volume of the feature space grows exponentially, making the available data become sparse. This sparsity makes it harder for algorithms to find patterns, increases computational cost, and can lead to overfitting. Distance-based algorithms like KNN are particularly affected. Solutions include dimensionality reduction (PCA, t-SNE) and feature selection."
+      },
+      {
+        "id": 8,
+        "question": "Compare L1 and L2 regularization.",
+        "answer": "L1 regularization (Lasso) adds the absolute value of coefficients to the loss function, driving some coefficients to exactly zero, effectively performing feature selection. L2 regularization (Ridge) adds the squared magnitude of coefficients, shrinking them toward zero but never eliminating them entirely. L1 is useful when you suspect many irrelevant features; L2 is better when most features are relevant."
+      },
+      {
+        "id": 9,
+        "question": "What is a random forest? How does it reduce overfitting?",
+        "answer": "Random forest is an ensemble method that builds multiple decision trees on random subsets of data (bagging) and random subsets of features. Each tree votes on the final prediction. It reduces overfitting through: (1) bagging — each tree sees different data, reducing variance; (2) feature randomness — trees can't all rely on the same dominant features; (3) averaging — combining many trees smooths out individual tree errors."
+      },
+      {
+        "id": 10,
+        "question": "Explain precision vs recall. When would you prioritize one over the other?",
+        "answer": "Precision is the fraction of true positives among all predicted positives (TP/(TP+FP)). Recall is the fraction of true positives among all actual positives (TP/(TP+FN)). Prioritize precision when false positives are costly (e.g., spam filter — marking legitimate email as spam is bad). Prioritize recall when false negatives are costly (e.g., cancer detection — missing a positive case is dangerous). F1-score balances both."
+      }
+    ],
+    "Web Development": [
+      {
+        "id": 1,
+        "question": "What is the difference between REST and GraphQL?",
+        "answer": "REST uses multiple endpoints with fixed data structures returned by each. GraphQL uses a single endpoint where the client specifies exactly what data it needs. REST is simpler and cacheable; GraphQL reduces over-fetching and under-fetching. REST uses HTTP methods (GET, POST, PUT, DELETE) semantically; GraphQL typically uses POST for everything. GraphQL requires a schema and resolvers on the server."
+      },
+      {
+        "id": 2,
+        "question": "Explain the virtual DOM and how React uses it.",
+        "answer": "The virtual DOM is a lightweight in-memory representation of the real DOM. When state changes, React creates a new virtual DOM tree, diffs it against the previous one (reconciliation), and batches only the necessary real DOM updates. This minimizes expensive DOM manipulations. React 18+ uses concurrent rendering features that further optimize this process with automatic batching and suspense."
+      },
+      {
+        "id": 3,
+        "question": "What are HTTP status codes? Name common ones.",
+        "answer": "Status codes indicate the result of an HTTP request. 2xx success: 200 OK, 201 Created, 204 No Content. 3xx redirection: 301 Moved Permanently, 304 Not Modified. 4xx client error: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 429 Too Many Requests. 5xx server error: 500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable."
+      },
+      {
+        "id": 4,
+        "question": "What is CORS and why does it exist?",
+        "answer": "CORS (Cross-Origin Resource Sharing) is a security mechanism that controls which origins can access resources on a web server. Browsers enforce the Same-Origin Policy by default, blocking requests to different domains. CORS uses HTTP headers (Access-Control-Allow-Origin, etc.) to whitelist specific origins. It prevents malicious sites from making unauthorized requests to other domains using a user's credentials."
+      },
+      {
+        "id": 5,
+        "question": "Explain async/await in JavaScript.",
+        "answer": "Async/await is syntactic sugar over Promises. An async function always returns a Promise. The 'await' keyword pauses execution inside an async function until a Promise resolves, then returns the resolved value. This makes asynchronous code read like synchronous code. Errors can be caught with try/catch. Under the hood, it's still event-loop based — await yields control back to the event loop while waiting."
+      },
+      {
+        "id": 6,
+        "question": "What is the difference between sessionStorage and localStorage?",
+        "answer": "localStorage persists data with no expiration date, surviving browser restarts and tabs. sessionStorage is scoped to the current tab/window and is cleared when that tab is closed. Both store key-value pairs as strings. Neither is designed for sensitive data (use httpOnly cookies for that). Both have a ~5-10MB storage limit depending on the browser."
+      },
+      {
+        "id": 7,
+        "question": "What is a CSS grid? How does it differ from Flexbox?",
+        "answer": "CSS Grid is a two-dimensional layout system for rows and columns simultaneously. Flexbox is one-dimensional, handling either row or column layout at a time. Grid is ideal for page layouts and complex component arrangements; Flexbox excels at distributing space among items in a single axis. Grid uses grid-template-rows/columns; Flexbox uses flex-direction, justify-content, align-items."
+      },
+      {
+        "id": 8,
+        "question": "What is webpack? How does Vite differ?",
+        "answer": "Webpack is a bundler that processes all modules and their dependencies into optimized bundles for production. It uses a configuration-heavy approach with loaders and plugins. Vite is a newer build tool that uses native ES modules in development (no bundling needed) and Rollup for production builds. Vite offers much faster dev server startup and hot module replacement because it only processes files on demand."
+      },
+      {
+        "id": 9,
+        "question": "What are WebSockets and when would you use them?",
+        "answer": "WebSockets provide full-duplex communication over a single TCP connection, allowing bidirectional real-time data transfer between client and server. Unlike HTTP (request-response), either party can send data at any time. Use cases include chat applications, live notifications, real-time gaming, collaborative editing, and live dashboards. They're more efficient than polling or Server-Sent Events for high-frequency two-way communication."
+      },
+      {
+        "id": 10,
+        "question": "Explain the concept of component composition in React.",
+        "answer": "Component composition is the principle of building complex UIs by combining small, reusable components. Components accept inputs (props) and return React elements. Composition over inheritance means combining components via children, render props, or higher-order components rather than extending component classes. This promotes reusability, testability, and separation of concerns. Each component manages its own state and lifecycle."
+      }
+    ],
+    "DevOps": [
+      {
+        "id": 1,
+        "question": "What is CI/CD? Explain the pipeline stages.",
+        "answer": "CI (Continuous Integration) automatically builds and tests code on every commit. CD (Continuous Deployment/Delivery) automates release to production. Typical pipeline stages: (1) Source — pull code from repository, (2) Build — compile/bundle, (3) Test — run unit/integration/e2e tests, (4) Security scan — check for vulnerabilities, (5) Staging — deploy to test environment, (6) Production — deploy to live. Tools include GitHub Actions, Jenkins, GitLab CI."
+      },
+      {
+        "id": 2,
+        "question": "What is Docker? How is it different from a virtual machine?",
+        "answer": "Docker containers package an application with its dependencies into a lightweight, portable unit. Unlike VMs which virtualize hardware and run full OS kernels, containers share the host OS kernel and only isolate the application layer. This makes containers much faster to start (seconds vs minutes), use less resources (MBs vs GBs), and be more portable. Docker uses images (read-only templates) and containers (running instances)."
+      },
+      {
+        "id": 3,
+        "question": "What is Kubernetes and when do you need it?",
+        "answer": "Kubernetes (K8s) is a container orchestration platform that automates deployment, scaling, and management of containerized applications. You need it when: managing many containers across multiple hosts, requiring auto-scaling based on load, needing zero-downtime deployments, requiring service discovery and load balancing, or managing microservices. For simple apps with few containers, Docker Compose is usually sufficient."
+      },
+      {
+        "id": 4,
+        "question": "Explain infrastructure as code (IaC).",
+        "answer": "IaC is managing infrastructure through machine-readable configuration files rather than manual processes. Tools like Terraform, AWS CloudFormation, and Pulumi define infrastructure declaratively. Benefits include: version control for infrastructure, reproducible environments, automated provisioning, drift detection, and documentation-as-code. Declarative IaC describes the desired state; the tool figures out how to achieve it."
+      },
+      {
+        "id": 5,
+        "question": "What is a load balancer? What algorithms exist?",
+        "answer": "A load balancer distributes incoming traffic across multiple servers to ensure availability and reliability. Algorithms include: Round Robin (sequential distribution), Least Connections (route to server with fewest active connections), IP Hash (route based on client IP for session persistence), and Weighted (servers with more capacity get more traffic). Load balancers can operate at Layer 4 (TCP) or Layer 7 (HTTP)."
+      },
+      {
+        "id": 6,
+        "question": "What is monitoring and why is it essential for DevOps?",
+        "answer": "Monitoring involves collecting, processing, and analyzing data about system performance and behavior. Key pillars: metrics (numeric measurements like CPU usage), logs (event records), and traces (request paths through distributed systems). Essential for: detecting issues before users notice, capacity planning, performance optimization, security incident detection, and understanding system behavior. Tools include Prometheus, Grafana, ELK stack, Datadog."
+      },
+      {
+        "id": 7,
+        "question": "Explain blue-green deployment vs canary deployment.",
+        "answer": "Blue-green maintains two identical environments. Traffic routes to blue (current). New version deploys to green. After testing green, traffic switches over. Instant rollback by switching back. Canary gradually routes a small percentage of traffic to the new version, monitoring for issues before increasing traffic. Blue-green is simpler but requires double resources. Canary is more sophisticated with lower risk but more complex to implement."
+      },
+      {
+        "id": 8,
+        "question": "What is a reverse proxy? Name popular ones.",
+        "answer": "A reverse proxy sits between clients and backend servers, forwarding client requests to appropriate servers. It provides: load balancing, SSL termination, caching, security (hides backend details), compression, and rate limiting. Popular options: Nginx (high performance, reverse proxy + web server), HAProxy (load balancing focused), Traefik (auto-discovery with Docker/K8s), Caddy (automatic HTTPS)."
+      },
+      {
+        "id": 9,
+        "question": "What is GitOps and how does it differ from traditional CI/CD?",
+        "answer": "GitOps uses Git as the single source of truth for infrastructure and application deployment. Changes are made via Git commits/pull requests, and a controller (like ArgoCD or Flux) automatically reconciles the desired state from Git with the actual state in the cluster. Unlike traditional CI/CD where pipelines push changes, GitOps is pull-based — the cluster pulls changes from Git. This provides audit trails, rollback via Git, and declarative infrastructure management."
+      },
+      {
+        "id": 10,
+        "question": "What is observability vs monitoring?",
+        "answer": "Monitoring is checking predefined metrics and logs against known thresholds to detect known problems. Observability is the ability to understand a system's internal state from its external outputs — you can ask new questions you didn't anticipate. The three pillars of observability are metrics, logs, and traces. Monitoring tells you something is wrong; observability helps you understand why, even for novel failure modes."
+      }
+    ],
+    "Cloud Engineering": [
+      {
+        "id": 1,
+        "question": "What are the differences between IaaS, PaaS, and SaaS?",
+        "answer": "IaaS (Infrastructure as a Service) provides virtualized computing resources — you manage OS, middleware, apps (e.g., AWS EC2, Azure VMs). PaaS (Platform as a Service) provides a platform for developing/running apps without managing infrastructure (e.g., Heroku, Google App Engine). SaaS (Software as a Service) delivers complete applications over the internet (e.g., Gmail, Salesforce). The tradeoff is control vs convenience."
+      },
+      {
+        "id": 2,
+        "question": "Explain the shared responsibility model in cloud security.",
+        "answer": "Cloud providers secure the infrastructure (physical data centers, network, hypervisor). Customers secure what they put in the cloud. For IaaS, customers handle OS, applications, data, identity management, and network configuration. For PaaS, customers handle applications and data. For SaaS, the provider handles everything except data and user access. Misunderstanding this model is a leading cause of cloud security breaches."
+      },
+      {
+        "id": 3,
+        "question": "What is auto-scaling and when should you use it?",
+        "answer": "Auto-scaling automatically adjusts computing resources based on demand. Use it for: workloads with variable traffic patterns (e-commerce during sales), unpredictable growth, cost optimization (scale down during off-hours), and high availability (replace unhealthy instances). Common strategies: target tracking (maintain a metric value), step scaling (add/remove instances at thresholds), and scheduled scaling (predictable patterns)."
+      },
+      {
+        "id": 4,
+        "question": "What is serverless computing? What are its limitations?",
+        "answer": "Serverless (e.g., AWS Lambda, Azure Functions) lets you run code without managing servers. The cloud provider handles provisioning, scaling, and maintenance. You pay only for execution time. Limitations: cold starts (latency when functions haven't been called recently), execution time limits (typically 5-15 minutes), vendor lock-in, difficulty debugging, limited execution environments, and statelessness (no local state between invocations)."
+      },
+      {
+        "id": 5,
+        "question": "Explain VPC, subnets, and security groups.",
+        "answer": "A VPC (Virtual Private Cloud) is an isolated virtual network in the cloud where you define IP ranges, subnets, and routing. Subnets partition the VPC into smaller networks — public subnets (internet-accessible) and private subnets (internal only). Security groups are virtual firewalls controlling inbound/outbound traffic at the instance level using allow rules. Network ACLs provide subnet-level stateless filtering. Together they create network isolation and defense in depth."
+      },
+      {
+        "id": 6,
+        "question": "What is CDN and how does it improve performance?",
+        "answer": "A Content Delivery Network (CDN) distributes content across geographically distributed edge servers. When a user requests content, they're routed to the nearest edge server, reducing latency. CDNs cache static assets (images, CSS, JS) closer to users, reduce origin server load, provide DDoS protection, handle SSL termination, and can serve content even if the origin is down. Popular CDNs: Cloudflare, AWS CloudFront, Akamai."
+      },
+      {
+        "id": 7,
+        "question": "What is multi-region deployment and why use it?",
+        "answer": "Multi-region deployment runs your application in multiple geographic regions simultaneously. Benefits: (1) Disaster recovery — if one region fails, others continue serving; (2) Lower latency — users connect to the nearest region; (3) Compliance — data residency requirements may mandate local storage; (4) Scale — distribute load across regions. Challenges include data synchronization, consistency models, increased complexity, and higher costs."
+      },
+      {
+        "id": 8,
+        "question": "Compare SQL and NoSQL databases for cloud applications.",
+        "answer": "SQL databases (PostgreSQL, MySQL) use structured schemas, ACID transactions, and relational queries. Best for: complex queries, data consistency requirements, structured data. NoSQL databases (MongoDB, DynamoDB, Redis) offer flexible schemas, horizontal scaling, and eventual consistency. Best for: high throughput, unstructured data, rapid iteration, specific access patterns. Many cloud apps use both — SQL for transactional data, NoSQL for caching or document storage."
+      },
+      {
+        "id": 9,
+        "question": "What is containerization and how does it relate to cloud-native?",
+        "answer": "Containerization packages applications with their dependencies into isolated, portable units. Cloud-native applications are designed to exploit cloud benefits: microservices architecture, containers, orchestration (K8s), service mesh, CI/CD, and observability. Containers enable: consistent environments across dev/staging/production, efficient resource utilization, rapid deployment, and horizontal scaling. They're the foundational building block of cloud-native architecture."
+      },
+      {
+        "id": 10,
+        "question": "What is disaster recovery and what strategies exist?",
+        "answer": "Disaster recovery (DR) plans restore systems after failures. Strategies: (1) Backup and restore — cheapest, longest recovery time; (2) Pilot light — minimal running infrastructure, quickly scalable; (3) Warm standby — scaled-down duplicate running in another region; (4) Multi-site active-active — full deployment in multiple regions, highest availability. Key metrics: RPO (Recovery Point Objective — maximum data loss) and RTO (Recovery Time Objective — maximum downtime)."
+      }
+    ],
+    "Cybersecurity": [
+      {
+        "id": 1,
+        "question": "What is the CIA triad in cybersecurity?",
+        "answer": "The CIA triad is the foundation of information security: Confidentiality — ensuring only authorized users can access data (encryption, access controls). Integrity — ensuring data hasn't been tampered with (hashing, digital signatures, audit logs). Availability — ensuring systems and data are accessible when needed (redundancy, DDoS protection, backups). All security controls map to one or more of these principles."
+      },
+      {
+        "id": 2,
+        "question": "Explain SQL injection and how to prevent it.",
+        "answer": "SQL injection inserts malicious SQL code into application queries through user input. An attacker might input `' OR '1'='1` to bypass authentication. Prevention: (1) Parameterized queries/prepared statements — separate SQL logic from data; (2) ORM frameworks that handle escaping; (3) Input validation and sanitization; (4) Least privilege — DB user should only have necessary permissions; (5) Web Application Firewalls for additional protection."
+      },
+      {
+        "id": 3,
+        "question": "What is XSS (Cross-Site Scripting) and its types?",
+        "answer": "XSS injects malicious scripts into web pages viewed by other users. Types: (1) Stored XSS — malicious script is permanently stored on the server (e.g., in a database via a comment field); (2) Reflected XSS — script is reflected off a server in the URL or error message; (3) DOM-based XSS — vulnerability exists in client-side code rather than server-side. Prevention: output encoding, Content Security Policy (CSP) headers, input validation, and using frameworks that auto-escape by default."
+      },
+      {
+        "id": 4,
+        "question": "What is multi-factor authentication (MFA)?",
+        "answer": "MFA requires two or more verification factors to gain access: something you know (password), something you have (phone, hardware token), and something you are (biometrics). Even if one factor is compromised, the account remains protected. Common implementations: TOTP apps (Google Authenticator), SMS codes (less secure), hardware keys (YubiKey), and push notifications. MFA significantly reduces credential-based attacks."
+      },
+      {
+        "id": 5,
+        "question": "What is a penetration test? What are its types?",
+        "answer": "A penetration test simulates real attacks to find vulnerabilities before attackers do. Types: (1) Black box — tester has no prior knowledge of the system; (2) White box — tester has full access to source code, infrastructure details; (3) Gray box — partial knowledge. Methodologies: OWASP Testing Guide, PTES (Penetration Testing Execution Standard), NIST. Testing covers network, application, social engineering, and physical security layers."
+      },
+      {
+        "id": 6,
+        "question": "Explain encryption at rest vs in transit.",
+        "answer": "Encryption in transit protects data moving between systems (TLS/SSL for HTTPS, VPNs for network traffic). Encryption at rest protects data stored on disks or databases (AES-256, database-level encryption). Both are essential — data in transit without at-rest encryption is vulnerable if storage is compromised, and vice versa. Key management is critical: keys must be securely stored, rotated, and access-controlled separately from encrypted data."
+      },
+      {
+        "id": 7,
+        "question": "What is a zero-trust security model?",
+        "answer": "Zero trust assumes no user or device is inherently trustworthy, regardless of location (inside or outside the network). Principles: (1) Verify explicitly — authenticate and authorize every request; (2) Least privilege access — minimal permissions needed; (3) Assume breach — design systems as if attackers are already inside. Implementation includes: micro-segmentation, MFA, continuous verification, encrypted communications, and detailed logging. It's a shift from perimeter-based security."
+      },
+      {
+        "id": 8,
+        "question": "What is OWASP Top 10?",
+        "answer": "OWASP Top 10 is a regularly updated list of the most critical web application security risks. Current categories include: Broken Access Control, Cryptographic Failures, Injection, Insecure Design, Security Misconfiguration, Vulnerable Components, Authentication Failures, Data Integrity Failures, Logging Failures, and Server-Side Request Forgery (SSRF). It serves as a baseline for secure development practices and is used in security audits and compliance."
+      },
+      {
+        "id": 9,
+        "question": "What is DDoS and how do you mitigate it?",
+        "answer": "Distributed Denial of Service floods a target with traffic from multiple sources, overwhelming it and denying service to legitimate users. Types: volumetric (bandwidth flooding), protocol (exploiting network protocols), application layer (targeting specific services). Mitigation: CDNs with DDoS protection (Cloudflare), rate limiting, traffic filtering, over-provisioning bandwidth, Web Application Firewalls, and using services like AWS Shield or Azure DDoS Protection."
+      },
+      {
+        "id": 10,
+        "question": "What is a security incident response plan?",
+        "answer": "An incident response plan defines how to handle security breaches. NIST phases: (1) Preparation — tools, training, playbooks; (2) Detection and Analysis — identify and scope the incident; (3) Containment — stop the damage (short-term: isolate systems, long-term: apply fixes); (4) Eradication — remove root cause; (5) Recovery — restore systems to normal; (6) Post-incident activity — lessons learned, improve defenses. Regular drills and tabletop exercises ensure readiness."
+      }
+    ],
+    "Mobile Development": [
+      {
+        "id": 1,
+        "question": "What is the difference between native and cross-platform development?",
+        "answer": "Native development uses platform-specific languages and tools (Swift/Objective-C for iOS, Kotlin/Java for Android), providing full access to platform APIs and best performance. Cross-platform frameworks (React Native, Flutter, Xamarin) use a single codebase to build for both platforms. Cross-platform benefits: faster development, code reuse, smaller teams. Native benefits: better performance, full API access, platform-specific UX patterns."
+      },
+      {
+        "id": 2,
+        "question": "Explain React Native's architecture.",
+        "answer": "React Native bridges JavaScript and native code. The JS thread runs React components and business logic. The native thread handles UI rendering and platform APIs. The bridge (now replaced by JSI in newer versions) facilitates communication. New Architecture uses Turbo Modules (lazy-loaded native modules) and Fabric (new rendering system) for better performance. Hermes JS engine optimizes startup time and memory usage."
+      },
+      {
+        "id": 3,
+        "question": "What is state management in mobile apps? Compare options.",
+        "answer": "State management handles application data and UI state. Options: (1) Component state — React's useState/useReducer for local state; (2) Context API — built-in React for lightweight global state; (3) Redux — predictable container with middleware; (4) Zustand — minimal boilerplate alternative to Redux; (5) MobX — observable-based reactive state. For React Native: Redux Toolkit is popular for complex apps, Zustand/Jotai for simpler needs, and React Query for server state."
+      },
+      {
+        "id": 4,
+        "question": "What is lazy loading and why is it important for mobile?",
+        "answer": "Lazy loading defers loading non-critical resources until needed. In mobile: images load only when scrolled into view, screens render only when navigated to, and heavy modules load on demand. Benefits: faster initial load, reduced memory usage, lower network consumption (critical on mobile data), and better user experience. Implementation: React.lazy() for components, Intersection Observer for images, dynamic imports for modules."
+      },
+      {
+        "id": 5,
+        "question": "Explain push notifications and their implementation.",
+        "answer": "Push notifications deliver messages to users' devices even when the app isn't active. iOS uses APNs (Apple Push Notification service), Android uses FCM (Firebase Cloud Manager). Implementation: register device for notifications, send token to your server, server sends tokens to APNs/FCM with payload. Considerations: permission handling, notification channels (Android), deep linking from notifications, and compliance with platform guidelines."
+      },
+      {
+        "id": 6,
+        "question": "What is deep linking and how does it work?",
+        "answer": "Deep linking connects a URL to specific content within a mobile app. Types: (1) Custom URL schemes (myapp://profile/123) — simple but no fallback; (2) Universal Links (iOS) and App Links (Android) — use standard HTTPS URLs with domain verification; (3) Deferred deep linking — routes users after app install. Implementation requires platform-specific configuration (Android manifest, iOS Associated Domains) and a routing library to map URLs to screens."
+      },
+      {
+        "id": 7,
+        "question": "What are performance optimization techniques for mobile apps?",
+        "answer": "Key techniques: (1) Minimize JS bundle size — tree shaking, code splitting; (2) Optimize images — proper sizing, compression, progressive loading; (3) Reduce native bridge calls — batch operations; (4) Use FlatList for large lists (virtualization); (5) Avoid unnecessary re-renders — React.memo, useMemo, useCallback; (6) Profile with Flipper/React DevTools; (7) Optimize animations — use native driver; (8) Implement caching strategies; (9) Monitor memory usage."
+      },
+      {
+        "id": 8,
+        "question": "How do you handle offline functionality in mobile apps?",
+        "answer": "Strategies: (1) Cache API responses with timestamps; (2) Use local databases (SQLite, Realm) for offline data; (3) Queue operations when offline and sync when connected; (4) Show cached content with 'offline' indicators; (5) Service workers for Progressive Web Apps; (6) React Query/RTK Query provide built-in caching and offline support. Libraries like WatermelonDB or Realm offer offline-first database solutions with sync capabilities."
+      },
+      {
+        "id": 9,
+        "question": "What is App Store Optimization (ASO)?",
+        "answer": "ASO improves app visibility in app stores to increase organic downloads. Key elements: (1) Keywords — research and optimize title and subtitle; (2) Screenshots and preview videos — showcase key features; (3) App description — clear, compelling, keyword-rich; (4) Ratings and reviews — encourage positive feedback; (5) Icon — distinctive and memorable; (6) Updates — regular releases signal active maintenance. Metrics to track: search ranking, conversion rate, download velocity."
+      },
+      {
+        "id": 10,
+        "question": "What is the difference between Expo and bare React Native?",
+        "answer": "Expo is a managed React Native development platform that provides pre-built native modules, simplifying setup and development. You don't need Xcode or Android Studio for most tasks. Bare React Native gives full access to native code and custom native modules. Expo workflow: fast iteration, OTA updates, limited native customization. Bare workflow: full native control, more setup complexity. Expo now supports 'ejecting' to bare when you need custom native code."
+      }
+    ],
+    "AI/ML Engineering": [
+      {
+        "id": 1,
+        "question": "What is the difference between AI, ML, and Deep Learning?",
+        "answer": "AI (Artificial Intelligence) is the broad concept of machines mimicking human intelligence. ML (Machine Learning) is a subset of AI where systems learn patterns from data without explicit programming. Deep Learning is a subset of ML using neural networks with multiple layers (hierarchical feature learning). ML needs feature engineering; deep learning automatically extracts features from raw data. Deep learning excels at unstructured data (images, text, speech)."
+      },
+      {
+        "id": 2,
+        "question": "Explain the transformer architecture.",
+        "answer": "Transformers process sequential data using self-attention mechanisms instead of recurrence. Key components: (1) Self-attention — each token attends to all other tokens to understand context; (2) Multi-head attention — multiple parallel attention mechanisms capture different relationship types; (3) Positional encoding — injects sequence order information; (4) Feed-forward layers — process attention outputs. Advantages: parallelizable training, captures long-range dependencies. Foundation of GPT, BERT, and modern LLMs."
+      },
+      {
+        "id": 3,
+        "question": "What is prompt engineering?",
+        "answer": "Prompt engineering is designing inputs to LLMs to get desired outputs. Techniques: (1) Zero-shot — direct instruction without examples; (2) Few-shot — provide examples in the prompt; (3) Chain-of-thought — instruct the model to reason step by step; (4) System prompts — set behavior and constraints; (5) Structured output — specify JSON or other formats. Best practices: be specific, provide context, iterate on prompts, use delimiters for clarity, and set clear expectations."
+      },
+      {
+        "id": 4,
+        "question": "What is RAG (Retrieval-Augmented Generation)?",
+        "answer": "RAG combines information retrieval with text generation. Process: (1) User asks a question; (2) System retrieves relevant documents from a knowledge base using vector search; (3) Retrieved context is added to the LLM prompt; (4) LLM generates an answer grounded in the retrieved documents. Benefits: reduces hallucination, provides up-to-date information, enables domain-specific knowledge without fine-tuning, and offers verifiable sources."
+      },
+      {
+        "id": 5,
+        "question": "Explain fine-tuning vs prompt engineering vs RAG.",
+        "answer": "Prompt engineering modifies inputs to guide pre-trained LLMs — cheapest, fastest, no training needed. RAG retrieves external documents to augment prompts — provides factual grounding without model changes. Fine-tuning further trains the model on domain-specific data — highest quality for specific tasks but requires training data, compute, and risks catastrophic forgetting. Use prompt engineering first, add RAG for knowledge-intensive tasks, fine-tune when consistent format/style is needed."
+      },
+      {
+        "id": 6,
+        "question": "What are embeddings and how are they used?",
+        "answer": "Embeddings are dense vector representations of data (text, images, etc.) where similar items have similar vectors. For text: words, sentences, or documents are mapped to fixed-size vectors capturing semantic meaning. Uses: semantic search (find similar documents), clustering (group similar items), recommendation systems, anomaly detection, and as input to ML models. Tools: OpenAI embeddings, sentence-transformers, FAISS for vector storage and retrieval."
+      },
+      {
+        "id": 7,
+        "question": "What is model evaluation? What metrics matter?",
+        "answer": "Model evaluation measures how well a model performs. Classification metrics: accuracy (overall correctness), precision (positive prediction accuracy), recall (ability to find all positives), F1 (harmonic mean of precision and recall), AUC-ROC (threshold-independent performance). Regression metrics: MAE, MSE, RMSE, R². For LLMs: perplexity (language modeling quality), BLEU/ROUGE (text similarity), human evaluation (quality assessment). Always evaluate on held-out test data."
+      },
+      {
+        "id": 8,
+        "question": "What is MLOps and why is it important?",
+        "answer": "MLOps applies DevOps principles to ML systems — automating model training, deployment, monitoring, and governance. Components: (1) Data pipeline automation; (2) Experiment tracking (MLflow, Weights & Biases); (3) Model versioning and registry; (4) CI/CD for models; (5) Model monitoring (data drift, performance degradation); (6) A/B testing; (7) Governance and compliance. Important because ML models degrade over time as data changes, and reproducibility is critical for production systems."
+      },
+      {
+        "id": 9,
+        "question": "What is data preprocessing? What steps are involved?",
+        "answer": "Data preprocessing transforms raw data into a format suitable for ML models. Steps: (1) Data cleaning — handle missing values, remove duplicates, fix errors; (2) Feature scaling — normalize or standardize numerical features; (3) Encoding — convert categorical variables to numbers (one-hot, label encoding); (4) Feature selection — remove irrelevant or redundant features; (5) Dimensionality reduction — PCA, t-SNE for high-dimensional data; (6) Data splitting — train/validation/test sets. Quality preprocessing often matters more than model choice."
+      },
+      {
+        "id": 10,
+        "question": "What are the ethical considerations in AI/ML?",
+        "answer": "Key ethical concerns: (1) Bias and fairness — models can perpetuate or amplify societal biases in training data; (2) Transparency — explainability of model decisions (black box problem); (3) Privacy — models may memorize sensitive training data; (4) Accountability — who's responsible when AI makes mistakes; (5) Environmental impact — large models have significant carbon footprints; (6) Job displacement — automation affecting employment; (7) Misinformation — deepfakes, generated content. Responsible AI requires bias auditing, explainability tools, privacy-preserving techniques, and governance frameworks."
+      }
+    ]
+  }
+}
