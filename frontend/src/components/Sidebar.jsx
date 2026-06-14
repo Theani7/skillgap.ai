@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Zap, Sparkles, Settings, User, Shield, LogOut,
-  Menu, X, BarChart3, FileSearch, AlertTriangle,
+  Menu, X, BarChart3, FileSearch, AlertTriangle, MessageSquare,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
@@ -16,6 +16,7 @@ const SECTIONS = [
     items: [
       { path: '/app', icon: Sparkles, label: 'Resume Analyzer' },
       { path: '/analysis', icon: FileSearch, label: 'Latest Analysis' },
+      { path: '/mock-interview', icon: MessageSquare, label: 'Mock Interview' },
     ],
   },
   {
