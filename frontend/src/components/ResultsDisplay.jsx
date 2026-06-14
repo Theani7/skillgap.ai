@@ -586,7 +586,7 @@ const ResultsDisplay = ({ data, onReset }) => {
       <div style={{
         borderRadius: 'var(--radius-xl)',
         padding: '40px 24px',
-        background: 'linear-gradient(135deg, #312E81 0%, #1E1B4B 100%)',
+        background: 'linear-gradient(135deg, #0a1628 0%, #1a2d4a 100%)',
         color: 'white',
         textAlign: 'center',
       }}>
@@ -644,7 +644,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   width: '100%', height: '44px', padding: '0 20px',
                   borderRadius: 'var(--radius-lg)', border: 'none',
-                  background: 'white', color: '#312E81',
+                  background: 'white', color: '#ffffff',
                   fontWeight: 'var(--font-semibold)', fontSize: '14px',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   opacity: loading ? 0.7 : 1,

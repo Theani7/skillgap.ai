@@ -103,7 +103,7 @@ const PrimaryButton = ({ children, onClick, type = 'button', disabled = false })
       color: disabled ? 'var(--color-text-muted)' : 'white',
       fontWeight: 'var(--font-semibold)', fontSize: '13px',
       border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
-      boxShadow: disabled ? 'none' : '0 2px 8px rgba(79, 70, 229, 0.2)',
+      boxShadow: disabled ? 'none' : '0 2px 8px rgba(255, 107, 53, 0.2)',
       transition: 'opacity 150ms ease',
     }}
   >
@@ -339,7 +339,7 @@ const Profile = () => {
                 background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
                 color: 'white', fontSize: '28px', fontWeight: 'var(--font-extrabold)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 6px 20px rgba(79, 70, 229, 0.3)',
+                boxShadow: '0 6px 20px rgba(255, 107, 53, 0.3)',
                 flexShrink: 0,
               }}>
                 {avatarLetter}
@@ -373,11 +373,6 @@ const Profile = () => {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-              <Link to="/jobs" style={{ textDecoration: 'none' }}>
-                <SecondaryButton>
-                  <Briefcase size={14} /> Jobs
-                </SecondaryButton>
-              </Link>
               <Link to="/app" style={{ textDecoration: 'none' }}>
                 <PrimaryButton>
                   <UploadCloud size={14} /> New Analysis

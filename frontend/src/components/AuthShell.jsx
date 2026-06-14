@@ -106,8 +106,8 @@ const AuthShell = ({ eyebrow, title, subtitle, children, footer }) => {
                     <svg width="80" height="80" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
                       <defs>
                         <linearGradient id="authMockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#818CF8" />
-                          <stop offset="100%" stopColor="#C4B5FD" />
+                          <stop offset="0%" stopColor="#ff6b35" />
+                          <stop offset="100%" stopColor="#22c55e" />
                         </linearGradient>
                       </defs>
                       <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="7" />
@@ -148,8 +148,8 @@ const AuthShell = ({ eyebrow, title, subtitle, children, footer }) => {
                 </div>
 
                 <div className="auth-mock-tip">
-                  <Sparkles size={14} color="#A5B4FC" />
-                  <span><strong>Next:</strong> Learn Kubernetes basics — closes your biggest gap.</span>
+                  <Sparkles size={14} color="#ff6b35" />
+                  <span><strong>Next:</strong> Learn Kubernetes basics - closes your biggest gap.</span>
                 </div>
               </div>
             </motion.div>
@@ -165,7 +165,7 @@ const AuthShell = ({ eyebrow, title, subtitle, children, footer }) => {
                 'Track applications in one place',
               ].map(line => (
                 <div key={line} className="auth-brand-point">
-                  <CheckCircle size={14} color="#A5B4FC" />
+                  <CheckCircle size={14} color="#ff6b35" />
                   <span>{line}</span>
                 </div>
               ))}
