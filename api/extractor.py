@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
-import pypdf
+import fitz
 import docx
 from defusedxml import ElementTree as DET
 import json
@@ -24,12 +24,11 @@ else:
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Extracts raw text from a PDF file."""
     try:
-        reader = pypdf.PdfReader(pdf_path)
+        doc = fitz.open(pdf_path)
         text = ""
-        for page in reader.pages:
-            extracted = page.extract_text()
-            if extracted:
-                text += extracted + "\n"
+        for page in doc:
+            text += page.get_text() + "\n"
+        doc.close()
         return text
     except Exception as e:
         logger.error(f"Error extracting PDF text: {e}")
@@ -76,7 +75,7 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
     Determine what crucial skills the candidate is missing for that role, and return them as an array of strings in 'missing_skills'.
     Estimate how well the candidate's qualifications match the target role as an integer percentage (0-100) in 'match_score'. If no target role is explicitly provided, evaluate them based on their most prominent apparent field.
 
-    CRITICAL — STRUCTURED EXPERIENCE & EDUCATION:
+    CRITICAL - STRUCTURED EXPERIENCE & EDUCATION:
     You MUST populate 'experience_blocks' and 'education_blocks' as structured arrays.
     For each experience entry, extract: title, company, start_date, end_date, bullets (array of strings).
     For each education entry, extract: degree, institution, year.
@@ -194,7 +193,7 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
 
     try:
         if model is None:
-            logger.error("Gemini model not available — GEMINI_API_KEY not configured")
+            logger.error("Gemini model not available - GEMINI_API_KEY not configured")
             return {}
         response = model.generate_content(
             prompt,
@@ -217,8 +216,9 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
         
         try:
             if file_path.lower().endswith('.pdf'):
-                reader = pypdf.PdfReader(file_path)
-                parsed_data["no_of_pages"] = len(reader.pages)
+                doc = fitz.open(file_path)
+                parsed_data["no_of_pages"] = len(doc)
+                doc.close()
             else:
                 parsed_data["no_of_pages"] = 1
         except Exception as page_error:
@@ -271,7 +271,7 @@ def rewrite_resume_with_gemini(resume_data: dict, target_role: str = None) -> di
     }
     try:
         if model is None:
-            logger.error("Gemini model not available — GEMINI_API_KEY not configured")
+            logger.error("Gemini model not available - GEMINI_API_KEY not configured")
             return {}
         response = model.generate_content(
             contents=prompt,
@@ -292,71 +292,6 @@ def rewrite_resume_with_gemini(resume_data: dict, target_role: str = None) -> di
         logger.error(f"Error during Gemini resume rewrite: {e}")
         return {}
 
-
-def generate_cover_letter_with_gemini(profile: dict, job_description: str, company: str, role: str) -> str:
-    name = profile.get('name', 'Candidate')
-    email = profile.get('email', '')
-    background = profile.get('background', '')
-    skills = profile.get('skills', '')
-    achievement = profile.get('achievement', '')
-    why_company = profile.get('why_company', '')
-    
-    if not role or len(str(role).strip()) < 4:
-        return "ERROR: Please provide a valid job title before generating."
-    
-    prompt = f"""You are an expert career coach and professional cover letter writer.
-
-Write a polished, personalized, and compelling cover letter using ONLY the information provided below. 
-
-STRICT RULES:
-- Never use filler phrases like "problem solving", "team player", or "passionate about"
-- Never leave placeholders, blanks, or template text in the output
-- Every sentence must add specific value — no fluff
-- Do not repeat the same point twice
-- Use a confident, professional, and human tone
-- Output ONLY the cover letter text, no explanations or commentary
-
-STRUCTURE (3 paragraphs):
-1. Opening — State the role and company, and make a strong first impression with a specific reason you're a great fit
-2. Middle — Highlight 2-3 relevant skills tied to the role, and include the achievement with impact
-3. Closing — Express enthusiasm for this specific company, and invite next steps confidently
-
-INPUT DATA:
-- Applicant Name: {name}
-- Email: {email}
-- Target Role: {role}
-- Company: {company}
-- Years of Experience / Background: {background}
-- Key Skills: {skills}
-- A Key Achievement (with metric if possible): {achievement}
-- Why this company: {why_company}
-- Job Description: {job_description}
-
-If the Target Role looks invalid or too short (under 4 characters), write:
-"ERROR: Please provide a valid job title before generating."
-
-If Job Description is provided, tailor the letter closely to the listed requirements.
-If Job Description is empty, write a strong general letter based on the role and company.
-
-Now write the cover letter:"""
-    
-    try:
-        if model is None:
-            logger.error("Gemini model not available — GEMINI_API_KEY not configured")
-            return ""
-        response = model.generate_content(
-            contents=prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.2,
-            ),
-        )
-        if not response or not response.text:
-            logger.error("Gemini returned empty response for cover letter generation")
-            return ""
-        return (response.text or "").strip()
-    except Exception as e:
-        logger.error(f"Error during Gemini cover letter generation: {e}")
-        return ""
 
 def simulate_interview_turn(resume_data: dict, target_role: str, chat_history: list) -> dict:
     """
@@ -410,4 +345,3 @@ def simulate_interview_turn(resume_data: dict, target_role: str, chat_history: l
             "question": "Can you tell me more about your most challenging technical project?",
             "is_finished": False
         }
-
