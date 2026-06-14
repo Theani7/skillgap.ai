@@ -18,7 +18,6 @@ from api.database import get_db_connection
 from api.extractor import (
     parse_resume_with_gemini,
     rewrite_resume_with_gemini,
-    generate_cover_letter_with_gemini,
     extract_text_from_pdf,
     extract_text_from_docx,
     simulate_interview_turn,
@@ -47,7 +46,6 @@ from api.career_services import (
 )
 from api.job_hunt_services import (
     compare_resume_to_jd,
-    generate_cover_letter_fallback,
     recommend_projects,
     get_translations,
     parse_resume_fallback,
@@ -55,6 +53,7 @@ from api.job_hunt_services import (
     generate_roadmap_fallback,
 )
 from api.exceptions import SkillGapException, ResumeParseException, LLMServiceException
+from api.mock_interview import router as mock_interview_router
 import json
 
 # ---------------------------------------------------------------------------
@@ -133,6 +132,8 @@ async def general_exception_handler(request: Request, exc: Exception):
             "status": "error"
         }
     )
+
+app.include_router(mock_interview_router)
 
 logger = logging.getLogger("resume-analyzer")
 logging.basicConfig(level=logging.INFO)
@@ -285,36 +286,9 @@ class PasswordResetConfirm(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
 
-class ApplicationInput(BaseModel):
-    company: str = Field(..., min_length=1, max_length=200)
-    role: str = Field(..., min_length=1, max_length=200)
-    status: str = Field(default="applied", max_length=50)
-    follow_up_date: Optional[str] = Field(default=None, max_length=50)
-    location: str = Field(default="", max_length=200)
-    salary: str = Field(default="", max_length=80)
-    url: str = Field(default="", max_length=500)
-    notes: str = Field(default="", max_length=2000)
-
-
-class ApplicationUpdate(BaseModel):
-    status: Optional[str] = Field(default=None, max_length=50)
-    follow_up_date: Optional[str] = Field(default=None, max_length=50)
-    location: Optional[str] = Field(default=None, max_length=200)
-    salary: Optional[str] = Field(default=None, max_length=80)
-    url: Optional[str] = Field(default=None, max_length=500)
-    notes: Optional[str] = Field(default=None, max_length=2000)
-
-
 class JDCompareRequest(BaseModel):
     resume_skills: list[str] = Field(default_factory=list, max_length=200)
     job_description: str = Field(..., max_length=20000)
-
-
-class CoverLetterRequest(BaseModel):
-    profile: dict
-    job_description: str = Field(..., max_length=20000)
-    company: str = Field(..., min_length=1, max_length=200)
-    role: str = Field(..., min_length=1, max_length=200)
 
 
 class ProjectRecommendationRequest(BaseModel):
@@ -575,8 +549,10 @@ def health_check():
 
 
 @app.post("/api/auth/logout")
-def logout(request: Request, response: Response):
-    refresh = request.cookies.get(REFRESH_COOKIE_NAME) or _extract_refresh_from_request(request)
+async def logout(request: Request, response: Response):
+    refresh = request.cookies.get(REFRESH_COOKIE_NAME)
+    if not refresh:
+        refresh = await _extract_refresh_from_request(request)
     if refresh:
         try:
             decoded = decode_token(refresh)
@@ -599,11 +575,14 @@ def logout(request: Request, response: Response):
     return {"message": "Logged out successfully"}
 
 
-def _extract_refresh_from_request(request: Request) -> Optional[str]:
+async def _extract_refresh_from_request(request: Request) -> Optional[str]:
     try:
-        body = request.scope.get("_body")
+        body = await request.body()
+        if body:
+            data = json.loads(body)
+            return data.get("refresh_token")
     except Exception:
-        body = None
+        pass
     return None
 
 
@@ -661,6 +640,10 @@ def refresh_access_token(request: Request, payload: RefreshTokenRequest, respons
             (hash_token(new_refresh_token), row["user_id"], int(new_payload["exp"])),
         )
         conn.commit()
+        # Look up the user's role for the response
+        cursor.execute("SELECT role FROM users WHERE id = ?", (row["user_id"],))
+        user_row = cursor.fetchone()
+        user_role = user_row["role"] if user_row else "user"
     finally:
         conn.close()
 
@@ -684,7 +667,7 @@ def refresh_access_token(request: Request, payload: RefreshTokenRequest, respons
             path="/api/auth",
         )
 
-    return {"token_type": "bearer", "role": current_user.get("role", "user")}
+    return {"token_type": "bearer", "role": user_role}
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -732,7 +715,7 @@ async def analyze_resume(
     )
     cache_row = cursor.fetchone()
     if cache_row:
-        # Cache hit — reuse the result but STILL insert a new user_data row
+        # Cache hit - reuse the result but STILL insert a new user_data row
         # so that /api/user/latest-analysis always reflects the latest upload.
         try:
             final_response_payload = json.loads(cache_row["result_json"])
@@ -742,7 +725,7 @@ async def analyze_resume(
             conn.commit()
             cache_row = None
         else:
-            logger.info(f"Cache hit for {safe_filename} — reusing result, saving new user_data row")
+            logger.info(f"Cache hit for {safe_filename} - reusing result, saving new user_data row")
         try:
             sec_token = secrets.token_hex(16)
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -810,8 +793,8 @@ async def analyze_resume(
 
         # Step 3: Conditional LLM Parsing
         # If local parser is highly confident (>= 70%), we skip Gemini.
-        # The local parser (v3) is structured enough — title/company/dates, degree/institution/year,
-        # tightened phone, real match score, ROLE_SYNONYMS-based target matching — that 70%
+        # The local parser (v3) is structured enough - title/company/dates, degree/institution/year,
+        # tightened phone, real match score, ROLE_SYNONYMS-based target matching - that 70%
         # is a safe threshold for skipping the slower, quota-limited Gemini call.
         if local_data.get("confidence_score", 0) >= 70:
             logger.info(
@@ -1049,7 +1032,6 @@ def delete_admin_user(user_id: int, current_admin: dict = Depends(get_current_ad
         cursor = conn.cursor()
         cursor.execute("DELETE FROM user_data WHERE ID = ?", (user_id,))
         cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
-        cursor.execute("DELETE FROM job_applications WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
@@ -1097,7 +1079,6 @@ def delete_registered_user(user_id: int, current_admin: dict = Depends(get_curre
     try:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
-        cursor.execute("DELETE FROM job_applications WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
@@ -1194,7 +1175,7 @@ def get_advanced_analytics(current_admin: dict = Depends(get_current_admin)):
 def get_latest_analysis(current_user: dict = Depends(get_current_user)):
     """
     Return the most recent saved analysis for the logged-in user.
-    Reads from the user_data table only — never re-invokes the AI.
+    Reads from the user_data table only - never re-invokes the AI.
     Use this to render the persistent "My Analysis" view in the sidebar
     without consuming Gemini tokens.
     """
@@ -1231,7 +1212,7 @@ def get_latest_analysis(current_user: dict = Depends(get_current_user)):
             payload = None
 
     if payload is None:
-        # Old rows without full analysis_data JSON — synthesize from columns
+        # Old rows without full analysis_data JSON - synthesize from columns
         payload = {
             "status": "success",
             "data": {
@@ -1443,99 +1424,6 @@ def rewrite_resume(payload: RewriteRequest, current_user: dict = Depends(get_cur
 def team_rank_candidates(payload: CandidateRankRequest, current_user: dict = Depends(get_current_user)):
     ranked = rank_candidates(payload.candidates, payload.target_role)
     return {"target_role": payload.target_role, "ranked_candidates": ranked}
-
-
-@app.post("/api/jobs/applications")
-def create_application(payload: ApplicationInput, current_user: dict = Depends(get_current_user)):
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO job_applications(user_id, company, role, status, follow_up_date, location, salary, url, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                current_user["id"], payload.company, payload.role, payload.status,
-                payload.follow_up_date, payload.location, payload.salary, payload.url, payload.notes,
-            ),
-        )
-        app_id = cursor.lastrowid
-        conn.commit()
-    finally:
-        conn.close()
-    return {"status": "success", "application_id": app_id}
-
-
-@app.get("/api/jobs/applications")
-def list_applications(current_user: dict = Depends(get_current_user)):
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM job_applications WHERE user_id = ? ORDER BY id DESC",
-            (current_user["id"],),
-        )
-        rows = [dict(r) for r in cursor.fetchall()]
-    finally:
-        conn.close()
-    return {"applications": rows}
-
-
-@app.patch("/api/jobs/applications/{application_id}")
-def update_application(application_id: int, payload: ApplicationUpdate, current_user: dict = Depends(get_current_user)):
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM job_applications WHERE id = ? AND user_id = ?",
-            (application_id, current_user["id"]),
-        )
-        row = cursor.fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Application not found")
-
-        status_value = payload.status if payload.status is not None else row["status"]
-        follow_up_value = payload.follow_up_date if payload.follow_up_date is not None else row["follow_up_date"]
-        location_value = payload.location if payload.location is not None else row["location"]
-        salary_value = payload.salary if payload.salary is not None else row["salary"]
-        url_value = payload.url if payload.url is not None else row["url"]
-        notes_value = payload.notes if payload.notes is not None else row["notes"]
-        cursor.execute(
-            """UPDATE job_applications
-               SET status = ?, follow_up_date = ?, location = ?, salary = ?, url = ?, notes = ?
-               WHERE id = ? AND user_id = ?""",
-            (status_value, follow_up_value, location_value, salary_value, url_value,
-             notes_value, application_id, current_user["id"]),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-    return {"status": "success"}
-
-
-@app.delete("/api/jobs/applications/{application_id}")
-def delete_application(application_id: int, current_user: dict = Depends(get_current_user)):
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM job_applications WHERE id = ? AND user_id = ?", (application_id, current_user["id"]))
-        conn.commit()
-    finally:
-        conn.close()
-    return {"status": "success"}
-
-
-@app.post("/api/cover-letter/generate")
-def generate_cover_letter(payload: CoverLetterRequest, current_user: dict = Depends(get_current_optional_user)):
-    try:
-        generated = generate_cover_letter_with_gemini(payload.profile, payload.job_description, payload.company, payload.role)
-    except Exception as e:
-        logger.warning(f"Gemini cover letter failed, using fallback: {e}")
-        generated = ""
-    if not generated:
-        generated = generate_cover_letter_fallback(payload.profile, payload.job_description, payload.company, payload.role)
-    return {"cover_letter": generated}
 
 
 @app.post("/api/jd/compare")
@@ -1808,4 +1696,3 @@ def quality_metrics(current_admin: dict = Depends(get_current_admin)):
         "feedback_events": feedback_count,
         "parse_failure_rate_pct": round((errors / total_requests) * 100, 2) if total_requests else 0.0,
     }
-

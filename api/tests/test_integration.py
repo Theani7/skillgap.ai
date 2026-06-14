@@ -282,5 +282,40 @@ class SecurityHeadersTests(unittest.TestCase):
         self.assertEqual(resp.headers.get("cache-control"), "no-store")
 
 
+class MockInterviewTests(unittest.TestCase):
+    def test_list_roles(self):
+        resp = client.get("/api/mock-interview")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("roles", data)
+        self.assertIsInstance(data["roles"], list)
+        self.assertGreater(len(data["roles"]), 0)
+
+    def test_get_questions_for_role(self):
+        resp = client.get("/api/mock-interview/Data Science")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["role"], "Data Science")
+        self.assertIn("questions", data)
+        self.assertIsInstance(data["questions"], list)
+        self.assertGreater(len(data["questions"]), 0)
+        self.assertIn("question", data["questions"][0])
+        self.assertIn("answer", data["questions"][0])
+
+    def test_get_questions_case_insensitive(self):
+        resp = client.get("/api/mock-interview/data science")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["role"], "Data Science")
+
+    def test_get_questions_unknown_role_404(self):
+        resp = client.get("/api/mock-interview/NonexistentRole")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_get_questions_whitespace_handling(self):
+        resp = client.get("/api/mock-interview/  Data Science  ")
+        self.assertEqual(resp.status_code, 200)
+
+
 if __name__ == "__main__":
     unittest.main()
