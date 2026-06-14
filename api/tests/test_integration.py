@@ -39,15 +39,15 @@ def _auth_header(access_token):
 
 
 def _make_pdf_content(text="Simple resume text"):
-    """Create minimal valid PDF with extractable text using pypdf."""
+    """Create minimal valid PDF with extractable text using PyMuPDF."""
     try:
-        from pypdf import PdfWriter
-        from io import BytesIO
-        writer = PdfWriter()
-        writer.add_blank_page(width=612, height=792)
-        buf = BytesIO()
-        writer.write(buf)
-        return buf.getvalue()
+        import fitz
+        doc = fitz.open()
+        page = doc.new_page(width=612, height=792)
+        page.insert_text((72, 72), text)
+        buf = doc.tobytes()
+        doc.close()
+        return buf
     except ImportError:
         content = f"%PDF-1.0\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<</Font<</F1 4 0 R>>>>>>endobj\n4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\nxref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000266 00000 n \ntrailer<</Size 5/Root 1 0 R>>\nstartxref\n340\n%%EOF"
         return content.encode("latin-1")
