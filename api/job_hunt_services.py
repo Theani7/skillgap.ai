@@ -65,7 +65,7 @@ SECTION_HEADERS: Dict[str, List[str]] = {
     ],
 }
 
-# Section canonical order — earlier wins on ambiguous header lines.
+# Section canonical order - earlier wins on ambiguous header lines.
 _SECTION_ORDER = ["summary", "experience", "education", "skills", "projects",
                   "certifications", "languages", "awards"]
 
@@ -145,7 +145,7 @@ ROLE_SYNONYMS: Dict[str, List[str]] = {
     "scrum master": ["Soft Skills"],
 }
 
-# Date range detector — captures "Jan 2020 - Present", "2020 - 2023",
+# Date range detector - captures "Jan 2020 - Present", "2020 - 2023",
 # "01/2020 - 12/2023", "Jan 2020 – Dec 2023", "Since 2020", etc.
 MONTH = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*"
 YEAR = r"(?:19|20)\d{2}"
@@ -169,7 +169,7 @@ DATE_RANGE_RE = re.compile(
 )
 SINGLE_DATE_RE = re.compile(rf"(?:since\s+)?({MONTH}\s+{YEAR}|{YEAR})", re.IGNORECASE)
 
-# Phone — require country code or area code in (parens), 10-11 digits total
+# Phone - require country code or area code in (parens), 10-11 digits total
 PHONE_RE = re.compile(
     r"""
     (?:\+?\d{1,3}[\s.\-]?)?
@@ -183,7 +183,7 @@ PHONE_RE = re.compile(
     re.VERBOSE,
 )
 
-# Name — 2-4 capitalized words, no digits, no noise chars, max 60 chars
+# Name - 2-4 capitalized words, no digits, no noise chars, max 60 chars
 NAME_RE = re.compile(
     r"^[A-Z][a-zA-ZÀ-ÿ'\-]+(?:\s+[A-Z][a-zA-ZÀ-ÿ'\-\.]+){1,3}$"
 )
@@ -208,7 +208,7 @@ DEGREE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Bullets (leading char sets) — used by the experience parser to separate
+# Bullets (leading char sets) - used by the experience parser to separate
 # header lines from bullet lines
 BULLET_PREFIX_RE = re.compile(r"^[\s\-\•\·\*▪►▸→]+")
 
@@ -327,7 +327,7 @@ def fuzzy_skill_match(text: str, skill: str) -> bool:
     pattern = rf'\b{re.escape(skill)}\b'
     if re.search(pattern, text, re.IGNORECASE):
         return True
-    # Check the alias table — if the canonical skill matches an alias, search for it
+    # Check the alias table - if the canonical skill matches an alias, search for it
     canonical = _SKILL_ALIASES.get(skill.lower(), skill)
     if canonical != skill.lower():
         pattern2 = rf'\b{re.escape(canonical)}\b'
@@ -364,7 +364,7 @@ def _extract_company_from_line(line: str) -> Optional[str]:
     m = re.search(r"(?:\s+at\s+|\s+@\s+)([A-Z][\w&.,'\- ]{1,60})", line)
     if m:
         return m.group(1).strip().rstrip(",.;")
-    # "Title - Company" / "Title — Company" (em-dash)
+    # "Title - Company" / "Title - Company" (em-dash)
     m = re.search(r"\s+[\-–—]\s+([A-Z][\w&.,'\- ]{1,60})$", line)
     if m:
         return m.group(1).strip().rstrip(",.;")
@@ -385,7 +385,7 @@ def _parse_experience_blocks(lines: List[str]) -> List[Dict[str, Any]]:
     """Group raw experience-section lines into {title, company, start_date, end_date, bullets}.
 
     Algorithm:
-      1. Find every line that contains a date range — each one marks an entry boundary.
+      1. Find every line that contains a date range - each one marks an entry boundary.
       2. For each entry, scan BACKWARDS from the date line to collect contiguous
          header lines (no bullets, < 100 chars, no blank lines in between).
          Convention: with 2+ header lines, line[0] is the title and line[-1] is the
@@ -406,7 +406,7 @@ def _parse_experience_blocks(lines: List[str]) -> List[Dict[str, Any]]:
             date_positions.append((i, m, stripped))
 
     if not date_positions:
-        # No dates found — return empty list (don't synthesize a phantom block)
+        # No dates found - return empty list (don't synthesize a phantom block)
         return []
 
     blocks: List[Dict[str, Any]] = []
@@ -464,7 +464,7 @@ def _parse_experience_blocks(lines: List[str]) -> List[Dict[str, Any]]:
                 j += 1
                 continue
             bullet_clean = BULLET_PREFIX_RE.sub("", raw_line, count=1).strip()
-            # Stop if this line is another date (shouldn't happen — next_idx catches it)
+            # Stop if this line is another date (shouldn't happen - next_idx catches it)
             if DATE_RANGE_RE.search(bullet_clean):
                 break
             bullets.append(bullet_clean)
@@ -522,11 +522,11 @@ def _parse_education_blocks(lines: List[str]) -> List[Dict[str, Any]]:
         if m:
             degree = m.group(0)
 
-        # Year — first 4-digit year in [19|20]\d{2}
+        # Year - first 4-digit year in [19|20]\d{2}
         year_match = re.search(r"\b(?:19|20)\d{2}\b", line)
         year = year_match.group(0) if year_match else ""
 
-        # Institution — everything else, stripped of degree/year
+        # Institution - everything else, stripped of degree/year
         institution = line
         if degree:
             institution = institution.replace(degree, "").strip(" ,-–—")
@@ -595,7 +595,7 @@ def _target_categories_for_role(target_role: str) -> List[str]:
     if not target_role:
         return ["Other Technical"]
     role_lower = target_role.lower()
-    # Try ROLE_SYNONYMS — match on the longest fragment first
+    # Try ROLE_SYNONYMS - match on the longest fragment first
     matched_categories: List[str] = []
     fragments = sorted(ROLE_SYNONYMS.keys(), key=len, reverse=True)
     for frag in fragments:
@@ -615,7 +615,7 @@ def _compute_local_match_score(
     """Compute a directional match score from overlap with the role's category skills.
 
     We deliberately don't divide by `len(target_skills)`, because the union of
-    3-4 taxonomy categories can yield 50+ "target" skills — dividing makes even
+    3-4 taxonomy categories can yield 50+ "target" skills - dividing makes even
     a strong resume look like 10% overlap. Instead, we use overlap as a direct
     signal with reasonable bounds:
 
@@ -698,15 +698,15 @@ def prioritize_missing_skills(
         difficulty = _SKILL_DIFFICULTY.get(sl, 2)
 
         # Priority factors:
-        # 1. Category count — skills in more target categories are more important
+        # 1. Category count - skills in more target categories are more important
         cat_score = min(5, len(cats))
 
-        # 2. Foundational check — if user is missing a "basic" skill for the role,
+        # 2. Foundational check - if user is missing a "basic" skill for the role,
         #    it should be flagged as critical
         foundational = difficulty == 1
         foundational_bonus = 3 if foundational else 0
 
-        # 3. Adjacent-skill bonus — if user has related skills, this gap is easier to close
+        # 3. Adjacent-skill bonus - if user has related skills, this gap is easier to close
         #    (prioritize gaps where user already has adjacent skills)
         adjacent_skills = set()
         if sl in {"react", "angular", "vue", "svelte", "next.js", "nuxt.js"}:
@@ -740,7 +740,7 @@ def prioritize_missing_skills(
         if cat_score >= 3:
             reasons.append(f"required across {len(cats)} target areas")
         if has_adjacent:
-            reasons.append("you have adjacent skills — easier to learn")
+            reasons.append("you have adjacent skills - easier to learn")
         if not reasons:
             reasons.append("commonly required for this role")
 
@@ -772,7 +772,7 @@ def generate_personalized_roadmap(
     prioritized = prioritize_missing_skills(missing_skills, target_role, found_skills)
 
     if not prioritized:
-        # No gaps — suggest mastery-level steps
+        # No gaps - suggest mastery-level steps
         return [
             {
                 "step": 1,
@@ -927,7 +927,7 @@ def parse_resume_fallback(
     Hybrid Resume Parser (v3).
 
     Produces a structured JSON payload matching the shape Gemini returns, using
-    only local heuristics — no LLM calls. Used both as a high-confidence fast
+    only local heuristics - no LLM calls. Used both as a high-confidence fast
     path (skips Gemini) and as a graceful fallback when Gemini is unavailable
     or rate-limited.
 
@@ -946,7 +946,7 @@ def parse_resume_fallback(
     text_lower = text.lower()
     lines = [l.strip() for l in text.split('\n') if l.strip()]
 
-    # 1. Section detection (improved — word-boundary, 40-char tolerance)
+    # 1. Section detection (improved - word-boundary, 40-char tolerance)
     sections: Dict[str, Any] = {
         "experience": [],
         "education": [],
@@ -998,8 +998,8 @@ def parse_resume_fallback(
     # that consumes resume_data.get("experience") as a list of strings.
     experience_flat: List[str] = []
     for b in experience_blocks:
-        head = " — ".join(filter(None, [b.get("title"), b.get("company")]))
-        dates = " — ".join(filter(None, [b.get("start_date"), b.get("end_date")]))
+        head = " - ".join(filter(None, [b.get("title"), b.get("company")]))
+        dates = " - ".join(filter(None, [b.get("start_date"), b.get("end_date")]))
         if head and dates:
             experience_flat.append(f"{head} ({dates})")
         elif head:
@@ -1011,7 +1011,7 @@ def parse_resume_fallback(
 
     education_flat: List[str] = []
     for b in education_blocks:
-        head = " — ".join(filter(None, [b.get("degree"), b.get("institution")]))
+        head = " - ".join(filter(None, [b.get("degree"), b.get("institution")]))
         if b.get("year"):
             head = f"{head} ({b['year']})" if head else b["year"]
         if head:
@@ -1038,12 +1038,14 @@ def parse_resume_fallback(
     # 8b. Personalized roadmap based on actual gaps
     roadmap = generate_personalized_roadmap(target_role, found_skills, raw_missing)
 
-    # 9. Page count (PDFs only — caller must pass file_path)
+    # 9. Page count (PDFs only - caller must pass file_path)
     no_of_pages = 1
     if file_path and file_path.lower().endswith(".pdf"):
         try:
-            import pypdf
-            no_of_pages = max(1, len(pypdf.PdfReader(file_path).pages))
+            import fitz
+            doc = fitz.open(file_path)
+            no_of_pages = max(1, len(doc))
+            doc.close()
         except Exception:
             pass
 
@@ -1129,23 +1131,6 @@ def rewrite_resume_fallback(resume_data: dict, target_role: str = None) -> dict:
         "skills": skills,
         "rewritten_method": "fallback"
     }
-
-
-def generate_cover_letter_fallback(profile: Dict[str, Any], job_description: str, company: str, role: str) -> str:
-    """Basic template-based cover letter"""
-    name = profile.get("name") or "Candidate"
-    summary = profile.get("summary") or "I build reliable solutions and collaborate across teams to deliver measurable outcomes."
-    skills = ", ".join((profile.get("skills") or [])[:6]) or "problem solving and delivery focus"
-    jd_snippet = " ".join(job_description.split()[:40]) if job_description else ""
-    
-    return (
-        f"Dear Hiring Team at {company},\n\n"
-        f"I am excited to apply for the {role} role. My name is {name}, and {summary}\n\n"
-        f"My core skills include {skills}. I am particularly interested in this opportunity because it aligns with your needs: {jd_snippet}.\n\n"
-        "I would welcome the chance to discuss how I can contribute quickly and responsibly to your team.\n\n"
-        "Sincerely,\n"
-        f"{name}"
-    )
 
 
 def generate_roadmap_fallback(role: str, target_skills: List[str], current_skills: List[str]) -> List[dict]:
