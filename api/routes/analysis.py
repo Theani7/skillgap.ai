@@ -1,0 +1,365 @@
+import hashlib
+import json
+import logging
+import os
+import re
+import secrets
+import tempfile
+import time
+from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel, EmailStr, Field
+
+from api.auth import get_current_optional_user, get_current_user
+from api.career_services import compute_resume_score_breakdown, generate_job_matches
+from api.database import get_db_connection
+from api.exceptions import LLMServiceException, ResumeParseException
+from api.extractor import extract_text_from_docx, extract_text_from_pdf, parse_resume_with_gemini
+from api.job_hunt_services import parse_resume_fallback
+from api.market_data import get_market_trends_for_role
+
+logger = logging.getLogger("resume-analyzer")
+
+router = APIRouter(tags=["analysis"])
+
+# Bump this when scoring/parsing logic changes to auto-invalidate stale cache entries.
+_CACHE_VERSION = 2
+
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+PDF_MAGIC = b"%PDF"
+DOCX_MAGIC = b"PK\x03\x04"
+
+
+class Feedback(BaseModel):
+    name: str = Field(..., min_length=1, max_length=50)
+    email: EmailStr
+    score: int = Field(..., ge=1, le=5)
+    comments: str = Field(default="", max_length=2000)
+
+
+def get_content_hash(data: bytes) -> str:
+    """Generate SHA-256 hash of file content for caching.
+    Includes _CACHE_VERSION so bumping it auto-invalidates all old entries."""
+    return hashlib.sha256(f"{_CACHE_VERSION}:".encode() + data).hexdigest()
+
+
+def _detect_filetype(contents: bytes, filename: str) -> Optional[str]:
+    if contents.startswith(PDF_MAGIC):
+        return "pdf"
+    if contents.startswith(DOCX_MAGIC):
+        return "docx"
+    if filename.lower().endswith(".pdf"):
+        return "pdf"
+    if filename.lower().endswith(".docx"):
+        return "docx"
+    return None
+
+
+@router.post("/api/analyze")
+async def analyze_resume(
+    file: UploadFile = File(...),
+    target_role: str = Form(None),
+    current_user: dict = Depends(get_current_optional_user)
+):
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
+    if not contents:
+        raise HTTPException(status_code=400, detail="Empty file upload")
+
+    filetype = _detect_filetype(contents, file.filename or "")
+    if not filetype:
+        raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported")
+
+    safe_filename = re.sub(r"[^\w.\-]", "_", (file.filename or "resume")[:120])
+    content_hash = get_content_hash(contents)
+    t_role = (target_role or "General")[:200]
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT result_json FROM analysis_cache WHERE content_hash = ? AND target_role = ? AND (expires_at IS NULL OR expires_at > ?)",
+        (content_hash, t_role, int(time.time())),
+    )
+    cache_row = cursor.fetchone()
+    if cache_row:
+        # Cache hit - reuse the result but STILL insert a new user_data row
+        # so that /api/user/latest-analysis always reflects the latest upload.
+        try:
+            final_response_payload = json.loads(cache_row["result_json"])
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(f"Corrupt cache entry for {safe_filename}, deleting and re-parsing")
+            cursor.execute("DELETE FROM analysis_cache WHERE content_hash = ? AND target_role = ?", (content_hash, t_role))
+            conn.commit()
+            cache_row = None
+        else:
+            logger.info(f"Cache hit for {safe_filename} - reusing result, saving new user_data row")
+        try:
+            sec_token = secrets.token_hex(16)
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            u_id = current_user['id'] if current_user and 'id' in current_user else -1
+            resume_data_c = final_response_payload.get("data", {})
+            skills_c = resume_data_c.get('skills', [])
+            recommended_skills_c = final_response_payload.get("recommended_skills", [])
+            missing_skills_c = final_response_payload.get("missing_skill_names", [])
+            missing_skills_str_c = ", ".join(missing_skills_c) if missing_skills_c else ""
+            resume_score_c = final_response_payload.get("resume_score", 0)
+            predicted_field_c = final_response_payload.get("predicted_field", "")
+            cursor.execute(
+                """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    sec_token,
+                    resume_data_c.get('name') or 'N/A',
+                    resume_data_c.get('email') or 'N/A',
+                    resume_data_c.get('mobile_number') or 'N/A',
+                    resume_data_c.get('name') or 'N/A',
+                    resume_data_c.get('email') or 'N/A',
+                    str(resume_score_c),
+                    timestamp,
+                    str(resume_data_c.get('no_of_pages', 1)),
+                    predicted_field_c,
+                    "Unknown Level",
+                    ", ".join(skills_c) if skills_c else "",
+                    ", ".join(recommended_skills_c) if recommended_skills_c else "",
+                    "Courses mapped via API",
+                    safe_filename,
+                    t_role,
+                    missing_skills_str_c,
+                    u_id,
+                    json.dumps(final_response_payload)
+                )
+            )
+            conn.commit()
+        except Exception as db_error:
+            conn.rollback()
+            logger.error(f"Cache-hit user_data insert failed: {db_error}")
+        finally:
+            conn.close()
+        return final_response_payload
+
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{filetype}") as tmp:
+            try:
+                os.chmod(tmp.name, 0o600)
+            except (OSError, PermissionError):
+                pass
+            tmp.write(contents)
+            tmp_path = tmp.name
+
+        if filetype == "pdf":
+            resume_text = extract_text_from_pdf(tmp_path)
+        else:
+            resume_text = extract_text_from_docx(tmp_path)
+
+        if not resume_text.strip():
+            raise ResumeParseException("Could not extract any text from the uploaded file.")
+
+        # Step 2: Attempt Local Hybrid Parsing First (Fast, Free)
+        local_data = parse_resume_fallback(resume_text, target_role, file_path=tmp_path)
+
+        # Step 3: Conditional LLM Parsing
+        # If local parser is highly confident (>= 70%), we skip Gemini.
+        # The local parser (v3) is structured enough - title/company/dates, degree/institution/year,
+        # tightened phone, real match score, ROLE_SYNONYMS-based target matching - that 70%
+        # is a safe threshold for skipping the slower, quota-limited Gemini call.
+        if local_data.get("confidence_score", 0) >= 70:
+            logger.info(
+                f"Using high-confidence local parse for {file.filename} "
+                f"(confidence={local_data.get('confidence_score')}%, "
+                f"skills={len(local_data.get('skills', []))}, "
+                f"experience={len(local_data.get('experience_blocks', []))}, "
+                f"education={len(local_data.get('education_blocks', []))})"
+            )
+            resume_data = local_data
+        else:
+            logger.info(f"Low confidence ({local_data.get('confidence_score')}%) in local parse. Invoking Gemini...")
+            try:
+                resume_data = parse_resume_with_gemini(tmp_path, target_role)
+                # Merge local fields if Gemini missed them
+                if not resume_data.get('email') and local_data.get('email'):
+                    resume_data['email'] = local_data['email']
+                if not resume_data.get('mobile_number') and local_data.get('mobile_number'):
+                    resume_data['mobile_number'] = local_data['mobile_number']
+                if not resume_data.get('no_of_pages') or resume_data.get('no_of_pages') == 1:
+                    if local_data.get('no_of_pages', 1) > 1:
+                        resume_data['no_of_pages'] = local_data['no_of_pages']
+            except Exception as e:
+                logger.warning(f"Gemini parse failed, using local hybrid fallback: {e}")
+                resume_data = local_data
+        
+        if not resume_data:
+            raise LLMServiceException("AI service returned no data and local fallback failed.")
+        
+        # Explainable scoring with evidence
+        resume_score, feedback_msgs, score_breakdown = compute_resume_score_breakdown(resume_data, target_role)
+            
+        # Advanced Field Prediction based on keyword density
+        skills = resume_data.get('skills', [])
+        skills_lower = [s.lower() for s in skills]
+        
+        predicted_field = "Unknown"
+        recommended_skills = []
+        recommended_courses = []
+        # recommended_courses = [] # This will be populated from DB
+        
+        # New Match Score and Missing Skills logic
+        match_score = resume_data.get('match_score', 0)
+        missing_skills = resume_data.get('missing_skills', [])
+        missing_skills_videos = []
+        
+        from api.courses import predict_field_with_ai, SKILL_RECOMMENDATIONS, RESUME_VIDEOS, INTERVIEW_VIDEOS, generate_youtube_search_links, ROADMAPS
+        
+        # Call out to our new ML Model to get the closest semantic field
+        predicted_field = predict_field_with_ai(resume_data)
+        
+        
+        dynamic_resume_videos = RESUME_VIDEOS.get('General', [])
+        dynamic_interview_videos = INTERVIEW_VIDEOS.get('General', [])
+        skill_videos = []
+        
+        # Extract dynamic roadmap from Gemini payload
+        roadmap = resume_data.get('roadmap', [])
+        if not roadmap:
+            roadmap = ROADMAPS.get('General', [])
+            
+        trends = get_market_trends_for_role('General')
+        
+        # Initialize Database connection early for courses
+        # Use existing conn
+        cursor = conn.cursor()
+
+        # Fetch courses from dynamic DB instead of static dictionary
+        recommended_courses = []
+        cursor.execute("SELECT course_name, course_url FROM courses WHERE field = ?", ('General',))
+        for row in cursor.fetchall():
+            recommended_courses.append([row['course_name'], row['course_url']])
+        
+        mapping_field = target_role if target_role else predicted_field
+
+        if mapping_field != "Unknown":
+            # Personalized recommendations: only suggest skills the user is actually missing
+            all_field_skills = SKILL_RECOMMENDATIONS.get(mapping_field, [])
+            found_skills_lower = {s.lower() for s in (resume_data.get("skills") or [])}
+            recommended_skills = [s for s in all_field_skills if s.lower() not in found_skills_lower]
+            if not recommended_skills:
+                recommended_skills = all_field_skills[:5]
+            
+            # Fetch field-specific courses
+            cursor.execute("SELECT course_name, course_url FROM courses WHERE field = ?", (mapping_field,))
+            field_courses = cursor.fetchall()
+            if field_courses:
+                recommended_courses = [[row['course_name'], row['course_url']] for row in field_courses]
+
+            # Fallback to static roadmap only if dynamic extraction failed
+            if not resume_data.get('roadmap', []):
+                roadmap = ROADMAPS.get(mapping_field, ROADMAPS['General'])
+            trends = get_market_trends_for_role(mapping_field)
+            dynamic_resume_videos = RESUME_VIDEOS.get(mapping_field, RESUME_VIDEOS['General'])
+            dynamic_interview_videos = INTERVIEW_VIDEOS.get(mapping_field, INTERVIEW_VIDEOS['General'])
+            # Generate personalized youtube links for missing skills specifically
+            skill_videos = generate_youtube_search_links(recommended_skills[:6])
+            
+        # Generate course links specifically for missing skills if they exist
+        if missing_skills:
+             missing_skills_videos = generate_youtube_search_links(missing_skills[:6])
+            
+        sec_token = secrets.token_hex(10)
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        missing_skills_str = ", ".join(missing_skills) if missing_skills else ""
+        
+        u_id = -1
+        if current_user and 'id' in current_user:
+            u_id = current_user['id']
+            
+        final_response_payload = {
+            "status": "success",
+            "data": resume_data,
+            "target_role": target_role,
+            "predicted_field": predicted_field,
+            "recommended_skills": recommended_skills,
+            "recommended_courses": recommended_courses,
+            "match_score": match_score,
+            "missing_skills": missing_skills_videos,
+            "missing_skill_names": missing_skills,
+            "roadmap": roadmap,
+            "trends": trends,
+            "job_matches": generate_job_matches(mapping_field, skills, missing_skills),
+            "resume_score": resume_score,
+            "score_breakdown": score_breakdown,
+            "feedback": feedback_msgs,
+            "videos": {
+                "resume": list(set(dynamic_resume_videos)),
+                "interview": list(set(dynamic_interview_videos)),
+                "tutorials": skill_videos
+            }
+        }
+
+        cache_expires = int(time.time()) + 7 * 24 * 3600
+        cursor.execute(
+            "INSERT INTO analysis_cache (content_hash, target_role, result_json, expires_at) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(content_hash, target_role) DO UPDATE SET result_json = excluded.result_json, expires_at = excluded.expires_at",
+            (content_hash, t_role, json.dumps(final_response_payload), cache_expires),
+        )
+
+        cursor.execute(
+            """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                sec_token,
+                resume_data.get('name') or 'N/A',
+                resume_data.get('email') or 'N/A',
+                resume_data.get('mobile_number') or 'N/A',
+                resume_data.get('name') or 'N/A',
+                resume_data.get('email') or 'N/A',
+                str(resume_score),
+                timestamp,
+                str(resume_data.get('no_of_pages', 1)),
+                predicted_field,
+                "Unknown Level",
+                ", ".join(skills) if skills else "",
+                ", ".join(recommended_skills) if recommended_skills else "",
+                "Courses mapped via API",
+                safe_filename,
+                t_role,
+                missing_skills_str,
+                u_id,
+                json.dumps(final_response_payload)
+            )
+        )
+        conn.commit()
+
+        return final_response_payload
+
+    except Exception as parse_error:
+        logger.error(f"Analysis error for {safe_filename}: {parse_error}")
+        raise
+    finally:
+        conn.close()
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+
+@router.post("/api/feedback")
+def submit_feedback(feedback: Feedback, current_user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        cursor.execute(
+            "INSERT INTO user_feedback (feed_name, feed_email, feed_score, comments, Timestamp) VALUES (?, ?, ?, ?, ?)",
+            (feedback.name, feedback.email, feedback.score, feedback.comments, timestamp)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return {"status": "success", "message": "Feedback saved."}
