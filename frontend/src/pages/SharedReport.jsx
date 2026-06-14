@@ -51,7 +51,7 @@ const SharedReport = () => {
 
   const scoreColor = resumeScore >= 80
     ? 'var(--color-success)' : resumeScore >= 50
-      ? 'var(--color-warning)' : 'var(--color-danger)';
+      ? 'var(--color-warning)' : 'var(--color-error)';
 
   if (loading) {
     return (
@@ -62,7 +62,7 @@ const SharedReport = () => {
           style={{ textAlign: 'center' }}
         >
           <div className="analysis-spinner" style={{ width: 32, height: 32, margin: '0 auto 16px' }} />
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Loading shared report...</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Loading shared report...</p>
         </motion.div>
       </div>
     );
@@ -79,7 +79,7 @@ const SharedReport = () => {
         >
           <div style={{
             width: 64, height: 64, borderRadius: 16,
-            background: 'linear-gradient(135deg, var(--color-danger), #B91C1C)',
+            background: 'linear-gradient(135deg, var(--color-error), #B91C1C)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 24px',
           }}>
@@ -88,7 +88,7 @@ const SharedReport = () => {
           <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 12, color: 'var(--color-text)' }}>
             Report unavailable
           </h2>
-          <p style={{ color: 'var(--color-text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>
+          <p style={{ color: 'var(--color-text-muted)', marginBottom: 32, lineHeight: 1.6 }}>
             {error}
           </p>
           <Link
@@ -113,17 +113,17 @@ const SharedReport = () => {
       {/* Header bar */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'var(--color-card-bg)', borderBottom: '1px solid var(--color-border)',
+        background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)',
         padding: '0 24px',
       }}>
         <div style={{
           maxWidth: 900, margin: '0 auto', height: 56,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: '0.85rem' }}>
+          <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-text-muted)', textDecoration: 'none', fontSize: '0.85rem' }}>
             <ArrowLeft size={14} /> Back to login
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: 'var(--color-text-secondary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
             <Shield size={13} /> Shared report
           </div>
         </div>
@@ -136,7 +136,7 @@ const SharedReport = () => {
             Career Analysis
           </h1>
           {targetRole && (
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
               Target role: <strong style={{ color: 'var(--color-primary)' }}>{targetRole}</strong>
             </p>
           )}
@@ -144,7 +144,7 @@ const SharedReport = () => {
 
         {/* Score card */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible" style={{
-          background: 'var(--color-card-bg)', borderRadius: 16,
+          background: 'var(--color-surface)', borderRadius: 16,
           border: '1px solid var(--color-border)',
           padding: '32px', marginBottom: 32,
           display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap',
@@ -164,26 +164,26 @@ const SharedReport = () => {
               alignItems: 'center', justifyContent: 'center',
             }}>
               <span style={{ fontSize: '1.6rem', fontWeight: 800, color: scoreColor }}>{Math.round(resumeScore)}</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>/ 100</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>/ 100</span>
             </div>
           </div>
           <div style={{ flex: 1, minWidth: 200 }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: 8 }}>
               {targetRole ? `Fit for ${targetRole}` : 'Resume quality'}
             </h3>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', lineHeight: 1.6 }}>
               {feedback[0] || 'Analysis complete.'}
             </p>
           </div>
           {matchScore != null && (
             <div style={{
-              background: 'var(--color-primary-muted)', borderRadius: 10,
+              background: 'var(--navy-100)', borderRadius: 10,
               padding: '12px 20px', textAlign: 'center',
             }}>
               <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--color-primary)' }}>
                 {Math.round(matchScore)}%
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)' }}>Role match</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Role match</div>
             </div>
           )}
         </motion.div>
@@ -191,7 +191,7 @@ const SharedReport = () => {
         {/* Skills */}
         {matchedSkills.length > 0 && (
           <motion.div variants={fadeUp} initial="hidden" animate="visible" style={{
-            background: 'var(--color-card-bg)', borderRadius: 16,
+            background: 'var(--color-surface)', borderRadius: 16,
             border: '1px solid var(--color-border)', padding: '24px', marginBottom: 32,
           }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: 16 }}>
@@ -201,7 +201,7 @@ const SharedReport = () => {
               {matchedSkills.map((s) => (
                 <span key={s} style={{
                   padding: '4px 12px', borderRadius: 8,
-                  background: 'var(--color-success-muted)', color: 'var(--color-success)',
+                  background: 'var(--green-100)', color: 'var(--color-success)',
                   fontSize: '0.8rem', fontWeight: 600,
                 }}>{s}</span>
               ))}
@@ -212,7 +212,7 @@ const SharedReport = () => {
         {/* Missing skills */}
         {missingSkills.length > 0 && (
           <motion.div variants={fadeUp} initial="hidden" animate="visible" style={{
-            background: 'var(--color-card-bg)', borderRadius: 16,
+            background: 'var(--color-surface)', borderRadius: 16,
             border: '1px solid var(--color-border)', padding: '24px', marginBottom: 32,
           }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: 16 }}>
@@ -222,7 +222,7 @@ const SharedReport = () => {
               {missingSkills.map((s) => (
                 <span key={s} style={{
                   padding: '4px 12px', borderRadius: 8,
-                  background: 'var(--color-warning-muted)', color: 'var(--color-warning)',
+                  background: 'var(--color-warning-light)', color: 'var(--color-warning)',
                   fontSize: '0.8rem', fontWeight: 600,
                 }}>{s}</span>
               ))}
@@ -233,7 +233,7 @@ const SharedReport = () => {
         {/* Roadmap */}
         {roadmap && (
           <motion.div variants={fadeUp} initial="hidden" animate="visible" style={{
-            background: 'var(--color-card-bg)', borderRadius: 16,
+            background: 'var(--color-surface)', borderRadius: 16,
             border: '1px solid var(--color-border)', padding: '24px', marginBottom: 32,
           }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: 16 }}>
@@ -258,7 +258,7 @@ const SharedReport = () => {
                         {stepData.skills.map((s) => (
                           <span key={s} style={{
                             padding: '2px 8px', borderRadius: 6,
-                            background: 'var(--color-primary-muted)', color: 'var(--color-primary)',
+                            background: 'var(--navy-100)', color: 'var(--color-primary)',
                             fontSize: '0.75rem', fontWeight: 600,
                           }}>{s}</span>
                         ))}
@@ -273,7 +273,7 @@ const SharedReport = () => {
 
         {/* CTA */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible" style={{ textAlign: 'center', marginTop: 48 }}>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: 16 }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: 16 }}>
             Want to see your own career analysis?
           </p>
           <Link
