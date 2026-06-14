@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, MessageSquare, Sparkles } from 'lucide-react';
-import axios from 'axios';
-
-const API = import.meta.env.VITE_API_URL || '';
+import api from '../services/api';
 
 export default function MockInterview() {
   const [roles, setRoles] = useState([]);
@@ -13,7 +11,7 @@ export default function MockInterview() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(`${API}/api/mock-interview`).then(res => {
+    api.get('/api/mock-interview').then(res => {
       setRoles(res.data.roles);
       if (res.data.roles.length > 0) {
         setSelectedRole(res.data.roles[0]);
@@ -28,7 +26,7 @@ export default function MockInterview() {
       setExpanded({});
       setLoading(true);
       try {
-        const res = await axios.get(`${API}/api/mock-interview/${encodeURIComponent(selectedRole)}`);
+        const res = await api.get(`/api/mock-interview/${encodeURIComponent(selectedRole)}`);
         if (!cancelled) setQuestions(res.data.questions);
       } finally {
         if (!cancelled) setLoading(false);
