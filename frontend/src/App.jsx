@@ -12,12 +12,11 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Analyzer = lazy(() => import('./pages/Analyzer'));
 const AnalysisResult = lazy(() => import('./pages/AnalysisResult'));
-const Jobs = lazy(() => import('./pages/Jobs'));
-const CoverLetter = lazy(() => import('./pages/CoverLetter'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Admin = lazy(() => import('./pages/Admin'));
 const SharedReport = lazy(() => import('./pages/SharedReport'));
+const MockInterview = lazy(() => import('./pages/MockInterview'));
 
 const withBoundary = (node) => <ErrorBoundary>{node}</ErrorBoundary>;
 
@@ -76,11 +75,10 @@ const Layout = () => {
           <Routes>
             <Route path="/app" element={<ProtectedRoute>{withBoundary(<Analyzer />)}</ProtectedRoute>} />
             <Route path="/analysis" element={<ProtectedRoute>{withBoundary(<AnalysisResult />)}</ProtectedRoute>} />
-            <Route path="/jobs" element={<ProtectedRoute>{withBoundary(<Jobs />)}</ProtectedRoute>} />
-            <Route path="/cover-letter" element={<ProtectedRoute>{withBoundary(<CoverLetter />)}</ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute>{withBoundary(<Settings />)}</ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute>{withBoundary(<Profile />)}</ProtectedRoute>} />
+            <Route path="/mock-interview" element={<ProtectedRoute>{withBoundary(<MockInterview />)}</ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/app" replace />} />
           </Routes>
         </Suspense>
