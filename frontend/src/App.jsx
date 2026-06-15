@@ -9,8 +9,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PageLoader from './components/Skeleton';
 
 const Landing = lazy(() => import('./pages/Landing'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
 const Analyzer = lazy(() => import('./pages/Analyzer'));
 const AnalysisResult = lazy(() => import('./pages/AnalysisResult'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -21,7 +19,7 @@ const MockInterview = lazy(() => import('./pages/MockInterview'));
 
 const withBoundary = (node) => <ErrorBoundary>{node}</ErrorBoundary>;
 
-const PUBLIC_PATHS = ['/', '/login', '/register'];
+const PUBLIC_PATHS = ['/', '/shared/'];
 
 const Layout = () => {
   const location = useLocation();
@@ -54,9 +52,7 @@ const Layout = () => {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={withBoundary(<Landing openAuthModal={openAuthModal} />)} />
-              <Route path="/login" element={withBoundary(<Login />)} />
-              <Route path="/register" element={withBoundary(<Register />)} />
-              <Route path="/shared/:token" element={withBoundary(<SharedReport />)} />
+              <Route path="/shared/:token" element={withBoundary(<SharedReport openAuthModal={openAuthModal} />)} />
             </Routes>
           </Suspense>
         </main>
