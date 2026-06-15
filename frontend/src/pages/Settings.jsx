@@ -112,7 +112,7 @@ const ConfirmModal = (props) => {
                 type="button" onClick={onConfirm} disabled={busy}
                 style={{
                   flex: 1, height: '42px', padding: '0 20px', borderRadius: 'var(--radius-lg)',
-                  background: danger ? 'var(--color-error)' : 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+                  background: danger ? 'var(--color-error)' : 'var(--color-primary)',
                   color: 'white', fontWeight: 'var(--font-semibold)', fontSize: '14px',
                   border: 'none', cursor: busy ? 'not-allowed' : 'pointer',
                   opacity: busy ? 0.7 : 1,
@@ -402,7 +402,7 @@ const Settings = () => {
                 display: 'flex', alignItems: 'center', gap: '4px',
               }}>
                 <ExternalLink size={10} />
-                Account deletion is currently manual — contact support to complete.
+                Account deletion is currently manual - contact support to complete.
               </p>
             </div>
           </Section>

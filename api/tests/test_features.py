@@ -253,7 +253,7 @@ class ResumeParserTests(unittest.TestCase):
 
     def test_experience_flat_list_compat(self):
         # The flat "experience" list should still contain something useful
-        # (composed of "Title — Company (dates)" + bullets)
+        # (composed of "Title - Company (dates)" + bullets)
         flat = self.parsed["experience"]
         self.assertTrue(len(flat) >= 3)
         joined = "\n".join(flat)

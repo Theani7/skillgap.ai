@@ -1,6 +1,7 @@
 import logging
+from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from api.auth import get_current_admin
@@ -26,27 +27,54 @@ def trigger_simulated_scrape(current_admin: dict = Depends(get_current_admin)):
 
 
 @router.get("/api/admin/users")
-def get_admin_users(current_admin: dict = Depends(get_current_admin)):
+def get_admin_users(
+    current_admin: dict = Depends(get_current_admin),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM user_data ORDER BY ID DESC")
+        # Select only safe columns, exclude sensitive system info
+        cursor.execute(
+            """
+            SELECT ID, user_id, Timestamp, Predicted_Field, resume_score,
+                   target_role, missing_skills, Actual_skills, Recommended_skills,
+                   pdf_name
+            FROM user_data
+            ORDER BY ID DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        )
         rows = cursor.fetchall()
+        # Get total count for pagination
+        cursor.execute("SELECT COUNT(*) as total FROM user_data")
+        total = cursor.fetchone()["total"]
     finally:
         conn.close()
-    return {"users": [dict(r) for r in rows]}
+    return {"users": [dict(r) for r in rows], "total": total, "limit": limit, "offset": offset}
 
 
 @router.get("/api/admin/feedback")
-def get_admin_feedback(current_admin: dict = Depends(get_current_admin)):
+def get_admin_feedback(
+    current_admin: dict = Depends(get_current_admin),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM user_feedback ORDER BY ID DESC")
+        cursor.execute(
+            "SELECT ID, name, email, score, comments, created_at FROM user_feedback ORDER BY ID DESC LIMIT ? OFFSET ?",
+            (limit, offset),
+        )
         rows = cursor.fetchall()
+        cursor.execute("SELECT COUNT(*) as total FROM user_feedback")
+        total = cursor.fetchone()["total"]
     finally:
         conn.close()
-    return {"feedback": [dict(r) for r in rows]}
+    return {"feedback": [dict(r) for r in rows], "total": total, "limit": limit, "offset": offset}
 
 
 @router.delete("/api/admin/users/{user_id}")
@@ -99,6 +127,20 @@ def get_registered_users(current_admin: dict = Depends(get_current_admin)):
 @router.delete("/api/admin/registered-users/{user_id}")
 def delete_registered_user(user_id: int, current_admin: dict = Depends(get_current_admin)):
     """Delete (ban) a registered user and cascade-delete their data."""
+    # Prevent deleting the last admin
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT role FROM users WHERE id = ?", (user_id,))
+        user = cursor.fetchone()
+        if user and user["role"] == "admin":
+            cursor.execute("SELECT COUNT(*) as admin_count FROM users WHERE role = 'admin'")
+            admin_count = cursor.fetchone()["admin_count"]
+            if admin_count <= 1:
+                raise HTTPException(status_code=400, detail="Cannot delete the last admin account")
+    finally:
+        conn.close()
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -123,7 +165,7 @@ def get_all_courses(current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM courses ORDER BY field, id DESC")
+        cursor.execute("SELECT id, field, course_name, course_url, created_at FROM courses ORDER BY field, id DESC")
         rows = cursor.fetchall()
     finally:
         conn.close()

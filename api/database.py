@@ -147,28 +147,6 @@ def init_db():
         ''')
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS job_applications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                company VARCHAR(200) NOT NULL,
-                role VARCHAR(200) NOT NULL,
-                status VARCHAR(40) NOT NULL DEFAULT 'applied',
-                follow_up_date VARCHAR(30) DEFAULT NULL,
-                location VARCHAR(200) DEFAULT '',
-                salary VARCHAR(80) DEFAULT '',
-                url VARCHAR(500) DEFAULT '',
-                notes TEXT DEFAULT '',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        for col, typedef in [
-            ('location', "VARCHAR(200) DEFAULT ''"),
-            ('salary', "VARCHAR(80) DEFAULT ''"),
-            ('url', "VARCHAR(500) DEFAULT ''"),
-        ]:
-            _ensure_column(cursor, 'job_applications', col, typedef)
-
-        cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_profiles (
                 user_id INTEGER PRIMARY KEY,
                 full_name VARCHAR(200) DEFAULT '',

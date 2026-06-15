@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, ChevronDown, ChevronUp, Check, Square } from 'lucide-react';
+import { Clock, ChevronDown, ChevronUp, Check, Square, ExternalLink, BookOpen, Video, FileText, Award } from 'lucide-react';
 
 const RoadmapStep = ({ step, index, isLast }) => {
   const [isExpanded, setIsExpanded] = useState(index === 0);
@@ -138,7 +138,7 @@ const RoadmapStep = ({ step, index, isLast }) => {
                 )}
 
                 {Array.isArray(step.action_items) && step.action_items.length > 0 && (
-                  <div>
+                  <div style={{ marginBottom: step.resources?.length > 0 ? '16px' : 0 }}>
                     <h5 style={{
                       fontSize: '10px', fontWeight: 'var(--font-bold)',
                       color: 'var(--color-text-muted)', textTransform: 'uppercase',
@@ -174,6 +174,57 @@ const RoadmapStep = ({ step, index, isLast }) => {
                               {action}
                             </span>
                           </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {Array.isArray(step.resources) && step.resources.length > 0 && (
+                  <div>
+                    <h5 style={{
+                      fontSize: '10px', fontWeight: 'var(--font-bold)',
+                      color: 'var(--color-text-muted)', textTransform: 'uppercase',
+                      letterSpacing: '0.06em', margin: '0 0 8px',
+                    }}>
+                      Learning Resources
+                    </h5>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {step.resources.map((resource, i) => {
+                        const iconMap = { docs: FileText, video: Video, course: BookOpen, cert: Award };
+                        const Icon = iconMap[resource.type] || ExternalLink;
+                        return (
+                          <a
+                            key={i}
+                            href={resource.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '10px',
+                              padding: '10px 12px', borderRadius: 'var(--radius-md)',
+                              background: 'var(--color-surface)',
+                              border: '1px solid var(--color-border)',
+                              textDecoration: 'none', transition: 'all 150ms ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = 'var(--color-primary)';
+                              e.currentTarget.style.background = 'var(--color-bg)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = 'var(--color-border)';
+                              e.currentTarget.style.background = 'var(--color-surface)';
+                            }}
+                          >
+                            <Icon size={14} style={{ color: 'var(--color-secondary)', flexShrink: 0 }} />
+                            <span style={{
+                              fontSize: '13px', color: 'var(--color-text)',
+                              flex: 1, lineHeight: 1.4,
+                            }}>
+                              {resource.title}
+                            </span>
+                            <ExternalLink size={12} style={{ color: 'var(--color-text-light)', flexShrink: 0 }} />
+                          </a>
                         );
                       })}
                     </div>

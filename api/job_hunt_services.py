@@ -760,118 +760,641 @@ def prioritize_missing_skills(
 def generate_personalized_roadmap(
     target_role: str, found_skills: List[str], missing_skills: List[str]
 ) -> List[dict]:
-    """Generate a 4-phase learning roadmap based on the user's actual skill gaps.
-
-    Unlike the old generic template, this:
-      - Uses actual missing skills, not hardcoded ones
-      - Groups skills by difficulty (easy → hard)
-      - Assigns realistic durations based on skill count and complexity
-      - Provides specific action items for each skill
-    """
+    """Generate a smart, role-specific learning roadmap using local LLM with template fallback."""
     role = target_role or "Professional"
     prioritized = prioritize_missing_skills(missing_skills, target_role, found_skills)
 
     if not prioritized:
-        # No gaps - suggest mastery-level steps
-        return [
-            {
-                "step": 1,
-                "title": "Skill Deepening",
-                "duration": "3 weeks",
-                "skills": found_skills[:3] if found_skills else ["Advanced Architecture"],
-                "action_items": [
-                    f"Take an advanced course in {found_skills[0] if found_skills else 'system design'}.",
-                    "Build a production-grade project showcasing depth.",
-                ],
-            },
-            {
-                "step": 2,
-                "title": "Open Source & Portfolio",
-                "duration": "4 weeks",
-                "skills": ["Open Source", "Portfolio"],
-                "action_items": [
-                    "Contribute to an open-source project in your domain.",
-                    "Write technical blog posts about your projects.",
-                ],
-            },
-            {
-                "step": 3,
-                "title": "Leadership & Mentorship",
-                "duration": "3 weeks",
-                "skills": ["Technical Leadership", "Code Review"],
-                "action_items": [
-                    "Mentor a junior developer on a project.",
-                    "Lead a code review session or architecture discussion.",
-                ],
-            },
-            {
-                "step": 4,
-                "title": "Career Positioning",
-                "duration": "2 weeks",
-                "skills": ["Interview Prep", "Networking"],
-                "action_items": [
-                    "Update LinkedIn and portfolio with new skills.",
-                    "Practice system design and behavioral interviews.",
-                ],
-            },
-        ]
+        return _generate_mastery_roadmap(role, found_skills)
 
-    # Group by difficulty
-    beginner = [p for p in prioritized if p["difficulty"] == "beginner"]
-    intermediate = [p for p in prioritized if p["difficulty"] == "intermediate"]
-    advanced = [p for p in prioritized if p["difficulty"] == "advanced"]
+    # Try LLM-powered action items first
+    from api.local_llm import generate_roadmap_with_llm
+    llm_actions = generate_roadmap_with_llm(role, found_skills, missing_skills)
 
-    # Split into 4 phases
-    total = len(prioritized)
-    phases = [
+    # Fallback to template-based generation
+
+    # Get role-specific configuration
+    role_config = _get_role_config(role)
+
+    # Group related skills into learning chunks
+    skill_groups = _group_related_skills(prioritized, role)
+
+    # Build phases from skill groups
+    phases = []
+
+    for i, group in enumerate(skill_groups):
+        group_skills = [s["skill"] for s in group]
+        avg_difficulty = sum(_SKILL_DIFFICULTY.get(s.lower(), 2) for s in group_skills) / len(group_skills)
+
+        # Estimate duration based on difficulty
+        if avg_difficulty <= 1.3:
+            duration_weeks = max(1, len(group_skills))
+            difficulty_label = "Fundamentals"
+        elif avg_difficulty <= 2.3:
+            duration_weeks = max(2, len(group_skills) + 1)
+            difficulty_label = "Core Skills"
+        else:
+            duration_weeks = max(3, len(group_skills) + 1)
+            difficulty_label = "Advanced Topics"
+
+        # Generate specific action items for each skill
+        action_items = []
+        resources = []
+        for skill in group:
+            skill_lower = skill["skill"].lower()
+            # Use LLM actions if available, otherwise fall back to templates
+            if llm_actions and skill_lower in llm_actions:
+                action_items.extend(llm_actions[skill_lower])
+            else:
+                skill_actions, skill_resources = _generate_skill_actions(skill, found_skills, role)
+                action_items.extend(skill_actions)
+                resources.extend(skill_resources)
+
+        # Add role-specific project suggestion
+        project_suggestion = _get_role_project_suggestion(group_skills, role, role_config)
+        action_items.append(project_suggestion)
+        action_items.append("Document your learning and add to portfolio")
+
+        phase_title = _generate_phase_title(group_skills, i + 1, difficulty_label)
+
+        phases.append({
+            "step": i + 1,
+            "title": phase_title,
+            "duration": f"{duration_weeks} week{'s' if duration_weeks > 1 else ''}",
+            "skills": group_skills,
+            "action_items": action_items,
+            "resources": resources[:6],
+            "difficulty": difficulty_label,
+        })
+
+    # Add role-specific career prep phase
+    career_prep = _generate_career_prep_phase(role, role_config)
+    career_prep["step"] = len(phases) + 1
+    phases.append(career_prep)
+
+    return phases
+
+
+def _get_role_config(role: str) -> dict:
+    """Get role-specific configuration for roadmap generation."""
+    role_lower = role.lower()
+
+    # Role-specific configurations (top 7 targeted roles)
+    role_configs = {
+        "software engineer": {
+            "project_types": ["full-stack web app", "REST API with authentication", "microservices architecture"],
+            "interview_focus": ["system design", "data structures", "algorithms"],
+            "portfolio_emphasis": "GitHub contributions and code quality",
+            "key_tools": ["Git", "CI/CD", "testing frameworks"],
+        },
+        "frontend": {
+            "project_types": ["interactive web app", "component library", "responsive dashboard"],
+            "interview_focus": ["UI/UX discussions", "performance optimization", "accessibility"],
+            "portfolio_emphasis": "Live demos and design thinking",
+            "key_tools": ["browser DevTools", "Lighthouse", "Figma"],
+        },
+        "backend": {
+            "project_types": ["REST API with database", "microservice with Docker", "real-time WebSocket app"],
+            "interview_focus": ["API design", "database optimization", "scalability"],
+            "portfolio_emphasis": "API documentation and system architecture",
+            "key_tools": ["Postman", "database tools", "monitoring"],
+        },
+        "data scientist": {
+            "project_types": ["end-to-end ML pipeline", "data visualization dashboard", "predictive model deployment"],
+            "interview_focus": ["statistics", "ML algorithms", "data cleaning"],
+            "portfolio_emphasis": "Jupyter notebooks and Kaggle competitions",
+            "key_tools": ["Jupyter", "pandas", "scikit-learn"],
+        },
+        "devops": {
+            "project_types": ["CI/CD pipeline", "infrastructure as code", "monitoring dashboard"],
+            "interview_focus": ["infrastructure design", "incident response", "automation"],
+            "portfolio_emphasis": "automation scripts and infrastructure diagrams",
+            "key_tools": ["Terraform", "Kubernetes", "monitoring tools"],
+        },
+        "mobile developer": {
+            "project_types": ["cross-platform app", "native mobile app", "app with backend integration"],
+            "interview_focus": ["mobile UX", "performance", "offline functionality"],
+            "portfolio_emphasis": "App Store links and user feedback",
+            "key_tools": ["mobile IDE", "emulators", "testing frameworks"],
+        },
+        "full stack": {
+            "project_types": ["full-stack SaaS", "real-time web app", "e-commerce platform"],
+            "interview_focus": ["system design", "full-stack debugging", "architecture"],
+            "portfolio_emphasis": "deployed applications and end-to-end ownership",
+            "key_tools": ["frontend frameworks", "backend frameworks", "databases"],
+        },
+        "cybersecurity": {
+            "project_types": ["security audit", "vulnerability scanner", "security automation tool"],
+            "interview_focus": ["threat modeling", "incident response", "compliance frameworks"],
+            "portfolio_emphasis": "CTF competitions and security certifications",
+            "key_tools": ["Wireshark", "Burp Suite", "SIEM tools"],
+        },
+    }
+
+    # Find matching role config
+    for key, config in role_configs.items():
+        if key in role_lower:
+            return config
+
+    # Default config
+    return {
+        "project_types": ["personal project", "open-source contribution", "technical blog"],
+        "interview_focus": ["technical fundamentals", "problem solving", "communication"],
+        "portfolio_emphasis": "demonstrated learning and growth",
+        "key_tools": ["version control", "documentation", "testing"],
+    }
+
+
+def _get_role_project_suggestion(skills: List[str], role: str, role_config: dict) -> str:
+    """Generate a role-specific project suggestion based on skills."""
+    import random
+
+    project_types = role_config.get("project_types", ["personal project"])
+
+    # Match skills to specific project ideas
+    skill_set = {s.lower() for s in skills}
+
+    if "react" in skill_set or "vue" in skill_set or "angular" in skill_set:
+        return f"Build a {random.choice(['interactive dashboard', 'task management app', 'portfolio website'])} using {skills[0]}"
+    elif "docker" in skill_set or "kubernetes" in skill_set:
+        return f"Containerize and deploy a {random.choice(['microservices app', 'full-stack application', 'ML model service'])} using Docker"
+    elif "machine learning" in skill_set or "pytorch" in skill_set or "tensorflow" in skill_set:
+        return f"Build an {random.choice(['image classifier', 'recommendation system', 'predictive model'])} end-to-end"
+    elif "postgresql" in skill_set or "mongodb" in skill_set:
+        return f"Design and implement a {random.choice(['database schema', 'data pipeline', 'API with database'])} for a real use case"
+    elif "aws" in skill_set or "azure" in skill_set:
+        return f"Deploy a {random.choice(['serverless application', 'web app with CI/CD', 'static site with CDN'])} to the cloud"
+    else:
+        return f"Build a {random.choice(project_types)} combining {', '.join(skills[:2])}"
+
+
+def _generate_career_prep_phase(role: str, role_config: dict) -> dict:
+    """Generate a role-specific career preparation phase."""
+    interview_focus = role_config.get("interview_focus", ["technical fundamentals", "problem solving"])
+    portfolio_emphasis = role_config.get("portfolio_emphasis", "demonstrated learning")
+
+    return {
+        "title": "Career Positioning & Interview Prep",
+        "duration": "2 weeks",
+        "skills": ["Interview Prep", "Portfolio", "Networking"],
+        "action_items": [
+            f"Update LinkedIn highlighting {portfolio_emphasis}",
+            f"Practice {interview_focus[0]} and {interview_focus[1]} questions",
+            "Build 1-2 portfolio projects showcasing your new skills",
+            "Contribute to open-source projects in your target domain",
+        ],
+        "resources": [],
+        "difficulty": "Preparation",
+    }
+
+
+def _generate_mastery_roadmap(role: str, found_skills: List[str]) -> List[dict]:
+    """Generate roadmap when no skill gaps exist - focus on mastery and positioning."""
+    top_skills = found_skills[:3] if found_skills else ["System Design"]
+    return [
         {
             "step": 1,
-            "title": "Foundation & Quick Wins",
-            "duration": f"{max(2, len(beginner) + 1)} weeks",
-            "skills": [p["skill"] for p in beginner[:3]] or [p["skill"] for p in prioritized[:2]],
-            "action_items": [],
+            "title": f"Deepen Expertise in {top_skills[0]}",
+            "duration": "3 weeks",
+            "skills": top_skills[:2],
+            "action_items": [
+                f"Complete an advanced course in {top_skills[0]}",
+                "Build a production-grade project showcasing depth",
+                "Write a technical blog post about what you learned",
+            ],
+            "resources": [],
+            "difficulty": "Advanced",
         },
         {
             "step": 2,
-            "title": "Core Skill Building",
-            "duration": f"{max(3, len(intermediate) + 2)} weeks",
-            "skills": [p["skill"] for p in intermediate[:3]] or [p["skill"] for p in prioritized[2:5]],
-            "action_items": [],
+            "title": "Open Source & Community",
+            "duration": "3 weeks",
+            "skills": ["Open Source", "Technical Writing"],
+            "action_items": [
+                "Contribute to an open-source project in your domain",
+                "Submit a pull request to a popular library",
+                "Write 2-3 technical articles about your expertise",
+            ],
+            "resources": [],
+            "difficulty": "Advanced",
         },
         {
             "step": 3,
-            "title": "Advanced Topics & Projects",
-            "duration": f"{max(3, len(advanced) + 2)} weeks",
-            "skills": [p["skill"] for p in advanced[:3]] or [p["skill"] for p in prioritized[5:8]],
-            "action_items": [],
+            "title": "Leadership & Mentorship",
+            "duration": "2 weeks",
+            "skills": ["Technical Leadership", "Mentoring"],
+            "action_items": [
+                "Mentor a junior developer on a project",
+                "Lead a code review or architecture discussion",
+                "Document best practices for your team",
+            ],
+            "resources": [],
+            "difficulty": "Advanced",
         },
         {
             "step": 4,
-            "title": "Portfolio & Interview Prep",
-            "duration": "2-3 weeks",
-            "skills": ["Portfolio Projects", "Interview Practice"],
-            "action_items": [],
+            "title": "Career Positioning",
+            "duration": "2 weeks",
+            "skills": ["Interview Prep", "Networking"],
+            "action_items": [
+                "Update LinkedIn and portfolio with recent work",
+                "Practice system design and behavioral interviews",
+                "Connect with professionals in your target role",
+            ],
+            "resources": [],
+            "difficulty": "Preparation",
         },
     ]
 
-    # Generate specific action items for each phase
-    for phase in phases:
-        skills = phase["skills"]
-        items = []
-        if skills and skills[0] != "Portfolio Projects":
-            items.append(f"Complete an online course or tutorial in {skills[0]}.")
-            if len(skills) > 1:
-                items.append(f"Practice {skills[1]} through a small hands-on project.")
-            items.append("Document what you learned and add to your portfolio.")
-        else:
-            items = [
-                "Build 1-2 portfolio projects demonstrating your new skills.",
-                "Practice mock interviews focusing on system design.",
-                "Update your resume and LinkedIn with newly acquired skills.",
-            ]
-        phase["action_items"] = items
 
-    return phases
+def _group_related_skills(prioritized: List[dict], role: str) -> List[List[dict]]:
+    """Group related skills into learning chunks for coherent phases."""
+    # Define skill relationships (skills that should be learned together)
+    skill_clusters = {
+        "react_ecosystem": {"react", "next.js", "typescript", "tailwind", "redux", "zustand"},
+        "vue_ecosystem": {"vue", "nuxt.js", "vuex", "pinia"},
+        "python_backend": {"django", "flask", "fastapi", "python"},
+        "java_backend": {"java", "spring boot", "hibernate"},
+        "node_backend": {"node.js", "express", "mongodb", "graphql"},
+        "cloud_aws": {"aws", "terraform", "docker", "kubernetes", "ci/cd"},
+        "cloud_azure": {"azure", "terraform", "docker", "kubernetes", "ci/cd"},
+        "data_science": {"python", "pandas", "numpy", "matplotlib", "seaborn", "statistics"},
+        "ml_engineering": {"machine learning", "deep learning", "tensorflow", "pytorch", "scikit-learn"},
+        "mobile_cross": {"react native", "flutter", "dart"},
+        "mobile_native": {"swift", "kotlin", "swiftui", "jetpack compose"},
+        "devops_tools": {"docker", "kubernetes", "jenkins", "ci/cd", "terraform", "ansible"},
+        "databases": {"sql", "postgresql", "mysql", "mongodb", "redis", "elasticsearch"},
+        "testing": {"testing", "unit testing", "integration testing", "selenium", "qa"},
+    }
+
+    # Assign each skill to the best matching cluster (first match wins)
+    skill_to_cluster = {}
+    clustered_skill_names = set()
+    
+    for skill in prioritized:
+        skill_lower = skill["skill"].lower()
+        if skill_lower in clustered_skill_names:
+            continue
+        for cluster_name, cluster_skills in skill_clusters.items():
+            if skill_lower in cluster_skills:
+                skill_to_cluster.setdefault(cluster_name, []).append(skill)
+                clustered_skill_names.add(skill_lower)
+                break
+
+    # Skills not in any cluster go to their own group
+    unclustered = [s for s in prioritized if s["skill"].lower() not in clustered_skill_names]
+
+    # Build groups: clustered skills first, then unclustered
+    groups = []
+    for cluster_skills in skill_to_cluster.values():
+        if cluster_skills:
+            groups.append(cluster_skills)
+
+    # Add unclustered skills in small batches
+    for i in range(0, len(unclustered), 2):
+        batch = unclustered[i:i+2]
+        groups.append(batch)
+
+    return groups if groups else [prioritized[:3]]
+
+
+def _generate_skill_actions(skill_info: dict, found_skills: List[str], role: str) -> tuple:
+    """Generate specific action items and resources for a skill."""
+    skill = skill_info["skill"]
+    difficulty = skill_info["difficulty"]
+    skill_lower = skill.lower()
+
+    # Skill-specific action templates
+    action_templates = {
+        # Frontend
+        "react": [
+            "Learn React fundamentals: components, props, state, and hooks",
+            "Build a CRUD app with React (e.g., todo list, weather app)",
+            "Practice React patterns: context, custom hooks, performance optimization",
+        ],
+        "typescript": [
+            "Learn TypeScript basics: types, interfaces, generics",
+            "Convert an existing JavaScript project to TypeScript",
+            "Practice advanced types: unions, generics, utility types",
+        ],
+        "next.js": [
+            "Learn Next.js basics: pages, routing, API routes",
+            "Build a full-stack app with Next.js and a database",
+            "Practice SSR/SSG and optimization techniques",
+        ],
+        "vue": [
+            "Learn Vue fundamentals: components, reactivity, directives",
+            "Build a single-page app with Vue Router and Pinia",
+            "Practice Vue 3 Composition API patterns",
+        ],
+        "angular": [
+            "Learn Angular basics: components, services, dependency injection",
+            "Build a dashboard app with Angular Material",
+            "Practice RxJS and state management",
+        ],
+        # Backend
+        "python": [
+            "Review Python fundamentals: data structures, OOP, decorators",
+            "Build a REST API using FastAPI or Flask",
+            "Practice Python best practices and design patterns",
+        ],
+        "django": [
+            "Learn Django basics: models, views, templates",
+            "Build a Django project with user authentication",
+            "Practice Django REST framework for APIs",
+        ],
+        "flask": [
+            "Learn Flask basics: routes, templates, forms",
+            "Build a REST API with Flask and SQLAlchemy",
+            "Practice Flask blueprints and application factory pattern",
+        ],
+        "fastapi": [
+            "Learn FastAPI basics: path operations, Pydantic models",
+            "Build a REST API with authentication and database",
+            "Practice async endpoints and dependency injection",
+        ],
+        "node.js": [
+            "Learn Node.js fundamentals: modules, event loop, streams",
+            "Build a REST API with Express.js",
+            "Practice async programming and error handling",
+        ],
+        "express": [
+            "Learn Express basics: routing, middleware, error handling",
+            "Build a REST API with Express and MongoDB",
+            "Practice authentication and authorization patterns",
+        ],
+        # DevOps
+        "docker": [
+            "Learn Docker basics: images, containers, Dockerfile",
+            "Containerize an existing application",
+            "Practice Docker Compose for multi-container apps",
+        ],
+        "kubernetes": [
+            "Learn K8s basics: pods, services, deployments",
+            "Deploy a microservices app to a local K8s cluster",
+            "Practice scaling and rolling updates",
+        ],
+        "aws": [
+            "Learn AWS core services: EC2, S3, RDS, Lambda",
+            "Build a serverless app with AWS Lambda",
+            "Practice IAM, security groups, and VPC basics",
+        ],
+        "terraform": [
+            "Learn Terraform basics: providers, resources, state",
+            "Infrastructure as Code for a simple web app",
+            "Practice modules and workspaces",
+        ],
+        "ci/cd": [
+            "Learn CI/CD fundamentals: pipelines, automation",
+            "Set up a GitHub Actions pipeline for a project",
+            "Practice automated testing and deployment",
+        ],
+        # Data Science
+        "machine learning": [
+            "Review ML fundamentals: regression, classification, clustering",
+            "Complete a Kaggle competition or practice dataset",
+            "Build an end-to-end ML pipeline with scikit-learn",
+        ],
+        "deep learning": [
+            "Learn neural network basics: perceptrons, activation functions",
+            "Build a deep learning model with TensorFlow or PyTorch",
+            "Practice CNNs for image classification",
+        ],
+        "pandas": [
+            "Learn pandas basics: DataFrames, Series, indexing",
+            "Practice data cleaning and transformation",
+            "Analyze a real-world dataset with pandas",
+        ],
+        "tensorflow": [
+            "Learn TensorFlow basics: tensors, operations, gradients",
+            "Build a neural network with Keras",
+            "Practice model training and evaluation",
+        ],
+        "pytorch": [
+            "Learn PyTorch basics: tensors, autograd, nn.Module",
+            "Build a neural network for image classification",
+            "Practice training loops and GPU acceleration",
+        ],
+        "sql": [
+            "Learn SQL basics: SELECT, JOIN, GROUP BY",
+            "Practice complex queries and subqueries",
+            "Design a database schema for a real application",
+        ],
+        "postgresql": [
+            "Learn PostgreSQL basics: tables, indexes, constraints",
+            "Practice advanced queries and window functions",
+            "Optimize query performance with EXPLAIN ANALYZE",
+        ],
+        "mongodb": [
+            "Learn MongoDB basics: documents, collections, CRUD",
+            "Practice aggregation pipelines",
+            "Design a schema for a real application",
+        ],
+        # Mobile
+        "react native": [
+            "Learn React Native basics: components, navigation, state",
+            "Build a cross-platform mobile app",
+            "Practice native modules and platform-specific code",
+        ],
+        "flutter": [
+            "Learn Flutter basics: widgets, layouts, state management",
+            "Build a cross-platform mobile app",
+            "Practice custom widgets and animations",
+        ],
+        "swift": [
+            "Learn Swift basics: types, protocols, optionals",
+            "Build an iOS app with SwiftUI",
+            "Practice Core Data and networking",
+        ],
+        "kotlin": [
+            "Learn Kotlin basics: coroutines, extensions, null safety",
+            "Build an Android app with Jetpack Compose",
+            "Practice Android architecture components",
+        ],
+        # Soft Skills
+        "leadership": [
+            "Read a leadership book (e.g., 'The Manager's Path')",
+            "Lead a small project or feature at work",
+            "Practice giving constructive feedback",
+        ],
+        "communication": [
+            "Practice writing clear technical documentation",
+            "Give a presentation or tech talk",
+            "Practice active listening in meetings",
+        ],
+        "agile": [
+            "Learn Agile principles and Scrum framework",
+            "Participate in sprint planning and retrospectives",
+            "Practice user story writing and estimation",
+        ],
+    }
+
+    # Get actions for this skill, or generate generic ones
+    if skill_lower in action_templates:
+        actions = action_templates[skill_lower]
+    elif any(x in skill_lower for x in ["react", "angular", "vue", "svelte"]):
+        actions = [
+            f"Learn {skill} fundamentals through official documentation",
+            f"Build a small project using {skill}",
+            f"Practice {skill} best practices and patterns",
+        ]
+    elif any(x in skill_lower for x in ["django", "flask", "fastapi", "express", "spring"]):
+        actions = [
+            f"Learn {skill} basics: routing, middleware, templates",
+            f"Build a REST API with {skill}",
+            f"Practice authentication and database integration",
+        ]
+    elif any(x in skill_lower for x in ["docker", "kubernetes", "terraform", "ci/cd"]):
+        actions = [
+            f"Learn {skill} fundamentals through hands-on tutorials",
+            f"Set up {skill} in a practice environment",
+            f"Apply {skill} to a real project",
+        ]
+    else:
+        actions = [
+            f"Learn {skill} fundamentals through official documentation",
+            f"Practice {skill} with a small hands-on project",
+            f"Apply {skill} in a real-world scenario",
+        ]
+
+    # Generate resource links
+    resources = _get_skill_resources(skill, role)
+
+    return actions, resources
+
+
+def _get_skill_resources(skill: str, role: str) -> List[dict]:
+    """Get learning resources for a specific skill."""
+    # Curated resource mapping
+    resource_map = {
+        "react": [
+            {"title": "React Official Tutorial", "url": "https://react.dev/learn", "type": "docs"},
+            {"title": "React Crash Course (Free)", "url": "https://youtu.be/Dorf8i6lCuk", "type": "video"},
+        ],
+        "typescript": [
+            {"title": "TypeScript Handbook", "url": "https://www.typescriptlang.org/docs/handbook/", "type": "docs"},
+            {"title": "TypeScript Tutorial (Free)", "url": "https://youtu.be/BwuLxPH8IDs", "type": "video"},
+        ],
+        "next.js": [
+            {"title": "Next.js Learn Course", "url": "https://nextjs.org/learn", "type": "docs"},
+            {"title": "Next.js Crash Course", "url": "https://youtu.be/mTz0GXj8NN0", "type": "video"},
+        ],
+        "vue": [
+            {"title": "Vue.js Official Guide", "url": "https://vuejs.org/guide/introduction.html", "type": "docs"},
+            {"title": "Vue 3 Crash Course (Free)", "url": "https://youtu.be/FXpIoQ_rT_c", "type": "video"},
+        ],
+        "angular": [
+            {"title": "Angular Official Tutorial", "url": "https://angular.dev/tutorial", "type": "docs"},
+            {"title": "Angular Crash Course (Free)", "url": "https://youtu.be/3dHNOWTI7H8", "type": "video"},
+        ],
+        "python": [
+            {"title": "Python Official Tutorial", "url": "https://docs.python.org/3/tutorial/", "type": "docs"},
+            {"title": "Python for Everybody (Free)", "url": "https://www.py4e.com/", "type": "course"},
+        ],
+        "django": [
+            {"title": "Django Official Tutorial", "url": "https://docs.djangoproject.com/en/stable/intro/tutorial01/", "type": "docs"},
+            {"title": "Django Crash Course (Free)", "url": "https://youtu.be/e1IyzVyrLSU", "type": "video"},
+        ],
+        "flask": [
+            {"title": "Flask Official Documentation", "url": "https://flask.palletsprojects.com/en/3.0.x/tutorial/", "type": "docs"},
+            {"title": "Flask Crash Course (Free)", "url": "https://youtu.be/Z1RJmh_OqeA", "type": "video"},
+        ],
+        "fastapi": [
+            {"title": "FastAPI Official Tutorial", "url": "https://fastapi.tiangolo.com/tutorial/", "type": "docs"},
+            {"title": "FastAPI Course (Free)", "url": "https://youtu.be/0sOvCWFmrtA", "type": "video"},
+        ],
+        "node.js": [
+            {"title": "Node.js Official Guides", "url": "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs", "type": "docs"},
+            {"title": "Node.js Crash Course", "url": "https://youtu.be/fBNz5xF-Kx4", "type": "video"},
+        ],
+        "express": [
+            {"title": "Express.js Official Guide", "url": "https://expressjs.com/en/guide/routing.html", "type": "docs"},
+            {"title": "Express Crash Course (Free)", "url": "https://youtu.be/CnH3kAXSrmU", "type": "video"},
+        ],
+        "docker": [
+            {"title": "Docker Official Tutorial", "url": "https://docs.docker.com/get-started/", "type": "docs"},
+            {"title": "Docker Crash Course (Free)", "url": "https://youtu.be/fqMOX6JJhGo", "type": "video"},
+        ],
+        "kubernetes": [
+            {"title": "Kubernetes Basics", "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/", "type": "docs"},
+            {"title": "K8s Crash Course (Free)", "url": "https://youtu.be/X48VuDVv0do", "type": "video"},
+        ],
+        "aws": [
+            {"title": "AWS Free Tier Training", "url": "https://aws.amazon.com/free/", "type": "course"},
+            {"title": "AWS Cloud Practitioner", "url": "https://aws.amazon.com/certification/certified-cloud-practitioner/", "type": "cert"},
+        ],
+        "terraform": [
+            {"title": "Terraform Official Tutorials", "url": "https://developer.hashicorp.com/terraform/tutorials", "type": "docs"},
+            {"title": "Terraform Crash Course (Free)", "url": "https://youtu.be/l5k1ai_GBDE", "type": "video"},
+        ],
+        "machine learning": [
+            {"title": "ML Crash Course by Google", "url": "https://developers.google.com/machine-learning/crash-course", "type": "course"},
+            {"title": "Machine Learning by Andrew Ng", "url": "https://www.coursera.org/learn/machine-learning", "type": "course"},
+        ],
+        "deep learning": [
+            {"title": "Deep Learning Specialization", "url": "https://www.coursera.org/specializations/deep-learning", "type": "course"},
+            {"title": "Fast.ai Practical Deep Learning", "url": "https://course.fast.ai/", "type": "course"},
+        ],
+        "tensorflow": [
+            {"title": "TensorFlow Official Tutorials", "url": "https://www.tensorflow.org/tutorials", "type": "docs"},
+            {"title": "TensorFlow Crash Course", "url": "https://www.tensorflow.org/tutorials/quickstart/beginner", "type": "docs"},
+        ],
+        "pytorch": [
+            {"title": "PyTorch Official Tutorial", "url": "https://pytorch.org/tutorials/", "type": "docs"},
+            {"title": "PyTorch for Deep Learning", "url": "https://www.youtube.com/watch?v=aircAruvnKk", "type": "video"},
+        ],
+        "pandas": [
+            {"title": "Pandas Official Documentation", "url": "https://pandas.pydata.org/docs/getting_started/introduction.html", "type": "docs"},
+            {"title": "Pandas Tutorial (Free)", "url": "https://youtu.be/vmEHCJofslg", "type": "video"},
+        ],
+        "sql": [
+            {"title": "SQL Tutorial", "url": "https://www.w3schools.com/sql/", "type": "docs"},
+            {"title": "SQL Crash Course (Free)", "url": "https://youtu.be/HXV3zeQKqGY", "type": "video"},
+        ],
+        "postgresql": [
+            {"title": "PostgreSQL Official Documentation", "url": "https://www.postgresql.org/docs/current/tutorial.html", "type": "docs"},
+            {"title": "PostgreSQL Crash Course (Free)", "url": "https://youtu.be/qw--VlpxnE4", "type": "video"},
+        ],
+        "mongodb": [
+            {"title": "MongoDB Official Tutorial", "url": "https://www.mongodb.com/docs/manual/tutorial/getting-started/", "type": "docs"},
+            {"title": "MongoDB Crash Course (Free)", "url": "https://youtu.be/-56x56UppqQ", "type": "video"},
+        ],
+        "react native": [
+            {"title": "React Native Official Guide", "url": "https://reactnative.dev/docs/getting-started", "type": "docs"},
+            {"title": "React Native Crash Course (Free)", "url": "https://youtu.be/0-S5a9eLho8", "type": "video"},
+        ],
+        "flutter": [
+            {"title": "Flutter Official Documentation", "url": "https://docs.flutter.dev/get-started/install", "type": "docs"},
+            {"title": "Flutter Crash Course (Free)", "url": "https://youtu.be/1gDIFuM9sKY", "type": "video"},
+        ],
+        "swift": [
+            {"title": "Swift Official Documentation", "url": "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/", "type": "docs"},
+            {"title": "SwiftUI Tutorial", "url": "https://developer.apple.com/tutorials/swiftui", "type": "docs"},
+        ],
+        "kotlin": [
+            {"title": "Kotlin Official Documentation", "url": "https://kotlinlang.org/docs/home.html", "type": "docs"},
+            {"title": "Kotlin Crash Course (Free)", "url": "https://youtu.be/FdNLHkYEXEo", "type": "video"},
+        ],
+    }
+
+    skill_lower = skill.lower()
+    if skill_lower in resource_map:
+        return resource_map[skill_lower]
+
+    # Generic fallback based on skill type
+    return [
+        {"title": f"Learn {skill} - Official Documentation", "url": "#", "type": "docs"},
+    ]
+
+
+def _generate_phase_title(skills: List[str], phase_num: int, difficulty: str) -> str:
+    """Generate a descriptive title for a roadmap phase."""
+    if len(skills) == 1:
+        return f"Master {skills[0]}"
+    elif len(skills) <= 2:
+        return f"Learn {skills[0]} & {skills[1]}"
+    else:
+        return f"{difficulty}: {skills[0]}, {skills[1]} & {len(skills) - 2} more"
 
 def generate_synthetic_roadmap(target_role: str, found_skills: List[str]) -> List[dict]:
     """Generates a structured career roadmap using local logic when AI is unavailable."""

@@ -224,7 +224,7 @@ const ResultsDisplay = ({ data, onReset }) => {
                 transition={{ duration: 1, ease: 'easeOut' }}
                 style={{
                   height: '100%',
-                  background: 'linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+                  background: 'var(--color-primary)',
                   borderRadius: 'var(--radius-full)',
                 }}
               />

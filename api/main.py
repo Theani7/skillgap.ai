@@ -9,6 +9,7 @@ import logging
 from api.database import get_db_connection
 from api.exceptions import SkillGapException
 from api.mock_interview import router as mock_interview_router
+from api.mock_interview_ai import router as mock_interview_ai_router
 from api.routes.auth import router as auth_router
 from api.routes.analysis import router as analysis_router
 from api.routes.admin import router as admin_router
@@ -97,6 +98,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 app.include_router(mock_interview_router)
+app.include_router(mock_interview_ai_router)
 app.include_router(auth_router)
 app.include_router(analysis_router)
 app.include_router(admin_router)
@@ -126,7 +128,7 @@ app.add_middleware(
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Cookie"],
+    allow_headers=["Authorization", "Content-Type", "Cookie", "X-Requested-With"],
     max_age=600,
 )
 
@@ -161,6 +163,9 @@ def _client_ip(request: Request) -> str:
 
 @app.middleware("http")
 async def request_logging_and_rate_limit(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
     client_ip = _client_ip(request)
     now_minute = int(time.time() // 60)
     bucket_key = f"{client_ip}:{now_minute}"

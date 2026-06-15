@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Zap, Sparkles, Settings, User, Shield, LogOut,
   Menu, X, BarChart3, FileSearch, AlertTriangle, MessageSquare,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../services/api';
 
 const STORAGE_KEY = 'skillgap_sidebar_collapsed';
 
@@ -34,7 +33,6 @@ const BOTTOM_LINKS = [
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === '1'; } catch { return false; }
@@ -63,12 +61,6 @@ const Sidebar = () => {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
-
-  const handleLogout = async () => {
-    try { await api.post('/api/auth/logout'); } catch (_) { /* noop */ }
-    logout();
-    navigate('/');
-  };
 
   const isActive = (path) => location.pathname === path;
   const width = collapsed ? 72 : 240;
@@ -169,7 +161,7 @@ const Sidebar = () => {
         >
           <div style={{
             width: '32px', height: '32px', borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+            background: 'var(--color-primary)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
             flexShrink: 0,
@@ -346,7 +338,7 @@ const Sidebar = () => {
         >
           <div style={{
             width: '32px', height: '32px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+            background: 'var(--color-primary)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'white', fontSize: '13px', fontWeight: 'var(--font-bold)',
             flexShrink: 0,
@@ -477,8 +469,7 @@ const Sidebar = () => {
                 </button>
 <button
                     onClick={async () => {
-                      try { await api.post('/api/auth/logout'); } catch (_) { /* noop */ }
-                      logout();
+                      await logout();
                     }}
                     style={{
                     flex: 1, padding: '10px 0', borderRadius: 10,

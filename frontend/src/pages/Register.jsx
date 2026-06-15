@@ -78,7 +78,13 @@ const Register = () => {
       if (res.ok) {
         navigate('/login', { state: { justRegistered: true } });
       } else {
-        setError(data.detail?.[0]?.msg || data.detail || 'Registration failed. Check your details and try again.');
+        let msg = data.error || data.detail;
+        if (Array.isArray(msg)) {
+          msg = msg.map(e => e.msg || e).join('. ');
+        } else if (!msg) {
+          msg = 'Registration failed. Please check your details and try again.';
+        }
+        setError(msg);
       }
     } catch (_err) {
       setError('Unable to reach the server. Check your connection and try again.');
@@ -94,7 +100,7 @@ const Register = () => {
   const canSubmit =
     username.length >= 3 &&
     usernameStatus === 'available' &&
-    password.length >= 6 &&
+    password.length >= 8 &&
     passwordsMatch &&
     firstName && lastName && email &&
     !loading;
@@ -120,7 +126,7 @@ const Register = () => {
     <AuthShell
       eyebrow="Create account"
       title="Set up your workspace"
-      subtitle="One account, free to use. Your analyses and job tracker stay tied to this email."
+      subtitle="One account, free to use. Your analyses and progress history stay tied to this email."
       footer={footer}
     >
       {error && (
@@ -248,8 +254,8 @@ const Register = () => {
               type={showPasswords ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required minLength={6} autoComplete="new-password"
-              placeholder="At least 6 characters"
+              required minLength={8} autoComplete="new-password"
+              placeholder="At least 8 characters"
               className="auth-input has-icon"
               style={{ paddingLeft: '40px' }}
             />
@@ -274,7 +280,7 @@ const Register = () => {
                 {strength >= 4 ? <CheckCircle size={12} /> : null}
                 {strengthLabel[strength]}
                 {strength < 5 && strength > 0 && (
-                  <span className="auth-hint-muted">— try mixing uppercase, numbers, and symbols.</span>
+                  <span className="auth-hint-muted">- try mixing uppercase, numbers, and symbols.</span>
                 )}
               </p>
             </div>
@@ -301,7 +307,7 @@ const Register = () => {
               type={showPasswords ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              required minLength={6} autoComplete="new-password"
+              required minLength={8} autoComplete="new-password"
               placeholder="Re-enter your password"
               className="auth-input has-icon"
               style={{
@@ -320,7 +326,7 @@ const Register = () => {
             </div>
           </div>
           {passwordsMismatch && (
-            <p className="auth-hint auth-hint-error">Passwords do not match — please re-enter.</p>
+            <p className="auth-hint auth-hint-error">Passwords do not match - please re-enter.</p>
           )}
         </div>
 

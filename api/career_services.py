@@ -153,7 +153,7 @@ def compute_resume_score_breakdown(resume_data: Dict[str, Any], target_role: str
     else:
         feedback_msgs.append("Education details not found. Ensure your degrees and universities are clearly listed.")
 
-    # 3. Experience Analysis — quality-aware (uses experience_blocks if available)
+    # 3. Experience Analysis - quality-aware (uses experience_blocks if available)
     exp_blocks = resume_data.get("experience_blocks") or []
     exp_flat = resume_data.get("experience") or []
     if exp_blocks:
@@ -179,7 +179,7 @@ def compute_resume_score_breakdown(resume_data: Dict[str, Any], target_role: str
     else:
         feedback_msgs.append("No professional experience detected. Add internships, projects, or work history.")
 
-    # 4. Skills Analysis — role-aware scoring
+    # 4. Skills Analysis - role-aware scoring
     skills = resume_data.get("skills") or []
     if skills:
         skill_count = len(skills)
@@ -216,7 +216,7 @@ def compute_resume_score_breakdown(resume_data: Dict[str, Any], target_role: str
                     "Consider moving them to a separate section or removing them to keep focus."
                 )
         else:
-            # No target role — count-based scoring (original behavior)
+            # No target role - count-based scoring (original behavior)
             if skill_count >= 10:
                 breakdown["skills"]["score"] = 25
             elif skill_count >= 5:
