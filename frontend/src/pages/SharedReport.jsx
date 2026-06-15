@@ -11,7 +11,7 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
 };
 
-const SharedReport = () => {
+const SharedReport = ({ openAuthModal }) => {
   const { token } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -91,18 +91,18 @@ const SharedReport = () => {
           <p style={{ color: 'var(--color-text-muted)', marginBottom: 32, lineHeight: 1.6 }}>
             {error}
           </p>
-          <Link
-            to="/login"
+          <button
+            onClick={() => openAuthModal('login')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '10px 24px', borderRadius: 10,
               background: 'var(--color-primary)', color: 'white',
               fontWeight: 600, fontSize: '0.9rem',
-              textDecoration: 'none',
+              textDecoration: 'none', border: 'none', cursor: 'pointer',
             }}
           >
             <ArrowLeft size={16} /> Sign in
-          </Link>
+          </button>
         </motion.div>
       </div>
     );
@@ -120,9 +120,12 @@ const SharedReport = () => {
           maxWidth: 900, margin: '0 auto', height: 56,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-text-muted)', textDecoration: 'none', fontSize: '0.85rem' }}>
+          <button
+            onClick={() => openAuthModal('login')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-text-muted)', textDecoration: 'none', fontSize: '0.85rem', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
             <ArrowLeft size={14} /> Back to login
-          </Link>
+          </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
             <Shield size={13} /> Shared report
           </div>
@@ -276,18 +279,18 @@ const SharedReport = () => {
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: 16 }}>
             Want to see your own career analysis?
           </p>
-          <Link
-            to="/register"
+          <button
+            onClick={() => openAuthModal('register')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '10px 28px', borderRadius: 10,
               background: 'var(--color-primary)',
               color: 'white', fontWeight: 700, fontSize: '0.9rem',
-              textDecoration: 'none',
+              textDecoration: 'none', border: 'none', cursor: 'pointer',
             }}
           >
             Create your account <ExternalLink size={14} />
-          </Link>
+          </button>
         </motion.div>
       </main>
     </div>

@@ -1,10 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Zap } from 'lucide-react';
 
 const PublicTopBar = ({ openAuthModal }) => {
-  const location = useLocation();
-  const isAuth = location.pathname === '/login' || location.pathname === '/register';
-
   return (
     <header
       style={{
@@ -45,45 +42,27 @@ const PublicTopBar = ({ openAuthModal }) => {
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isAuth ? (
-            <Link
-              to="/"
-              style={{
-                padding: '8px 14px', borderRadius: 'var(--radius-md)',
-                fontSize: '14px', fontWeight: '500',
-                color: 'var(--color-text-muted)', textDecoration: 'none',
-                transition: 'color 150ms ease',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-muted)'}
-            >
-              ← Back to home
-            </Link>
-          ) : (
-            <>
-              <button
-                onClick={() => openAuthModal('login')}
-                style={{
-                  padding: '8px 14px', borderRadius: 'var(--radius-md)',
-                  fontSize: '14px', fontWeight: '500',
-                  color: 'var(--color-text-muted)', textDecoration: 'none',
-                  transition: 'color 150ms ease',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-muted)'}
-              >
-                Log in
-              </button>
-              <button
-                onClick={() => openAuthModal('register')}
-                className="btn btn-primary"
-                style={{ padding: '8px 16px', fontSize: '14px' }}
-              >
-                Get started
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => openAuthModal('login')}
+            style={{
+              padding: '8px 14px', borderRadius: 'var(--radius-md)',
+              fontSize: '14px', fontWeight: '500',
+              color: 'var(--color-text-muted)', textDecoration: 'none',
+              transition: 'color 150ms ease',
+              background: 'none', border: 'none', cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-muted)'}
+          >
+            Log in
+          </button>
+          <button
+            onClick={() => openAuthModal('register')}
+            className="btn btn-primary"
+            style={{ padding: '8px 16px', fontSize: '14px' }}
+          >
+            Get started
+          </button>
         </nav>
       </div>
 

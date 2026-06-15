@@ -785,7 +785,7 @@ const AnalysisResult = () => {
       }
     } catch (err) {
       if (err.response?.status === 401) {
-        navigate('/login', { replace: true });
+        navigate('/', { replace: true });
         return;
       }
       setError('Could not load your analysis. Please try again.');
