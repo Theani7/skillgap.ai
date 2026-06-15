@@ -136,7 +136,7 @@ const SkillsTab = ({ matched, gaps, filter, setFilter }) => {
           <div className="analysis-skills-body">
             {visibleGaps.length === 0 ? (
               <p className="analysis-empty-text">
-                {filter ? 'No matches for that filter.' : 'All clear — no major gaps identified.'}
+                {filter ? 'No matches for that filter.' : 'All clear - no major gaps identified.'}
               </p>
             ) : (
               <div className="analysis-tags">
@@ -160,7 +160,7 @@ const NextStep = ({ analysis, gaps }) => {
   const firstRoadmap = Array.isArray(analysis.roadmap) ? analysis.roadmap[0] : null;
   const title = firstRoadmap?.title || (firstGap ? `Learn ${firstGap}` : 'Polish your resume');
   const body = firstRoadmap?.action_items?.[0] || (firstGap
-    ? `${firstGap} is the highest-impact skill to add right now — it shows up in the most roles you're targeting.`
+    ? `${firstGap} is the highest-impact skill to add right now - it shows up in the most roles you're targeting.`
     : 'Refine the wording of your bullets and quantify the impact of each project.');
 
   return (
@@ -260,7 +260,7 @@ const OverviewTab = ({ analysis, resumeInfo, targetRole, predictedField, matchSc
                 {matchScore >= 75
                   ? 'You already cover most of what this role asks for.'
                   : matchScore >= 50
-                  ? 'You are on the right track — a few targeted skills will close the gap.'
+                  ? 'You are on the right track - a few targeted skills will close the gap.'
                   : 'There are meaningful gaps. Follow the roadmap to build them up.'}
               </p>
             </div>
@@ -433,10 +433,12 @@ const FeedbackCard = ({ resumeInfo, onSent }) => {
   const [hover, setHover] = useState(0);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       const fd = new FormData(e.target);
       await api.post('/api/feedback', {
@@ -448,7 +450,7 @@ const FeedbackCard = ({ resumeInfo, onSent }) => {
       setSent(true);
       onSent?.();
     } catch (_err) {
-      // surface inline; keep simple
+      setError('Failed to submit feedback. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -458,8 +460,10 @@ const FeedbackCard = ({ resumeInfo, onSent }) => {
     <div className="analysis-feedback">
       {!sent ? (
         <>
-          <h3>How useful was this analysis?</h3>
-          <p>Your feedback helps us improve the AI for everyone.</p>
+          <div className="analysis-feedback-header">
+            <h3>How useful was this analysis?</h3>
+            <p>Your feedback helps us improve the AI for everyone.</p>
+          </div>
           <div className="analysis-stars">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -472,20 +476,38 @@ const FeedbackCard = ({ resumeInfo, onSent }) => {
                 className="analysis-star-btn"
               >
                 <Star
-                  size={26}
-                  fill={(hover || rating) >= star ? '#FBBF24' : 'transparent'}
-                  color={(hover || rating) >= star ? '#FBBF24' : 'rgba(255,255,255,0.3)'}
+                  size={28}
+                  fill={(hover || rating) >= star ? 'var(--color-primary)' : 'transparent'}
+                  color={(hover || rating) >= star ? 'var(--color-primary)' : 'var(--color-border)'}
                 />
               </button>
             ))}
           </div>
+          {rating > 0 && (
+            <div className="analysis-rating-label">
+              {rating === 1 && 'Not useful'}
+              {rating === 2 && 'Slightly useful'}
+              {rating === 3 && 'Moderately useful'}
+              {rating === 4 && 'Very useful'}
+              {rating === 5 && 'Extremely useful'}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="analysis-feedback-form">
+            {error && (
+              <div style={{
+                padding: '8px 12px', marginBottom: '12px',
+                background: 'var(--color-error-light)', color: 'var(--color-error)',
+                borderRadius: 'var(--radius-md)', fontSize: '13px', fontWeight: 'var(--font-semibold)',
+              }}>
+                {error}
+              </div>
+            )}
             <textarea
               name="comments"
               placeholder="Any suggestions to improve the analysis?"
               className="analysis-feedback-input"
             />
-            <button type="submit" disabled={loading} className="analysis-feedback-submit">
+            <button type="submit" disabled={loading || !rating} className="analysis-feedback-submit">
               {loading ? (
                 <><span className="analysis-spinner" /> Sending...</>
               ) : (
@@ -604,7 +626,7 @@ const ShareModal = ({ analysisId, targetRole, resumeName, onClose }) => {
   const socialLinks = shareUrl ? [
     { icon: Linkedin, label: 'LinkedIn', color: '#0A66C2', url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}` },
     { icon: Twitter, label: 'Twitter', color: '#1DA1F2', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}` },
-    { icon: Mail, label: 'Email', color: 'var(--color-text-secondary)', url: `mailto:?subject=${encodeURIComponent(`Career Analysis${targetRole ? ` — ${targetRole}` : ''}`)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}` },
+    { icon: Mail, label: 'Email', color: 'var(--color-text-secondary)', url: `mailto:?subject=${encodeURIComponent(`Career Analysis${targetRole ? ` - ${targetRole}` : ''}`)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}` },
   ] : [];
 
   return (
@@ -1027,7 +1049,6 @@ const AnalysisResult = () => {
               matchScore={matchScore}
               scoreBreakdown={scoreBreakdown}
               feedbackMsgs={feedbackMsgs}
-              matchedSkills={matchedSkills}
               missingSkills={missingSkills}
             />
           )}

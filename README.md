@@ -69,8 +69,6 @@ In today's competitive job market, candidates often struggle to:
 - **Mock Interview Copilot**: Auto-generated behavioral + technical questions
 - **Resume Rewrite Mode**: Rewrites experience bullets with stronger action/outcome framing
 - **Team Candidate Ranking**: Rank multiple candidates with unified scores
-- **Application Tracker**: Track company, role, status, follow-up, and notes
-- **Cover Letter Generator**: AI-generated role/company-specific letters
 - **JD Comparator**: Keyword coverage analysis against job descriptions
 - **Project Optimizer**: Portfolio project recommendations
 
@@ -323,7 +321,6 @@ Log in as admin to access:
 
 ### Short Term
 - [ ] LinkedIn profile integration
-- [ ] Automated cover letter generation
 - [ ] Email verification
 - [ ] Resume template marketplace
 

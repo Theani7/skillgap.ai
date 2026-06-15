@@ -1,4 +1,4 @@
-# Static market data — sourced from BLS, Levels.fyi, Glassdoor, PayScale, Robert Half (2025-2026)
+# Static market data - sourced from BLS, Levels.fyi, Glassdoor, PayScale, Robert Half (2025-2026)
 
 INDUSTRY_TRENDS = {
     "Data Science": {

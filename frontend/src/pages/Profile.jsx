@@ -99,7 +99,7 @@ const PrimaryButton = ({ children, onClick, type = 'button', disabled = false })
     style={{
       display: 'inline-flex', alignItems: 'center', gap: '6px',
       height: '36px', padding: '0 16px', borderRadius: 'var(--radius-md)',
-      background: disabled ? 'var(--color-border)' : 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+      background: disabled ? 'var(--color-border)' : 'var(--color-primary)',
       color: disabled ? 'var(--color-text-muted)' : 'white',
       fontWeight: 'var(--font-semibold)', fontSize: '13px',
       border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
@@ -336,7 +336,7 @@ const Profile = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: 0 }}>
               <div style={{
                 width: '72px', height: '72px', borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+                background: 'var(--color-primary)',
                 color: 'white', fontSize: '28px', fontWeight: 'var(--font-extrabold)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 6px 20px rgba(255, 107, 53, 0.3)',

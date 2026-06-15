@@ -79,7 +79,7 @@ const SharedReport = () => {
         >
           <div style={{
             width: 64, height: 64, borderRadius: 16,
-            background: 'linear-gradient(135deg, var(--color-error), #B91C1C)',
+            background: 'var(--color-error)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 24px',
           }}>
@@ -281,7 +281,7 @@ const SharedReport = () => {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '10px 28px', borderRadius: 10,
-              background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+              background: 'var(--color-primary)',
               color: 'white', fontWeight: 700, fontSize: '0.9rem',
               textDecoration: 'none',
             }}

@@ -30,7 +30,7 @@ const PublicTopBar = () => {
         >
           <div style={{
             width: '32px', height: '32px', borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+            background: 'var(--color-primary)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
           }}>

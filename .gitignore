@@ -44,3 +44,6 @@ claude.md
 GEMINI.md
 gemini.md
 docs/superpowers
+
+# LLM models
+api/llm/*.gguf

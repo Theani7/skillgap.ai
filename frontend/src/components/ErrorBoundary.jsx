@@ -50,7 +50,7 @@ class ErrorBoundary extends Component {
             fontSize: '14px', color: 'var(--color-text-muted)',
             lineHeight: 1.6, margin: '0 0 20px',
           }}>
-            We hit an unexpected error rendering this view. Your analysis is still safe — try again or start over.
+            We hit an unexpected error rendering this view. Your analysis is still safe - try again or start over.
           </p>
           {this.state.error?.message && (
             <p style={{

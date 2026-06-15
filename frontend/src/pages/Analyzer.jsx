@@ -7,12 +7,9 @@ import {
 } from 'lucide-react';
 
 const targetRoles = [
-  'Data Science', 'Web Development', 'Android Development', 'IOS Development',
-  'UI/UX Design', 'Quality Assurance', 'DevOps', 'Cloud Engineering',
-  'Data Engineering', 'Machine Learning', 'Cybersecurity', 'Product Management',
-  'Business Analysis', 'Frontend Development', 'Backend Development',
-  'Full Stack Development', 'Mobile Development', 'Cloud Architecture',
-  'Software Engineering', 'Technical Writing', 'IT Support', 'Network Administration',
+  'Software Engineering', 'Frontend Development', 'Backend Development',
+  'Data Science', 'DevOps', 'Mobile Development', 'Full Stack Development',
+  'Cybersecurity',
 ];
 
 const formatFileSize = (bytes) => {
@@ -24,7 +21,7 @@ const formatFileSize = (bytes) => {
 const Analyzer = () => {
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
-  const [targetRole, setTargetRole] = useState('Data Science');
+  const [targetRole, setTargetRole] = useState('Software Engineering');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
@@ -192,7 +189,7 @@ const Analyzer = () => {
                     transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
                     style={{
                       position: 'absolute', height: '100%', width: '40%',
-                      background: 'linear-gradient(90deg, var(--color-primary), var(--color-secondary))',
+                      background: 'var(--color-primary)',
                     }}
                   />
                 </motion.div>

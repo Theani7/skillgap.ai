@@ -18,6 +18,7 @@ from api.database import get_db_connection
 from api.exceptions import LLMServiceException, ResumeParseException
 from api.extractor import extract_text_from_docx, extract_text_from_pdf, parse_resume_with_gemini
 from api.job_hunt_services import parse_resume_fallback
+from api.local_llm import parse_resume_with_local_llm
 from api.market_data import get_market_trends_for_role
 
 logger = logging.getLogger("resume-analyzer")
@@ -62,7 +63,7 @@ def _detect_filetype(contents: bytes, filename: str) -> Optional[str]:
 async def analyze_resume(
     file: UploadFile = File(...),
     target_role: str = Form(None),
-    current_user: dict = Depends(get_current_optional_user)
+    current_user: dict = Depends(get_current_user)
 ):
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
@@ -159,28 +160,23 @@ async def analyze_resume(
         if not resume_text.strip():
             raise ResumeParseException("Could not extract any text from the uploaded file.")
 
-        # Step 2: Attempt Local Hybrid Parsing First (Fast, Free)
+        # Step 2: Local Hybrid Parsing (Fast, Free, Regex-based)
         local_data = parse_resume_fallback(resume_text, target_role, file_path=tmp_path)
 
-        # Step 3: Conditional LLM Parsing
-        # If local parser is highly confident (>= 70%), we skip Gemini.
-        # The local parser (v3) is structured enough - title/company/dates, degree/institution/year,
-        # tightened phone, real match score, ROLE_SYNONYMS-based target matching - that 70%
-        # is a safe threshold for skipping the slower, quota-limited Gemini call.
-        if local_data.get("confidence_score", 0) >= 70:
-            logger.info(
-                f"Using high-confidence local parse for {file.filename} "
-                f"(confidence={local_data.get('confidence_score')}%, "
-                f"skills={len(local_data.get('skills', []))}, "
-                f"experience={len(local_data.get('experience_blocks', []))}, "
-                f"education={len(local_data.get('education_blocks', []))})"
-            )
-            resume_data = local_data
-        else:
-            logger.info(f"Low confidence ({local_data.get('confidence_score')}%) in local parse. Invoking Gemini...")
-            try:
-                resume_data = parse_resume_with_gemini(tmp_path, target_role)
-                # Merge local fields if Gemini missed them
+        # Step 3: Local LLM Parsing (Qwen2 - Smart, Free, No API Quota)
+        # Always try local LLM for better quality parsing
+        logger.info(f"Attempting local LLM parse for {file.filename}")
+        try:
+            llm_data = parse_resume_with_local_llm(resume_text, target_role)
+            if llm_data and llm_data.get("skills"):
+                logger.info(
+                    f"Local LLM parse successful: "
+                    f"skills={len(llm_data.get('skills', []))}, "
+                    f"experience={len(llm_data.get('experience_blocks', []))}, "
+                    f"education={len(llm_data.get('education_blocks', []))}"
+                )
+                resume_data = llm_data
+                # Merge local fields if LLM missed them
                 if not resume_data.get('email') and local_data.get('email'):
                     resume_data['email'] = local_data['email']
                 if not resume_data.get('mobile_number') and local_data.get('mobile_number'):
@@ -188,10 +184,25 @@ async def analyze_resume(
                 if not resume_data.get('no_of_pages') or resume_data.get('no_of_pages') == 1:
                     if local_data.get('no_of_pages', 1) > 1:
                         resume_data['no_of_pages'] = local_data['no_of_pages']
-            except Exception as e:
-                logger.warning(f"Gemini parse failed, using local hybrid fallback: {e}")
+            else:
+                logger.warning("Local LLM returned empty or incomplete data, using regex fallback")
                 resume_data = local_data
-        
+        except Exception as e:
+            logger.warning(f"Local LLM parse failed, using regex fallback: {e}")
+            resume_data = local_data
+
+        # Step 4: Final fallback - try Gemini if local LLM failed
+        if not resume_data or not resume_data.get("skills"):
+            logger.info("Local parsers failed, attempting Gemini...")
+            try:
+                resume_data = parse_resume_with_gemini(tmp_path, target_role)
+                if not resume_data:
+                    logger.warning("Gemini returned empty response")
+                    resume_data = local_data
+            except Exception as e:
+                logger.warning(f"Gemini parse failed: {e}")
+                resume_data = local_data
+
         if not resume_data:
             raise LLMServiceException("AI service returned no data and local fallback failed.")
         

@@ -293,7 +293,7 @@ class ShareEndpointTests(unittest.TestCase):
         if latest.status_code != 200 or not latest.json().get("analysis"):
             return
 
-        analysis_id = latest.json()["analysis"]["id"]
+        analysis_id = latest.json()["id"]
 
         # Create share link
         share_resp = client.post("/api/reports/share", json={

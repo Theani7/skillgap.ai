@@ -4,7 +4,7 @@ import os
 
 router = APIRouter(prefix="/api/mock-interview", tags=["mock-interview"])
 
-QUESTIONS_FILE = os.path.join(os.path.dirname(__file__), "mock_questions.json")
+QUESTIONS_FILE = os.path.join(os.path.dirname(__file__), "data", "mock_questions.json")
 
 
 def _load_questions():

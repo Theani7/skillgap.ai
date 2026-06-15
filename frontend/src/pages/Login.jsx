@@ -54,7 +54,7 @@ const Login = () => {
     <AuthShell
       eyebrow="Sign in"
       title="Welcome back"
-      subtitle="Pick up where you left off — your analyses, applications, and roadmaps are waiting."
+      subtitle="Pick up where you left off - your analyses, applications, and roadmaps are waiting."
       footer={footer}
     >
       {error && (
