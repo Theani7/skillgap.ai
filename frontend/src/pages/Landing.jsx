@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -6,7 +6,6 @@ import {
   Shield, Sparkles, ChevronDown, FileText, Map, Brain,
   Lock, Clock, Rocket,
 } from 'lucide-react';
-import AuthModal from '../components/AuthModal';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -103,18 +102,8 @@ const faqs = [
   },
 ];
 
-const Landing = () => {
+const Landing = ({ openAuthModal }) => {
   const [openFaq, setOpenFaq] = useState(0);
-
-  const [authModal, setAuthModal] = useState({ isOpen: false, tab: 'login' });
-
-  const openAuthModal = useCallback((tab = 'login') => {
-    setAuthModal({ isOpen: true, tab });
-  }, []);
-
-  const closeAuthModal = useCallback(() => {
-    setAuthModal({ isOpen: false, tab: 'login' });
-  }, []);
 
   return (
     <div className="landing-root">
@@ -1058,12 +1047,6 @@ const Landing = () => {
           </div>
         </div>
       </footer>
-
-      <AuthModal
-        isOpen={authModal.isOpen}
-        onClose={closeAuthModal}
-        initialTab={authModal.tab}
-      />
     </div>
   );
 };
