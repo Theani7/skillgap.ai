@@ -54,80 +54,128 @@ def _make_pdf_content(text="Simple resume text"):
 
 
 class AuthFlowTests(unittest.TestCase):
+    def setUp(self):
+        self.uid = int(time.time() * 1000000)
+        self.users = []
+
+    def tearDown(self):
+        for u in self.users:
+            try:
+                from api.database import get_db_connection
+                conn = get_db_connection()
+                conn.execute("DELETE FROM users WHERE username = ?", (u,))
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+
+    def _reg(self, username=None, email=None):
+        if username is None:
+            username = f"tuser_{self.uid}"
+        if email is None:
+            email = f"t_{self.uid}@test.com"
+        self.users.append(username)
+        return _register_user(username, email)
+
     def test_register_success(self):
-        resp = _register_user("flowuser", "flow@example.com")
+        resp = self._reg()
         self.assertEqual(resp.status_code, 200)
         self.assertIn("registered", resp.json()["message"])
 
     def test_register_duplicate_username(self):
-        _register_user("dupuser", "dup1@example.com")
-        resp = _register_user("dupuser", "dup2@example.com")
+        uname = f"dup_{self.uid}"
+        self.users.append(uname)
+        _register_user(uname, f"d1_{self.uid}@test.com")
+        resp = _register_user(uname, f"d2_{self.uid}@test.com")
         self.assertEqual(resp.status_code, 400)
 
     def test_register_duplicate_email(self):
-        _register_user("user_a", "same@example.com")
-        resp = _register_user("user_b", "same@example.com")
+        em = f"same_{self.uid}@test.com"
+        self._reg(email=em)
+        resp = self._reg(email=em)
         self.assertEqual(resp.status_code, 400)
 
     def test_login_success(self):
-        _register_user("loginuser", "login@example.com")
-        resp = _login_user("loginuser")
+        uname = f"login_{self.uid}"
+        self.users.append(uname)
+        _register_user(uname, f"l_{self.uid}@test.com")
+        resp = _login_user(uname)
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertIn("role", data)
         self.assertIn("username", data)
-        # Tokens should NOT be in response body (httpOnly cookies only)
         self.assertNotIn("access_token", data)
         self.assertNotIn("refresh_token", data)
 
     def test_login_wrong_password(self):
-        _register_user("wrongpw", "wrongpw@example.com")
-        resp = _login_user("wrongpw", password="WrongPassword1!")
+        uname = f"wpw_{self.uid}"
+        self.users.append(uname)
+        _register_user(uname, f"wp_{self.uid}@test.com")
+        resp = _login_user(uname, password="WrongPassword1!")
         self.assertEqual(resp.status_code, 401)
 
     def test_login_nonexistent_user(self):
-        resp = _login_user("ghostuser")
+        resp = _login_user(f"ghost_{self.uid}")
         self.assertEqual(resp.status_code, 401)
 
     def test_me_endpoint(self):
-        _register_user("meuser", "me@example.com")
-        login_resp = _login_user("meuser")
-        # Get user info via /me using cookie auth
+        uname = f"me_{self.uid}"
+        self.users.append(uname)
+        _register_user(uname, f"me_{self.uid}@test.com")
+        _login_user(uname)
         resp = client.get("/api/auth/me")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json()["username"], "meuser")
+        self.assertEqual(resp.json()["username"], uname)
 
     def test_me_unauthenticated(self):
         resp = client.get("/api/auth/me")
-        # Returns 200 with null user or 401 depending on implementation
         self.assertIn(resp.status_code, [200, 401])
 
     def test_logout_clears_cookies(self):
-        _register_user("logoutuser", "logout@example.com")
-        _login_user("logoutuser")
+        uname = f"logout_{self.uid}"
+        self.users.append(uname)
+        _register_user(uname, f"lo_{self.uid}@test.com")
+        _login_user(uname)
         resp = client.post("/api/auth/logout")
         self.assertEqual(resp.status_code, 200)
-        # After logout, /me should return 401
         resp = client.get("/api/auth/me")
         self.assertEqual(resp.status_code, 401)
 
     def test_check_username_available(self):
-        resp = client.get("/api/auth/check-username/uniqueuser123")
+        resp = client.get(f"/api/auth/check-username/avail_{self.uid}")
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.json()["available"])
 
     def test_check_username_taken(self):
-        _register_user("takenuser", "taken@example.com")
-        resp = client.get("/api/auth/check-username/takenuser")
+        uname = f"taken_{self.uid}"
+        self.users.append(uname)
+        _register_user(uname, f"tk_{self.uid}@test.com")
+        resp = client.get(f"/api/auth/check-username/{uname}")
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(resp.json()["available"])
 
 
 class AnalysisEndpointTests(unittest.TestCase):
+    def setUp(self):
+        self.uid = int(time.time() * 1000000)
+        self.users = []
+
+    def tearDown(self):
+        for u in self.users:
+            try:
+                from api.database import get_db_connection
+                conn = get_db_connection()
+                conn.execute("DELETE FROM users WHERE username = ?", (u,))
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+
     def _get_auth(self):
-        _register_user("analysisuser", "analysis@example.com")
-        _login_user("analysisuser")
-        # Extract access token from cookie
+        uname = f"analysis_{self.uid}"
+        self.users.append(uname)
+        _register_user(uname, f"an_{self.uid}@test.com")
+        _login_user(uname)
         for cookie in client.cookies.jar:
             if cookie.name == "access_token":
                 return cookie.value
@@ -201,9 +249,26 @@ class AnalysisEndpointTests(unittest.TestCase):
 
 
 class ShareEndpointTests(unittest.TestCase):
+    def setUp(self):
+        self.uid = int(time.time() * 1000000)
+        self.users = []
+
+    def tearDown(self):
+        for u in self.users:
+            try:
+                from api.database import get_db_connection
+                conn = get_db_connection()
+                conn.execute("DELETE FROM users WHERE username = ?", (u,))
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+
     def _get_auth(self):
-        _register_user("shareuser", "share@example.com")
-        _login_user("shareuser")
+        uname = f"share_{self.uid}"
+        self.users.append(uname)
+        _register_user(uname, f"sh_{self.uid}@test.com")
+        _login_user(uname)
         for cookie in client.cookies.jar:
             if cookie.name == "access_token":
                 return cookie.value
