@@ -189,7 +189,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
     usernameStatus === 'available' &&
     password.length >= 8 &&
     passwordsMatch &&
-    firstName && lastName && email &&
+    firstName && email &&
     !regLoading;
 
   if (!isOpen) return null;
@@ -319,14 +319,13 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
                 </div>
 
                 <div className="auth-field">
-                  <label className="auth-field-label" htmlFor="modal-reg-last">Last name</label>
+                  <label className="auth-field-label" htmlFor="modal-reg-last">Last name <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(optional)</span></label>
                   <div className="auth-input-wrap">
                     <input
                       id="modal-reg-last"
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      required
                       autoComplete="family-name"
                       placeholder="Last"
                       className="auth-input has-icon"
@@ -514,13 +513,6 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
                   </>
                 )}
               </button>
-
-              <p className="auth-terms">
-                By creating an account you agree to our{' '}
-                <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Terms of Service</a>
-                {' '}and{' '}
-                <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Privacy Policy</a>.
-              </p>
 
               <div className="auth-modal-footer">
                 Already have an account?{' '}

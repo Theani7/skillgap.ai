@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   CheckCircle, Zap, Upload, Target, BookOpen,
-  Shield, Sparkles, ChevronDown, FileText, Map, Brain,
+  Shield, Sparkles, FileText, Map, Brain,
   Lock, Clock, Rocket,
 } from 'lucide-react';
 
@@ -79,32 +79,7 @@ const steps = [
   { num: '04', icon: CheckCircle, title: 'Measure progress', body: 'Upload again later and compare your new score, gaps, and recommendations.' },
 ];
 
-const faqs = [
-  {
-    q: 'How much does this cost?',
-    a: 'It is free to use. Create an account, run as many resume analyses as you want, and keep your progress history tied to your profile. There is no subscription, no trial, and no paywall on the core toolkit.',
-  },
-  {
-    q: 'Is my resume kept private?',
-    a: 'Yes. Your resume is stored in your account only. The only external system it touches is the AI model that parses and analyzes it - and you can delete your account and all associated data at any time from Settings.',
-  },
-  {
-    q: 'Which roles does the analyzer support?',
-    a: 'Anything you can describe. The analyzer works against a built-in catalog of common roles, but you can also type a custom role like "Staff iOS engineer at a fintech" and it will benchmark against that.',
-  },
-  {
-    q: 'What AI model powers the analysis?',
-    a: 'Google Gemini, behind the scenes. We use it for resume parsing, skill extraction, and the learning roadmap. The same engine also runs a local fallback for high-confidence parses, so results are fast even on a slow connection.',
-  },
-  {
-    q: 'Do I need a credit card to sign up?',
-    a: 'No. The account is free, end of story. There is nothing to upgrade to and nothing to cancel.',
-  },
-];
-
 const Landing = ({ openAuthModal }) => {
-  const [openFaq, setOpenFaq] = useState(0);
-
   return (
     <div className="landing-root">
       <style>{`
@@ -476,10 +451,6 @@ const Landing = ({ openAuthModal }) => {
         <div className="container" style={{ position: 'relative' }}>
           <div className="mc-hero-grid">
             <motion.div initial="hidden" animate="visible" variants={stagger}>
-              <motion.div variants={fadeUp} style={{ marginBottom: '20px' }}>
-                <span className="mc-status mc-status-active">Mission Control Online</span>
-              </motion.div>
-              
               <motion.h1
                 variants={fadeUp}
                 style={{
@@ -897,53 +868,6 @@ const Landing = ({ openAuthModal }) => {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="section" style={{ background: 'var(--navy-50)' }}>
-        <div className="container" style={{ maxWidth: '720px' }}>
-          <motion.div
-            initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
-            style={{ textAlign: 'center', marginBottom: '48px' }}
-          >
-            <motion.div variants={fadeUp} style={{ marginBottom: '16px' }}>
-              <span className="mc-status mc-status-active">Intel Center</span>
-            </motion.div>
-            <motion.h2 variants={fadeUp} style={{
-              fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 700,
-              letterSpacing: '-0.03em', color: 'var(--color-text)', marginBottom: '12px',
-            }}>
-              Mission Briefing
-            </motion.h2>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={VIEW}
-            className="mc-faq"
-          >
-            {faqs.map((faq, i) => (
-              <div key={i} className="mc-faq-item">
-                <button
-                  className="mc-faq-trigger"
-                  onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
-                >
-                  <span>{faq.q}</span>
-                  <motion.div
-                    animate={{ rotate: openFaq === i ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronDown size={18} color="var(--color-text-muted)" />
-                  </motion.div>
-                </button>
-                <div className="mc-faq-content" style={{ maxHeight: openFaq === i ? '200px' : '0' }}>
-                  <div className="mc-faq-content-inner">{faq.a}</div>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="section">
         <div className="container">
@@ -1006,7 +930,7 @@ const Landing = ({ openAuthModal }) => {
                   <Zap size={16} color="var(--color-secondary)" />
                 </div>
                 <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.02em', fontFamily: 'var(--font-display)' }}>
-                  SkillGap<span style={{ color: 'var(--color-secondary)' }}>.ai</span>
+                  Skill<span className="mc-gradient">Gap.ai</span>
                 </span>
               </Link>
               <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: 0, maxWidth: '260px' }}>
