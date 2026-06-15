@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Zap } from 'lucide-react';
 
 const PublicTopBar = ({ openAuthModal }) => {
   return (
@@ -21,23 +20,15 @@ const PublicTopBar = ({ openAuthModal }) => {
         <Link
           to="/"
           style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            textDecoration: 'none', color: 'var(--color-text)',
+            textDecoration: 'none',
           }}
         >
-          <div style={{
-            width: '32px', height: '32px', borderRadius: 'var(--radius-md)',
-            background: 'var(--color-primary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
-          }}>
-            <Zap size={16} color="white" />
-          </div>
           <span style={{
-            fontWeight: 'var(--font-extrabold)', fontSize: '16px',
+            fontWeight: 'var(--font-extrabold)', fontSize: '20px',
             letterSpacing: 'var(--tracking-tight)',
+            color: 'var(--color-text)',
           }}>
-            SkillGap<span style={{ color: 'var(--color-primary)' }}>.ai</span>
+            Skill<span className="mc-gradient">Gap.ai</span>
           </span>
         </Link>
 
