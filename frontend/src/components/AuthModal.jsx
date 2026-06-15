@@ -218,7 +218,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
           </div>
 
           {activeTab === 'login' ? (
-            <form onSubmit={handleLoginSubmit} className="auth-modal-form">
+            <form onSubmit={handleLoginSubmit} className="auth-modal-form" noValidate>
               {loginError && (
                 <div className="auth-modal-error" role="alert">
                   <span className="auth-modal-error-icon" aria-hidden="true">!</span>
@@ -516,7 +516,10 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
               </button>
 
               <p className="auth-terms">
-                By creating an account you agree to our Terms of Service and Privacy Policy.
+                By creating an account you agree to our{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Terms of Service</a>
+                {' '}and{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Privacy Policy</a>.
               </p>
 
               <div className="auth-modal-footer">
