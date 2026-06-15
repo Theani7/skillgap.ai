@@ -44,6 +44,11 @@ claude.md
 GEMINI.md
 gemini.md
 docs/superpowers
+.agents/
+.claude/
+.mavis/
+.opencode/skills/
+.github/workflows/
 
 # LLM models
 api/llm/*.gguf
