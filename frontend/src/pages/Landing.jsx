@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -6,6 +6,7 @@ import {
   Shield, Sparkles, ChevronDown, FileText, Map, Brain,
   Lock, Clock, Rocket,
 } from 'lucide-react';
+import AuthModal from '../components/AuthModal';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -104,6 +105,16 @@ const faqs = [
 
 const Landing = () => {
   const [openFaq, setOpenFaq] = useState(0);
+
+  const [authModal, setAuthModal] = useState({ isOpen: false, tab: 'login' });
+
+  const openAuthModal = useCallback((tab = 'login') => {
+    setAuthModal({ isOpen: true, tab });
+  }, []);
+
+  const closeAuthModal = useCallback(() => {
+    setAuthModal({ isOpen: false, tab: 'login' });
+  }, []);
 
   return (
     <div className="landing-root">
@@ -515,13 +526,13 @@ const Landing = () => {
                 variants={fadeUp}
                 style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}
               >
-                <Link to="/register" className="mc-btn">
+                <button onClick={() => openAuthModal('register')} className="mc-btn">
                   <Rocket size={18} />
                   Launch Your Analysis
-                </Link>
-                <Link to="/login" className="mc-btn mc-btn-secondary">
+                </button>
+                <button onClick={() => openAuthModal('login')} className="mc-btn mc-btn-secondary">
                   Sign In
-                </Link>
+                </button>
               </motion.div>
 
               <motion.div
@@ -972,10 +983,10 @@ const Landing = () => {
               }}>
                 Join thousands of job seekers who know exactly what they need to learn next.
               </p>
-              <Link to="/register" className="mc-btn" style={{ fontSize: '16px', padding: '18px 36px' }}>
+              <button onClick={() => openAuthModal('register')} className="mc-btn" style={{ fontSize: '16px', padding: '18px 36px' }}>
                 <Rocket size={20} />
                 Start Your Mission
-              </Link>
+              </button>
             </div>
           </motion.div>
         </div>
@@ -1026,8 +1037,8 @@ const Landing = () => {
             <div>
               <h4 style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px', fontFamily: 'var(--font-display)' }}>Account</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <li><Link to="/login" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>Sign in</Link></li>
-                <li><Link to="/register" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>Create account</Link></li>
+                <li><button onClick={() => openAuthModal('login')} style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 0, font: 'inherit' }}>Sign in</button></li>
+                <li><button onClick={() => openAuthModal('register')} style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 0, font: 'inherit' }}>Create account</button></li>
               </ul>
             </div>
           </div>
@@ -1047,6 +1058,12 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+
+      <AuthModal
+        isOpen={authModal.isOpen}
+        onClose={closeAuthModal}
+        initialTab={authModal.tab}
+      />
     </div>
   );
 };
