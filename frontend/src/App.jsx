@@ -1,7 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import PublicTopBar from './components/Navbar';
+import AuthModal from './components/AuthModal';
 import Sidebar from './components/Sidebar';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -27,6 +28,16 @@ const Layout = () => {
   const { user, loading } = useAuth();
   const isPublic = PUBLIC_PATHS.includes(location.pathname) || location.pathname.startsWith('/shared/');
 
+  const [authModal, setAuthModal] = useState({ isOpen: false, tab: 'login' });
+
+  const openAuthModal = useCallback((tab = 'login') => {
+    setAuthModal({ isOpen: true, tab });
+  }, []);
+
+  const closeAuthModal = useCallback(() => {
+    setAuthModal({ isOpen: false, tab: 'login' });
+  }, []);
+
   if (loading && !isPublic) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
@@ -38,17 +49,22 @@ const Layout = () => {
   if (isPublic) {
     return (
       <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <PublicTopBar />
+        <PublicTopBar openAuthModal={openAuthModal} />
         <main style={{ flex: 1, width: '100%' }}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={withBoundary(<Landing />)} />
+              <Route path="/" element={withBoundary(<Landing openAuthModal={openAuthModal} />)} />
               <Route path="/login" element={withBoundary(<Login />)} />
               <Route path="/register" element={withBoundary(<Register />)} />
               <Route path="/shared/:token" element={withBoundary(<SharedReport />)} />
             </Routes>
           </Suspense>
         </main>
+        <AuthModal
+          isOpen={authModal.isOpen}
+          onClose={closeAuthModal}
+          initialTab={authModal.tab}
+        />
       </div>
     );
   }
