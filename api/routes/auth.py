@@ -1,8 +1,9 @@
 import json
 import logging
 import os
+import secrets
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -337,3 +338,76 @@ def refresh_access_token(request: Request, payload: RefreshTokenRequest, respons
         )
 
     return {"token_type": "bearer", "role": user_role}
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str = Field(..., max_length=200)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
+RESET_COOLDOWN_SECONDS = 5 * 60
+
+
+@router.post("/request-password-reset")
+def request_password_reset(payload: PasswordResetRequest, request: Request):
+    _check_strict_rate_limit(f"pwd-reset:{_client_ip(request)}")
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE email = ?", (payload.email,))
+        user = cursor.fetchone()
+        if user:
+            cooldown_cutoff = int(time.time()) - RESET_COOLDOWN_SECONDS
+            cursor.execute(
+                "SELECT created_at FROM password_reset_tokens WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+                (user["id"],),
+            )
+            last = cursor.fetchone()
+            if last:
+                try:
+                    last_ts = int(datetime.fromisoformat(str(last["created_at"]).replace(" ", "T")).timestamp())
+                except (ValueError, TypeError):
+                    last_ts = 0
+                if last_ts and last_ts > cooldown_cutoff:
+                    return {"status": "success", "message": "If the email exists, a reset flow has been created."}
+            token = secrets.token_urlsafe(32)
+            expires_at = int(time.time()) + (60 * 30)
+            cursor.execute(
+                "INSERT OR REPLACE INTO password_reset_tokens(token, user_id, expires_at, used) VALUES (?, ?, ?, 0)",
+                (token, user["id"], expires_at),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+    return {"status": "success", "message": "If the email exists, a reset flow has been created."}
+
+
+@router.post("/reset-password")
+def reset_password(payload: PasswordResetConfirm):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT token, user_id, expires_at, used FROM password_reset_tokens WHERE token = ?",
+            (payload.token,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=400, detail="Invalid token")
+        if int(row["used"]) == 1 or int(row["expires_at"]) < int(time.time()):
+            raise HTTPException(status_code=400, detail="Token expired or already used")
+
+        cursor.execute(
+            "UPDATE users SET hashed_password = ? WHERE id = ?",
+            (get_password_hash(payload.new_password), row["user_id"]),
+        )
+        cursor.execute("UPDATE password_reset_tokens SET used = 1 WHERE token = ?", (payload.token,))
+        cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (row["user_id"],))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"status": "success", "message": "Password reset successful"}
