@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, User, Lock, Mail, UserPlus, LogIn, ArrowRight, Check, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { API_URL } from '../services/env';
@@ -90,7 +90,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  // Focus trap
+  // Body scroll lock
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -196,7 +196,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
 
   return (
     <div className="auth-modal-overlay" onClick={handleOverlayClick}>
-      <div className="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+      <div className="auth-modal" role="dialog" aria-modal="true" aria-label={activeTab === 'login' ? 'Sign in' : 'Create account'}>
         <button className="auth-modal-close" onClick={onClose} aria-label="Close">
           <X size={18} />
         </button>
