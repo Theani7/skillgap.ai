@@ -1,0 +1,17 @@
+{
+  "name": "skillgap-ai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "AI-powered career coaching platform",
+  "scripts": {
+    "setup": "bash setup.sh",
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd venvapp && source bin/activate && cd .. && uvicorn api.main:app --reload --port 8000",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "lint": "cd frontend && npm run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
