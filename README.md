@@ -97,7 +97,7 @@ In today's competitive job market, candidates often struggle to:
 | Technology | Purpose |
 |------------|---------|
 | React 19.x | UI Framework |
-| Vite 6.x | Build Tool & Dev Server |
+| Vite 7.x | Build Tool & Dev Server |
 | React Router DOM 7.x | Client-side Routing |
 | Recharts | Data Visualization |
 | Framer Motion | Animations |
@@ -107,67 +107,48 @@ In today's competitive job market, candidates often struggle to:
 ### Backend
 | Technology | Purpose |
 |------------|---------|
-| Python 3.13+ | Runtime |
+| Python 3.9+ | Runtime |
 | FastAPI 0.115.x | Web Framework |
 | Uvicorn | ASGI Server |
-| Raw sqlite3 | Database driver (WAL mode) |
-| pypdf | PDF Parsing |
-| python-docx | DOCX Parsing |
-| defusedxml | Safe XML parsing |
-| google-generativeai | Google Gemini AI |
+| SQLite | Database (WAL mode) |
+| llama-cpp-python | Local LLM (Qwen2-0.5B) |
+| google-generativeai | Google Gemini AI (optional) |
 | PyJWT | JWT Handling |
-| bcrypt (direct) | Password Hashing |
-| email-validator | Email validation |
+| bcrypt | Password Hashing |
 
-### Database
-- **SQLite** (`cv.db`) - Single-file relational database
+### Local AI Model
+- **Qwen2-0.5B-Instruct** (Q4_K_M quantized, 379MB)
+- Runs offline for resume parsing when Gemini API is unavailable
+- Stored in `api/llm/qwen2-0_5b-instruct-q4_k_m.gguf`
 
 ---
 
 ## Project Structure
 
 ```
-AI-Resume-Analyzer/
+skillgap.ai/
 ├── api/                        # Backend (FastAPI)
-│   ├── main.py                  # FastAPI app entry point
-│   ├── config.py                # Environment configuration
-│   ├── database.py              # SQLAlchemy setup
-│   ├── models.py                # Database models
-│   ├── schemas.py               # Pydantic request/response models
-│   ├── auth.py                  # JWT & password utilities
-│   ├── extractor.py             # Resume text extraction
-│   ├── career_services.py       # AI career coaching logic
-│   ├── job_hunt_services.py     # Job matching services
-│   ├── courses.py               # Course recommendations
-│   ├── trends.py               # Market trends
-│   ├── market_data.py           # Market data utilities
-│   └── scraper.py               # Web scraping
+│   ├── main.py                 # FastAPI app entry point
+│   ├── local_llm.py            # Local LLM (Qwen2) integration
+│   ├── extractor.py            # Resume text extraction
+│   ├── career_services.py      # AI career coaching logic
+│   ├── job_hunt_services.py    # Job matching services
+│   ├── auth.py                 # JWT & password utilities
+│   ├── database.py             # SQLAlchemy setup
+│   └── llm/                    # Local model storage
+│       └── qwen2-0_5b-instruct-q4_k_m.gguf
 │
-├── frontend/                    # Frontend (React)
-│   ├── index.html              # Vite entry HTML
-│   ├── package.json            # Dependencies
-│   ├── vite.config.js          # Vite configuration
-│   ├── public/                 # Static assets
-│   └── src/
-│       ├── main.jsx            # App entry point
-│       ├── App.jsx            # Root component
-│       ├── index.css           # Design system
-│       ├── context/
-│       │   └── AuthContext.jsx # Auth state
-│       └── pages/
-│           ├── Landing.jsx     # Marketing page
-│           ├── Login.jsx       # Login page
-│           ├── Register.jsx    # Registration page
-│           ├── Analyzer.jsx    # Resume analysis
-│           ├── Profile.jsx      # User dashboard
-│           └── Admin.jsx        # Admin panel
+├── frontend/                   # Frontend (React)
+│   ├── src/
+│   │   ├── pages/              # Route components
+│   │   ├── components/         # Reusable UI
+│   │   └── context/            # Auth state
+│   └── package.json
 │
-├── venvapp/                    # Python virtual environment
-├── .env                       # Environment variables
-├── cv.db                      # SQLite database
-├── README.md                  # This file
-├── SYNOPSIS.md               # Project summary
-└── SYSTEM_ARCHITECTURE.md    # Technical architecture
+├── setup.sh                    # One-time setup script
+├── package.json                # Root scripts (setup, dev)
+├── .env                        # Environment variables
+└── venvapp/                    # Python virtual environment
 ```
 
 ---
@@ -176,70 +157,59 @@ AI-Resume-Analyzer/
 
 ### Prerequisites
 
-- **Node.js** v22 (see `.node-version`)
-- **Python** v3.11 (see `.python-version`)
-- **Google Gemini API Key** (Available free at [Google AI Studio](https://aistudio.google.com/))
+- **Node.js** v18+ (v22 recommended)
+- **Python** v3.9+
+- **Google Gemini API Key** (Optional - app works without it using local Qwen2-0.5B model)
 
-> **Tip:** Use [nvm](https://github.com/nvm-sh nvm) and [pyenv](https://github.com/pyenv/pyenv) to match the exact versions.
+### Quick Start (Recommended)
 
-### Option A: Docker (recommended)
+```bash
+# Clone the repo
+git clone https://github.com/Theani7/skillgap.ai.git
+cd skillgap.ai
 
-One command gets everything running:
+# Setup everything (venv, Python deps, Node deps, .env)
+npm run setup
+
+# Start both backend and frontend
+npm run dev
+```
+
+That's it! The app runs at:
+- **Frontend**: http://localhost:5173
+- **Backend**: http://localhost:8000
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run setup` | One-time setup: creates venv, installs all dependencies |
+| `npm run dev` | Starts backend + frontend in parallel |
+| `npm run dev:backend` | Starts only the backend server |
+| `npm run dev:frontend` | Starts only the frontend dev server |
+| `npm run build` | Build frontend for production |
+
+### Option B: Docker
 
 ```bash
 docker compose up --build
 ```
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:8000`
+### Option C: Manual Setup
 
-To stop and remove volumes:
+<details>
+<summary>Manual setup instructions</summary>
 
-```bash
-docker compose down -v
-```
-
-### Option B: Manual Setup
-
-#### Step 1: Clone and Configure
+#### Backend
 
 ```bash
-cd skillgap.ai
-cp .env.example .env   # or create .env manually
-```
-
-Create a `.env` file in the root directory:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-JWT_SECRET_KEY=at-least-32-random-characters-please
-DB_FILE=api/cv.db
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-ENV=development
-```
-
-`JWT_SECRET_KEY` is required in production. In development a per-process random key is used (sessions reset on restart).
-
-#### Step 2: Set Up Backend
-
-```bash
-# Create and activate virtual environment
 python3 -m venv venvapp
-source venvapp/bin/activate  # macOS/Linux
-# venvapp\Scripts\activate  # Windows
-
-# Install dependencies
+source venvapp/bin/activate
 pip install -r api/requirements.txt
-
-# Start backend server
 uvicorn api.main:app --reload --port 8000
 ```
 
-The backend runs at `http://localhost:8000`
-
-#### Step 3: Set Up Frontend
-
-Open a new terminal:
+#### Frontend
 
 ```bash
 cd frontend
@@ -247,7 +217,7 @@ npm install
 npm run dev
 ```
 
-The frontend runs at `http://localhost:5173`
+</details>
 
 ---
 
@@ -289,7 +259,7 @@ Open `http://localhost:5173` in your browser.
 
 ### 3. Demo Accounts
 
-The app does **not** auto-seed an admin account. To create a demo `admin`/`admin123` account, set `SEED_DEMO=1` in `.env` before the first request. To create your own admin, register a user and run:
+Set `SEED_DEMO=1` in `.env` before first run to create an `admin`/`admin123` account. Or create your own admin:
 
 ```sql
 UPDATE users SET role = 'admin' WHERE username = 'yourname';
@@ -341,8 +311,8 @@ MIT License
 
 ## Credits
 
-Built with FastAPI, React, Google Gemini, and a passion for helping people advance their careers.
+Built with FastAPI, React, Qwen2-0.5B, and Google Gemini.
 
-**Version**: 2.0 (Claymorphism Design System)
+**Version**: 3.0 (Local AI + Simplified Setup)
 
-For questions or support, please refer to the issue tracker.# skillgap.ai
+For questions or support, please refer to the issue tracker.
