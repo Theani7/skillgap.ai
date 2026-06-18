@@ -1,5 +1,8 @@
 from typing import Any, Dict, List, Optional
+import os
 import re
+
+SKIP_LOCAL_LLM = os.getenv("SKIP_LOCAL_LLM", "false").lower() in ("1", "true", "yes")
 
 
 I18N = {
@@ -767,9 +770,11 @@ def generate_personalized_roadmap(
     if not prioritized:
         return _generate_mastery_roadmap(role, found_skills)
 
-    # Try LLM-powered action items first
-    from api.local_llm import generate_roadmap_with_llm
-    llm_actions = generate_roadmap_with_llm(role, found_skills, missing_skills)
+    # Try LLM-powered action items first (unless disabled)
+    llm_actions = {}
+    if not SKIP_LOCAL_LLM:
+        from api.local_llm import generate_roadmap_with_llm
+        llm_actions = generate_roadmap_with_llm(role, found_skills, missing_skills)
 
     # Fallback to template-based generation
 
