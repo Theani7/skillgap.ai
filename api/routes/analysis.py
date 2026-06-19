@@ -410,7 +410,11 @@ def get_public_job_roles():
     default_roles = [
         'Software Engineering', 'Frontend Development', 'Backend Development',
         'Data Science', 'DevOps', 'Mobile Development', 'Full Stack Development',
-        'Cybersecurity',
+        'Cybersecurity', 'Product Management', 'Business Analysis',
+        'Technical Writing', 'IT Support', 'Network Administration',
+        'Cloud Engineering', 'Data Engineering', 'Machine Learning',
+        'Cloud Architecture', 'Web Development', 'UI/UX Design',
+        'Android Development', 'iOS Development', 'Quality Assurance',
     ]
 
     conn = get_db_connection()

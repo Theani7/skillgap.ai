@@ -213,6 +213,7 @@ seed_video_resources()
 load_videos_cache()
 seed_role_configs()
 load_role_configs_cache()
+seed_courses()
 
 _validate_env()
 
