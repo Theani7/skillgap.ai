@@ -137,16 +137,16 @@ const Sidebar = () => {
       }}
     >
       <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: collapsed ? '20px 0' : '20px 20px',
         minHeight: '72px',
-        gap: '12px',
       }}>
         <Link
           to="/app"
           style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             textDecoration: 'none', overflow: 'hidden',
+            flex: 1,
           }}
         >
           {!collapsed ? (
@@ -163,35 +163,35 @@ const Sidebar = () => {
               background: 'var(--color-secondary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
-            }}>
+              cursor: 'pointer',
+            }} onClick={(e) => { e.preventDefault(); setCollapsed(false); }}>
               <Zap size={18} color="white" />
             </div>
           )}
         </Link>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          style={{
-            width: collapsed ? '36px' : '28px',
-            height: collapsed ? '36px' : '28px',
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            background: collapsed ? 'var(--color-bg)' : 'transparent',
-            color: 'var(--color-text-muted)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 150ms ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--color-bg)';
-            e.currentTarget.style.color = 'var(--color-text)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = collapsed ? 'var(--color-bg)' : 'transparent';
-            e.currentTarget.style.color = 'var(--color-text-muted)';
-          }}
-        >
-          <Menu size={collapsed ? 18 : 14} />
-        </button>
+        {!collapsed && (
+          <button
+            onClick={() => setCollapsed(true)}
+            style={{
+              width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
+              border: 'none', background: 'transparent',
+              color: 'var(--color-text-muted)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 150ms ease',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--color-bg)';
+              e.currentTarget.style.color = 'var(--color-text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--color-text-muted)';
+            }}
+          >
+            <Menu size={16} />
+          </button>
+        )}
       </div>
 
       <nav style={{
