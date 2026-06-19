@@ -620,27 +620,43 @@ const ResourcesTab = ({ tutorials }) => {
         </span>
       </div>
       <div className="analysis-resources-grid">
-        {tutorials.slice(0, 9).map((video, i) => (
-          <a
-            key={i}
-            href={video.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="analysis-resource-card"
-          >
-            <div className="analysis-resource-thumb">
-              <PlayCircle size={22} color="white" />
-            </div>
-            <div className="analysis-resource-meta">
-              <span className="analysis-resource-tag">{TUTORIAL_LABEL}</span>
-              <h4 className="analysis-resource-title">{video.title}</h4>
-              <div className="analysis-resource-foot">
-                Watch on YouTube
-                <ArrowRight size={12} />
+        {tutorials.slice(0, 9).map((video, i) => {
+          const platform = detectPlatform(video.url);
+          const style = PLATFORM_STYLES[platform];
+          return (
+            <a
+              key={i}
+              href={video.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="analysis-resource-card"
+            >
+              <div className="analysis-resource-thumb" style={{ background: style.gradient }}>
+                <PlayCircle size={22} color="white" />
+                <span style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  left: '10px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.9)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  {style.label}
+                </span>
               </div>
-            </div>
-          </a>
-        ))}
+              <div className="analysis-resource-meta">
+                <span className="analysis-resource-tag">{TUTORIAL_LABEL}</span>
+                <h4 className="analysis-resource-title">{video.title}</h4>
+                <div className="analysis-resource-foot">
+                  Watch on {style.label}
+                  <ArrowRight size={12} />
+                </div>
+              </div>
+            </a>
+          );
+        })}
       </div>
     </div>
   );
