@@ -7,6 +7,7 @@ import {
   Trash2, Share2, Search, Award, AlertTriangle, Lightbulb,
   Calendar, Layers, Trophy, Compass, Quote,
   Link2, Copy, Mail, Twitter, Linkedin, Clock, Lock, Globe, X,
+  GraduationCap,
 } from 'lucide-react';
 import api from '../services/api';
 import Roadmap from '../components/Roadmap';
@@ -28,6 +29,7 @@ const stagger = {
 const TABS = [
   { id: 'overview',  label: 'Overview',  icon: Layers },
   { id: 'skills',    label: 'Skills',    icon: Target },
+  { id: 'courses',   label: 'Courses',   icon: GraduationCap },
   { id: 'roadmap',   label: 'Roadmap',   icon: Compass },
   { id: 'market',    label: 'Market',    icon: TrendingUp },
   { id: 'resources', label: 'Resources', icon: BookOpen },
@@ -149,6 +151,77 @@ const SkillsTab = ({ matched, gaps, filter, setFilter }) => {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const CoursesTab = ({ courses, recommendedSkills, targetRole }) => {
+  if (!Array.isArray(courses) || courses.length === 0) {
+    return (
+      <div className="card analysis-empty">
+        <GraduationCap size={24} color="var(--color-text-light)" />
+        <h3>No courses available</h3>
+        <p>Course recommendations will appear here once your resume is analyzed.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card analysis-resources-card">
+      <div className="analysis-card-head">
+        <div className="analysis-card-icon" style={{ background: 'var(--indigo-50)', color: 'var(--color-primary)' }}>
+          <GraduationCap size={18} />
+        </div>
+        <div>
+          <h3>Recommended courses</h3>
+          <p className="analysis-card-sub">
+            {targetRole ? `Curated courses for ${targetRole}` : 'Curated courses to boost your skills'}
+          </p>
+        </div>
+        <span style={pill('var(--indigo-50)', 'var(--color-primary)')}>
+          {courses.length} course{courses.length === 1 ? '' : 's'}
+        </span>
+      </div>
+
+      {recommendedSkills && recommendedSkills.length > 0 && (
+        <div style={{ padding: '0 20px 16px', borderBottom: '1px solid var(--color-border)' }}>
+          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: '0 0 8px' }}>
+            <Lightbulb size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: '4px' }} />
+            Because you're targeting <strong>{targetRole}</strong>, focus on these skills:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {recommendedSkills.slice(0, 8).map((skill) => (
+              <span key={skill} style={pill('var(--emerald-50)', 'var(--color-success)')}>
+                <Check size={10} /> {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="analysis-resources-grid">
+        {courses.map((course, i) => (
+          <a
+            key={i}
+            href={course.url || course.course_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="analysis-resource-card"
+          >
+            <div className="analysis-resource-thumb" style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
+              <GraduationCap size={22} color="white" />
+            </div>
+            <div className="analysis-resource-meta">
+              <span className="analysis-resource-tag">Course</span>
+              <h4 className="analysis-resource-title">{course.name || course.course_name}</h4>
+              <div className="analysis-resource-foot">
+                View course
+                <ArrowRight size={12} />
+              </div>
+            </div>
+          </a>
+        ))}
       </div>
     </div>
   );
@@ -815,6 +888,8 @@ const AnalysisResult = () => {
   const roadmap = analysis?.roadmap;
   const trends = analysis?.trends;
   const scoreBreakdown = analysis?.score_breakdown;
+  const courses = Array.isArray(analysis?.recommended_courses) ? analysis.recommended_courses : [];
+  const recommendedSkills = Array.isArray(analysis?.recommended_skills) ? analysis.recommended_skills : [];
 
   const handleDelete = async () => {
     if (!data?.id) return;
@@ -1058,6 +1133,13 @@ const AnalysisResult = () => {
               gaps={missingSkills}
               filter={skillFilter}
               setFilter={setSkillFilter}
+            />
+          )}
+          {activeTab === 'courses' && (
+            <CoursesTab
+              courses={courses}
+              recommendedSkills={recommendedSkills}
+              targetRole={targetRole}
             />
           )}
           {activeTab === 'roadmap' && <RoadmapTab roadmap={roadmap} />}
