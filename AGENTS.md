@@ -42,10 +42,11 @@ Optional:
 MARKET_DATA_PROVIDER=theirstack
 THEIRSTACK_API_KEY=your_key
 RATE_LIMIT_PER_MINUTE=120
-SEED_DEMO=1   # only set in dev to seed a default admin account
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
 ```
 
-`JWT_SECRET_KEY` is **required** in production. In development, a per-process random key is used (sessions reset on restart). `SEED_DEMO=1` seeds an `admin / admin123` account on first boot; never set this in production.
+`JWT_SECRET_KEY` is **required** in production. In development, a per-process random key is used (sessions reset on restart). `ADMIN_USERNAME` + `ADMIN_PASSWORD` create an admin account on first boot if both are set. Never use weak credentials in production.
 
 ## Architecture
 
@@ -95,7 +96,7 @@ SQLite file: `api/cv.db`. Key tables:
 
 ## Demo Accounts
 
-The app does **not** auto-seed an admin account. To create demo credentials, set `SEED_DEMO=1` in `.env` before the first request — this creates `admin / admin123`. Do not enable this in production. To create your own admin, register a user and run:
+The app does **not** auto-seed an admin account. To create demo credentials, set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env` before the first request — this creates the admin account on boot. Do not use weak credentials in production. To create your own admin, register a user and run:
 
 ```sql
 UPDATE users SET role = 'admin' WHERE username = 'yourname';
