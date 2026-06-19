@@ -70,6 +70,7 @@ const Admin = () => {
   const [resumeTotal, setResumeTotal] = useState(0);
   const [feedbackPage, setFeedbackPage] = useState(0);
   const [feedbackTotal, setFeedbackTotal] = useState(0);
+  const [feedbackStats, setFeedbackStats] = useState(null);
   const [uploadsOverTime, setUploadsOverTime] = useState([]);
   const [skillGaps, setSkillGaps] = useState([]);
   const [roleDistribution, setRoleDistribution] = useState([]);
@@ -89,7 +90,7 @@ const Admin = () => {
   const fetchAdminData = useCallback(async (signal) => {
     setLoading(true);
     try {
-      const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes, uploadsRes, skillGapsRes, roleDistRes, jobRolesRes] = await Promise.all([
+      const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes, uploadsRes, skillGapsRes, roleDistRes, jobRolesRes, feedbackStatsRes] = await Promise.all([
         api.get(`/api/admin/users?limit=${PAGE_SIZE}&offset=${resumePage * PAGE_SIZE}`, { signal }),
         api.get(`/api/admin/feedback?limit=${PAGE_SIZE}&offset=${feedbackPage * PAGE_SIZE}`, { signal }),
         api.get('/api/admin/registered-users', { signal }),
@@ -100,6 +101,7 @@ const Admin = () => {
         api.get('/api/admin/analytics/skill-gaps', { signal }),
         api.get('/api/admin/analytics/role-distribution', { signal }),
         api.get('/api/admin/job-roles', { signal }),
+        api.get('/api/admin/feedback/stats', { signal }),
       ]);
       setResumes(usersRes.data.users || []);
       setResumeTotal(usersRes.data.total || 0);
@@ -113,6 +115,7 @@ const Admin = () => {
       setSkillGaps(skillGapsRes.data.data || []);
       setRoleDistribution(roleDistRes.data.data || []);
       setJobRoles(jobRolesRes.data.job_roles || []);
+      setFeedbackStats(feedbackStatsRes.data);
     } catch (_err) {
       if (_err?.name !== 'CanceledError' && _err?.code !== 'ERR_CANCELED') {
         console.error(_err);
@@ -503,11 +506,66 @@ const Admin = () => {
 
         {activeTab === 'feedback' && (
           <div>
+            {feedbackStats && feedbackStats.total > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+                <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Reviews</span>
+                  <span style={{ fontSize: '28px', fontWeight: 800, color: 'var(--color-text)', fontFamily: 'var(--font-display)' }}>{feedbackStats.total}</span>
+                </div>
+                <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px', borderLeft: '3px solid #10B981' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#10B981', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Positive</span>
+                  <span style={{ fontSize: '28px', fontWeight: 800, color: '#10B981', fontFamily: 'var(--font-display)' }}>{feedbackStats.positive}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>4-5 stars</span>
+                </div>
+                <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px', borderLeft: '3px solid #F59E0B' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Neutral</span>
+                  <span style={{ fontSize: '28px', fontWeight: 800, color: '#F59E0B', fontFamily: 'var(--font-display)' }}>{feedbackStats.neutral}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>3 stars</span>
+                </div>
+                <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px', borderLeft: '3px solid #EF4444' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#EF4444', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Negative</span>
+                  <span style={{ fontSize: '28px', fontWeight: 800, color: '#EF4444', fontFamily: 'var(--font-display)' }}>{feedbackStats.negative}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>1-2 stars</span>
+                </div>
+                <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px', borderLeft: '3px solid var(--color-primary)' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Positive Ratio</span>
+                  <span style={{ fontSize: '28px', fontWeight: 800, color: 'var(--color-primary)', fontFamily: 'var(--font-display)' }}>{feedbackStats.ratio === '∞' ? '∞' : `${feedbackStats.ratio}:1`}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>positive per negative</span>
+                </div>
+              </div>
+            )}
+
+            {feedbackStats && feedbackStats.total > 0 && (
+              <div className="card" style={{ padding: '20px', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text)', margin: '0 0 14px' }}>Rating Distribution</h3>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '100px' }}>
+                  {[5, 4, 3, 2, 1].map((score) => {
+                    const count = feedbackStats.by_score[score] || 0;
+                    const pct = feedbackStats.total > 0 ? (count / feedbackStats.total) * 100 : 0;
+                    const color = score >= 4 ? '#10B981' : score === 3 ? '#F59E0B' : '#EF4444';
+                    return (
+                      <div key={score} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-muted)' }}>{count}</span>
+                        <div style={{ width: '100%', background: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden', height: `${Math.max(pct, 4)}%`, transition: 'height 400ms ease' }}>
+                          <div style={{ width: '100%', height: '100%', background: color, borderRadius: '4px' }} />
+                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text)' }}>{'★'.repeat(score)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <DataTable
               columns={[
                 { label: 'Name', render: (f) => f.feed_name },
                 { label: 'Email', render: (f) => f.feed_email, mono: true },
-                { label: 'Rating', render: (f) => '★'.repeat(Number(f.feed_score) || 0) },
+                { label: 'Rating', render: (f) => {
+                  const score = Number(f.feed_score) || 0;
+                  const color = score >= 4 ? '#10B981' : score === 3 ? '#F59E0B' : '#EF4444';
+                  return <span style={{ color, fontWeight: 600 }}>{'★'.repeat(score)}<span style={{ opacity: 0.2 }}>{'★'.repeat(5 - score)}</span></span>;
+                }},
                 { label: 'Comments', render: (f) => truncate(f.comments, 80), nowrap: true },
                 { label: 'When', render: (f) => f.Timestamp },
               ]}
