@@ -117,8 +117,8 @@ async def analyze_resume(
                 resume_score_c = final_response_payload.get("resume_score", 0)
                 predicted_field_c = final_response_payload.get("predicted_field", "")
                 cursor.execute(
-                    """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data, content_hash)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         sec_token,
                         resume_data_c.get('name') or 'N/A',
@@ -138,7 +138,8 @@ async def analyze_resume(
                         t_role,
                         missing_skills_str_c,
                         u_id,
-                        json.dumps(final_response_payload)
+                        json.dumps(final_response_payload),
+                        content_hash
                     )
                 )
                 conn.commit()
@@ -345,8 +346,8 @@ async def analyze_resume(
         )
 
         cursor.execute(
-            """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data, content_hash)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 sec_token,
                 resume_data.get('name') or 'N/A',
@@ -366,7 +367,8 @@ async def analyze_resume(
                 t_role,
                 missing_skills_str,
                 u_id,
-                json.dumps(final_response_payload)
+                json.dumps(final_response_payload),
+                content_hash
             )
         )
         conn.commit()

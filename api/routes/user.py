@@ -179,23 +179,21 @@ def delete_user_analysis(analysis_id: int, current_user: dict = Depends(get_curr
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        # Get the analysis data to find cache key
+        # Get the analysis data and content_hash for cache cleanup
         cursor.execute(
-            "SELECT analysis_data FROM user_data WHERE ID = ? AND user_id = ?",
+            "SELECT content_hash, target_role FROM user_data WHERE ID = ? AND user_id = ?",
             (analysis_id, current_user['id']),
         )
         row = cursor.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Analysis not found")
 
-        # Delete from analysis_cache if analysis_data exists
-        if row['analysis_data']:
-            try:
-                import json
-                payload = json.loads(row['analysis_data'])
-                # We don't have content_hash in the payload, so just delete the user_data row
-            except (json.JSONDecodeError, TypeError):
-                pass
+        # Delete from analysis_cache if we have the content_hash
+        if row['content_hash'] and row['target_role']:
+            cursor.execute(
+                "DELETE FROM analysis_cache WHERE content_hash = ? AND target_role = ?",
+                (row['content_hash'], row['target_role']),
+            )
 
         # Delete from user_roadmap_progress for this analysis
         cursor.execute("DELETE FROM user_roadmap_progress WHERE user_id = ? AND analysis_id = ?",
