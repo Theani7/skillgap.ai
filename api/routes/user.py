@@ -202,7 +202,7 @@ def delete_user_analysis(analysis_id: int, current_user: dict = Depends(get_curr
                        (current_user['id'], analysis_id))
 
         # Delete from shared_reports for this analysis
-        cursor.execute("DELETE FROM shared_reports WHERE owner_user_id = ? AND analysis_id = ?",
+        cursor.execute("DELETE FROM shared_reports WHERE user_id = ? AND analysis_id = ?",
                        (current_user['id'], analysis_id))
 
         # Delete the analysis itself
