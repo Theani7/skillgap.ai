@@ -179,42 +179,40 @@ def compute_resume_score_breakdown(resume_data: Dict[str, Any], target_role: str
     else:
         feedback_msgs.append("No professional experience detected. Add internships, projects, or work history.")
 
-    # 4. Skills Analysis - role-aware scoring
+    # 4. Skills Analysis - role-aware scoring (uses admin-defined role skills)
     skills = resume_data.get("skills") or []
     if skills:
         skill_count = len(skills)
 
-        # If a target role is provided, score by RELEVANT skills (those matching the role's categories)
+        # If a target role is provided, score by RELEVANT skills (from job_role_skills)
         if target_role:
-            categories = _target_categories_for_role(target_role)
-            target_skills_set = set()
-            taxonomy = get_skills_taxonomy()
-            for cat in categories:
-                for s in taxonomy.get(cat, []):
-                    target_skills_set.add(s.lower())
-            relevant_count = sum(1 for s in skills if s.lower() in target_skills_set)
-            irrelevant_count = skill_count - relevant_count
+            from api.job_hunt_services import _get_role_skills_from_db
+            role_skills = _get_role_skills_from_db(target_role)
+            role_skills_lower = {s.lower() for s in role_skills}
+            relevant_count = sum(1 for s in skills if s.lower() in role_skills_lower)
 
-            if relevant_count >= 8:
+            if relevant_count >= 10:
                 breakdown["skills"]["score"] = 25
+            elif relevant_count >= 7:
+                breakdown["skills"]["score"] = 20
             elif relevant_count >= 5:
-                breakdown["skills"]["score"] = 18
+                breakdown["skills"]["score"] = 15
             elif relevant_count >= 3:
-                breakdown["skills"]["score"] = 12
+                breakdown["skills"]["score"] = 10
             elif relevant_count >= 1:
-                breakdown["skills"]["score"] = 6
+                breakdown["skills"]["score"] = 5
             else:
                 breakdown["skills"]["score"] = 0
-                feedback_msgs.append(
-                    f"None of your {skill_count} skills match the target role ({target_role}). "
-                    f"Add skills relevant to {target_role} such as: "
-                    f"{', '.join(list(target_skills_set)[:5])}."
-                )
 
-            if irrelevant_count > 0 and relevant_count > 0:
+            if relevant_count == 0:
                 feedback_msgs.append(
-                    f"{irrelevant_count} of your skills are not relevant to {target_role}. "
-                    "Consider moving them to a separate section or removing them to keep focus."
+                    f"None of your {skill_count} skills match {target_role}. "
+                    f"Add skills like: {', '.join(role_skills[:5])}."
+                )
+            elif relevant_count < len(role_skills) // 2:
+                feedback_msgs.append(
+                    f"You have {relevant_count} relevant skills for {target_role}. "
+                    f"Consider adding more from: {', '.join([s for s in role_skills if s.lower() not in {sk.lower() for sk in skills}][:3])}."
                 )
         else:
             # No target role - count-based scoring (original behavior)
