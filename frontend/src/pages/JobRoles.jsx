@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase, Plus, Trash2, X, CheckCircle, AlertTriangle,
   ChevronDown, ChevronRight, Edit3, Save, GripVertical,
+  FileText, Sparkles, Clipboard, Layers,
 } from 'lucide-react';
 import api from '../services/api';
 import PageLoader from '../components/Skeleton';
@@ -23,6 +24,12 @@ const JobRoles = () => {
   const [expandedRole, setExpandedRole] = useState(null);
   const [roadmaps, setRoadmaps] = useState({});
   const [showRoadmapForm, setShowRoadmapForm] = useState(null);
+  const [roadmapMode, setRoadmapMode] = useState('manual');
+  const [templates, setTemplates] = useState({});
+  const [showTemplates, setShowTemplates] = useState(null);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkTitle, setBulkTitle] = useState('');
+  const [generating, setGenerating] = useState(false);
   const toastTimerRef = useRef(null);
 
   const [form, setForm] = useState({
@@ -168,6 +175,60 @@ const JobRoles = () => {
     }
   };
 
+  const fetchTemplates = async () => {
+    try {
+      const res = await api.get('/api/admin/roadmap-templates');
+      setTemplates(res.data.templates || {});
+      setShowTemplates(expandedRole);
+    } catch {
+      showToast('error', 'Failed to load templates.');
+    }
+  };
+
+  const handleImportTemplate = async (roleId, template) => {
+    try {
+      await api.post(`/api/admin/job-roles/${roleId}/roadmaps`, template);
+      showToast('success', 'Template imported successfully.');
+      setShowTemplates(null);
+      await fetchRoadmaps(roleId);
+    } catch {
+      showToast('error', 'Failed to import template.');
+    }
+  };
+
+  const handleBulkImport = async (roleId) => {
+    if (!bulkText.trim()) { showToast('error', 'Please paste roadmap steps.'); return; }
+    try {
+      const res = await api.post(`/api/admin/job-roles/${roleId}/roadmaps/bulk`, {
+        title: bulkTitle || 'Imported Roadmap',
+        description: '',
+        duration_weeks: 12,
+        steps_text: bulkText,
+      });
+      showToast('success', `Imported ${res.data.steps_imported} steps.`);
+      setBulkText('');
+      setBulkTitle('');
+      setShowRoadmapForm(null);
+      await fetchRoadmaps(roleId);
+    } catch (err) {
+      showToast('error', err.response?.data?.detail || 'Failed to import steps.');
+    }
+  };
+
+  const handleAIGenerate = async (roleId) => {
+    setGenerating(true);
+    try {
+      const res = await api.post(`/api/admin/job-roles/${roleId}/roadmaps/ai-generate`);
+      showToast('success', 'AI roadmap generated.');
+      setShowRoadmapForm(null);
+      await fetchRoadmaps(roleId);
+    } catch (err) {
+      showToast('error', err.response?.data?.detail || 'AI generation failed.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   if (loading) return <PageLoader />;
 
   return (
@@ -265,7 +326,12 @@ const JobRoles = () => {
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                         <p style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-text)', margin: 0 }}>Career Roadmaps</p>
-                        <button onClick={() => setShowRoadmapForm(role.id)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px' }}><Plus size={12} /> Add Roadmap</button>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button onClick={() => { setShowRoadmapForm(role.id); setRoadmapMode('manual'); }} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px' }}><Plus size={12} /> Manual</button>
+                          <button onClick={() => { setShowRoadmapForm(role.id); setRoadmapMode('template'); fetchTemplates(); }} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px' }}><Layers size={12} /> Templates</button>
+                          <button onClick={() => { setShowRoadmapForm(role.id); setRoadmapMode('bulk'); }} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px' }}><Clipboard size={12} /> Bulk Import</button>
+                          <button onClick={() => handleAIGenerate(role.id)} disabled={generating} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: 'none', background: generating ? 'var(--color-text-light)' : 'var(--color-primary)', color: 'white', cursor: generating ? 'not-allowed' : 'pointer', fontSize: '12px' }}><Sparkles size={12} /> {generating ? 'Generating...' : 'AI Generate'}</button>
+                        </div>
                       </div>
                       {roadmaps[role.id]?.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -291,34 +357,82 @@ const JobRoles = () => {
                 {showRoadmapForm === role.id && (
                   <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} style={{ overflow: 'hidden', borderTop: '1px solid var(--color-border)' }}>
                     <div style={{ padding: '16px 20px', background: 'var(--color-bg)' }}>
-                      <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 12px' }}>New Roadmap</h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <input placeholder="Roadmap title" value={roadmapForm.title} onChange={(e) => setRoadmapForm({ ...roadmapForm, title: e.target.value })} style={fieldStyle(false)} />
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                          <textarea placeholder="Description (optional)" value={roadmapForm.description} onChange={(e) => setRoadmapForm({ ...roadmapForm, description: e.target.value })} style={{ ...fieldStyle(false), height: '60px', padding: '8px 12px', resize: 'vertical' }} />
-                          <input type="number" placeholder="Duration (weeks)" value={roadmapForm.duration_weeks} onChange={(e) => setRoadmapForm({ ...roadmapForm, duration_weeks: parseInt(e.target.value) || 12 })} style={fieldStyle(false)} />
-                        </div>
-                        <div style={{ padding: '12px', borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                          <p style={{ fontSize: '12px', fontWeight: '600', margin: '0 0 8px' }}>Steps ({roadmapForm.steps.length})</p>
-                          {roadmapForm.steps.map((step, idx) => (
-                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: idx < roadmapForm.steps.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
-                              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', minWidth: '20px' }}>#{idx + 1}</span>
-                              <span style={{ flex: 1, fontSize: '13px' }}>{step.title}</span>
-                              <button onClick={() => handleRemoveStep(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)', padding: 0 }}><X size={12} /></button>
+                      {roadmapMode === 'manual' && (
+                        <>
+                          <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 12px' }}>New Roadmap (Manual)</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <input placeholder="Roadmap title" value={roadmapForm.title} onChange={(e) => setRoadmapForm({ ...roadmapForm, title: e.target.value })} style={fieldStyle(false)} />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                              <textarea placeholder="Description (optional)" value={roadmapForm.description} onChange={(e) => setRoadmapForm({ ...roadmapForm, description: e.target.value })} style={{ ...fieldStyle(false), height: '60px', padding: '8px 12px', resize: 'vertical' }} />
+                              <input type="number" placeholder="Duration (weeks)" value={roadmapForm.duration_weeks} onChange={(e) => setRoadmapForm({ ...roadmapForm, duration_weeks: parseInt(e.target.value) || 12 })} style={fieldStyle(false)} />
                             </div>
-                          ))}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: '6px', marginTop: '8px' }}>
-                            <input placeholder="Step title" value={stepInput.title} onChange={(e) => setStepInput({ ...stepInput, title: e.target.value })} style={{ ...fieldStyle(false), height: '34px', fontSize: '12px' }} />
-                            <input type="number" placeholder="Weeks" value={stepInput.duration_weeks} onChange={(e) => setStepInput({ ...stepInput, duration_weeks: parseInt(e.target.value) || 2 })} style={{ ...fieldStyle(false), height: '34px', fontSize: '12px' }} />
+                            <div style={{ padding: '12px', borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                              <p style={{ fontSize: '12px', fontWeight: '600', margin: '0 0 8px' }}>Steps ({roadmapForm.steps.length})</p>
+                              {roadmapForm.steps.map((step, idx) => (
+                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: idx < roadmapForm.steps.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', minWidth: '20px' }}>#{idx + 1}</span>
+                                  <span style={{ flex: 1, fontSize: '13px' }}>{step.title}</span>
+                                  <button onClick={() => handleRemoveStep(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)', padding: 0 }}><X size={12} /></button>
+                                </div>
+                              ))}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: '6px', marginTop: '8px' }}>
+                                <input placeholder="Step title" value={stepInput.title} onChange={(e) => setStepInput({ ...stepInput, title: e.target.value })} style={{ ...fieldStyle(false), height: '34px', fontSize: '12px' }} />
+                                <input type="number" placeholder="Weeks" value={stepInput.duration_weeks} onChange={(e) => setStepInput({ ...stepInput, duration_weeks: parseInt(e.target.value) || 2 })} style={{ ...fieldStyle(false), height: '34px', fontSize: '12px' }} />
+                              </div>
+                              <input placeholder="Skills (comma-separated)" value={stepInput.skills} onChange={(e) => setStepInput({ ...stepInput, skills: e.target.value })} style={{ ...fieldStyle(false), height: '34px', fontSize: '12px', marginTop: '6px' }} />
+                              <button type="button" onClick={handleAddStep} style={{ marginTop: '6px', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px' }}>Add Step</button>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button onClick={() => setShowRoadmapForm(null)} style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+                              <button onClick={handleCreateRoadmap} style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', background: 'var(--color-primary)', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Create Roadmap</button>
+                            </div>
                           </div>
-                          <input placeholder="Skills (comma-separated)" value={stepInput.skills} onChange={(e) => setStepInput({ ...stepInput, skills: e.target.value })} style={{ ...fieldStyle(false), height: '34px', fontSize: '12px', marginTop: '6px' }} />
-                          <button type="button" onClick={handleAddStep} style={{ marginTop: '6px', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px' }}>Add Step</button>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          <button onClick={() => setShowRoadmapForm(null)} style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
-                          <button onClick={handleCreateRoadmap} style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', background: 'var(--color-primary)', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Create Roadmap</button>
-                        </div>
-                      </div>
+                        </>
+                      )}
+
+                      {roadmapMode === 'template' && (
+                        <>
+                          <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 12px' }}>Import from Template</h4>
+                          {templates[role.title] ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {templates[role.title].map((tpl, idx) => (
+                                <div key={idx} style={{ padding: '12px', borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <div>
+                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: '600' }}>{tpl.title}</p>
+                                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-muted)' }}>{tpl.description} · {tpl.duration_weeks} weeks · {tpl.steps.length} steps</p>
+                                  </div>
+                                  <button onClick={() => handleImportTemplate(role.id, tpl)} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: 'var(--color-primary)', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>Import</button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>No templates available for this role.</p>
+                          )}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                            <button onClick={() => setShowRoadmapForm(null)} style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+                          </div>
+                        </>
+                      )}
+
+                      {roadmapMode === 'bulk' && (
+                        <>
+                          <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 8px' }}>Bulk Import Roadmap</h4>
+                          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '0 0 12px' }}>
+                            Paste steps one per line. Format: <code>Title | Description | Weeks | Skills | Resources</code>
+                          </p>
+                          <input placeholder="Roadmap title" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)} style={{ ...fieldStyle(false), marginBottom: '8px' }} />
+                          <textarea
+                            placeholder={"Example:\nProgramming Fundamentals | Learn core concepts | 4 | Python,OOP | https://youtube.com/...\nVersion Control | Master Git | 2 | Git,GitHub | https://youtube.com/..."}
+                            value={bulkText}
+                            onChange={(e) => setBulkText(e.target.value)}
+                            style={{ ...fieldStyle(false), height: '150px', padding: '10px 12px', resize: 'vertical', fontFamily: 'monospace', fontSize: '12px' }}
+                          />
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                            <button onClick={() => setShowRoadmapForm(null)} style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+                            <button onClick={() => handleBulkImport(role.id)} style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', background: 'var(--color-primary)', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Import Steps</button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 )}
