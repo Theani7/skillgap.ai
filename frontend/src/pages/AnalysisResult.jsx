@@ -1050,7 +1050,7 @@ const AnalysisResult = () => {
   const matchScore = analysis?.match_score;
   const resumeScore = analysis?.resume_score ?? data?.resume_score ?? 0;
   const missingSkills = Array.isArray(analysis?.missing_skill_names) ? analysis.missing_skill_names : [];
-  const matchedSkills = Array.isArray(resumeInfo?.skills) ? resumeInfo.skills : [];
+  const matchedSkills = Array.isArray(analysis?.data?.matched_role_skills) ? analysis.data.matched_role_skills : (Array.isArray(resumeInfo?.skills) ? resumeInfo.skills : []);
   const feedbackMsgs = Array.isArray(analysis?.feedback) ? analysis.feedback : [];
   const tutorials = Array.isArray(analysis?.videos?.tutorials) ? analysis.videos.tutorials : [];
   const roadmap = analysis?.roadmap;
