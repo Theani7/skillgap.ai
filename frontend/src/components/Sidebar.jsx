@@ -37,7 +37,6 @@ const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === '1'; } catch { return false; }
   });
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const userMenuRef = useRef(null);
@@ -45,11 +44,6 @@ const Sidebar = () => {
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (_) { /* noop */ }
   }, [collapsed]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setMobileOpen(false), 0);
-    return () => clearTimeout(t);
-  }, [location.pathname]);
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -63,7 +57,6 @@ const Sidebar = () => {
   }, [userMenuOpen]);
 
   const isActive = (path) => location.pathname === path;
-  const width = collapsed ? 72 : 240;
 
   const renderLink = (link) => {
     const active = isActive(link.path);
@@ -129,27 +122,24 @@ const Sidebar = () => {
 
   const userSubtitle = user?.email || (user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '');
 
-  const sidebarContent = (isMobile) => (
+  return (
     <aside
-      onMouseEnter={!isMobile ? () => setCollapsed(false) : undefined}
-      onMouseLeave={!isMobile ? () => setCollapsed(true) : undefined}
       style={{
-        position: isMobile ? 'fixed' : 'sticky',
+        position: 'sticky',
         top: 0, left: 0,
         height: '100vh',
-        width: isMobile ? 280 : width,
+        width: collapsed ? 72 : 240,
         background: 'var(--color-surface)',
         borderRight: '1px solid var(--color-border)',
         display: 'flex', flexDirection: 'column',
-        zIndex: isMobile ? 60 : 30,
-        transition: isMobile ? 'none' : 'width 200ms ease',
-        boxShadow: isMobile ? '0 10px 40px rgba(15, 23, 42, 0.15)' : 'none',
+        zIndex: 30,
+        transition: 'width 200ms ease',
       }}
     >
       <div style={{
         display: 'flex', alignItems: 'center',
-        justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
-        padding: collapsed && !isMobile ? '20px 0' : '20px 20px',
+        justifyContent: collapsed ? 'center' : 'space-between',
+        padding: collapsed ? '20px 0' : '20px 20px',
         minHeight: '72px',
       }}>
         <Link
@@ -159,37 +149,69 @@ const Sidebar = () => {
             textDecoration: 'none', overflow: 'hidden',
           }}
         >
-          <div style={{
-            width: '32px', height: '32px', borderRadius: 'var(--radius-md)',
-            background: 'var(--color-primary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
-            flexShrink: 0,
-          }}>
-            <Zap size={16} color="white" />
-          </div>
-          {(!collapsed || isMobile) && (
+          {!collapsed && (
             <span style={{
-              fontWeight: 'var(--font-extrabold)', fontSize: '16px',
-              letterSpacing: 'var(--tracking-tight)', color: 'var(--color-text)',
-              whiteSpace: 'nowrap',
+              fontWeight: 'var(--font-extrabold)', fontSize: '20px',
+              letterSpacing: 'var(--tracking-tight)',
+              color: 'var(--color-text)',
             }}>
-              SkillGap<span style={{ color: 'var(--color-primary)' }}>.ai</span>
+              Skill<span className="mc-gradient">Gap.ai</span>
             </span>
           )}
+          {collapsed && (
+            <div style={{
+              width: '32px', height: '32px', borderRadius: 'var(--radius-md)',
+              background: 'var(--color-secondary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
+              flexShrink: 0,
+            }}>
+              <Zap size={16} color="white" />
+            </div>
+          )}
         </Link>
-        {isMobile && (
+        {!collapsed && (
           <button
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close menu"
+            onClick={() => setCollapsed(true)}
+            aria-label="Collapse sidebar"
             style={{
-              width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
+              width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--color-border)', background: 'transparent',
               color: 'var(--color-text-muted)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 150ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--color-bg)';
+              e.currentTarget.style.color = 'var(--color-text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--color-text-muted)';
             }}
           >
-            <X size={16} />
+            <Menu size={14} />
+          </button>
+        )}
+        {collapsed && (
+          <button
+            onClick={() => setCollapsed(false)}
+            aria-label="Expand sidebar"
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '-12px',
+              width: '24px', height: '24px', borderRadius: '50%',
+              border: '1px solid var(--color-border)', background: 'var(--color-surface)',
+              color: 'var(--color-text-muted)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: 'var(--shadow-sm)',
+              opacity: 0,
+              transition: 'opacity 150ms ease',
+            }}
+            className="sidebar-expand-btn"
+          >
+            <Menu size={12} />
           </button>
         )}
       </div>
@@ -201,7 +223,7 @@ const Sidebar = () => {
       }}>
         {sectionsToRender.map((section) => (
           <div key={section.label}>
-            {(!collapsed || isMobile) && (
+            {!collapsed && (
               <h3 style={{
                 fontSize: '11px', fontWeight: 'var(--font-bold)',
                 textTransform: 'uppercase', letterSpacing: '0.08em',
@@ -217,7 +239,7 @@ const Sidebar = () => {
         ))}
 
         <div>
-          {(!collapsed || isMobile) && (
+          {!collapsed && (
             <h3 style={{
               fontSize: '11px', fontWeight: 'var(--font-bold)',
               textTransform: 'uppercase', letterSpacing: '0.08em',
@@ -234,7 +256,7 @@ const Sidebar = () => {
 
       <div style={{
         borderTop: '1px solid var(--color-border)',
-        padding: collapsed && !isMobile ? '12px 8px' : '12px 12px',
+        padding: collapsed ? '12px 8px' : '12px 12px',
         position: 'relative',
       }} ref={userMenuRef}>
         <AnimatePresence>
@@ -318,8 +340,8 @@ const Sidebar = () => {
           onClick={() => setUserMenuOpen(!userMenuOpen)}
           style={{
             display: 'flex', alignItems: 'center', gap: '10px',
-            width: '100%', padding: collapsed && !isMobile ? '6px' : '8px 10px',
-            justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
+            width: '100%', padding: collapsed ? '6px' : '8px 10px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--color-border)',
             background: 'var(--color-surface)',
@@ -345,7 +367,7 @@ const Sidebar = () => {
           }}>
             {(user?.full_name || user?.username || '?').charAt(0).toUpperCase()}
           </div>
-          {(!collapsed || isMobile) && (
+          {(!collapsed) && (
             <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
               <p style={{
                 fontSize: '13px', fontWeight: 'var(--font-semibold)',
@@ -369,47 +391,14 @@ const Sidebar = () => {
 
   return (
     <>
-      <button
-        onClick={() => setMobileOpen(true)}
-        aria-label="Open menu"
-        className="sidebar-mobile-trigger"
-        style={{
-          position: 'fixed', top: '12px', left: '12px', zIndex: 25,
-          width: '40px', height: '40px', borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--color-border)', background: 'var(--color-surface)',
-          color: 'var(--color-text-muted)', cursor: 'pointer',
-          display: 'none', alignItems: 'center', justifyContent: 'center',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        <Menu size={18} />
-      </button>
-
-      {sidebarContent(false)}
-
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)}
-              style={{
-                position: 'fixed', inset: 0,
-                background: 'rgba(15, 23, 42, 0.45)',
-                backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-                zIndex: 55,
-              }}
-            />
-            {sidebarContent(true)}
-          </>
-        )}
-      </AnimatePresence>
+      {sidebarContent}
 
       <style>{`
-        .sidebar-mobile-trigger { display: none; }
-        @media (max-width: 1023px) {
-          aside { display: none !important; }
-          .sidebar-mobile-trigger { display: flex !important; }
+        .sidebar-expand-btn:hover {
+          opacity: 1 !important;
+        }
+        aside:hover .sidebar-expand-btn {
+          opacity: 1;
         }
       `}</style>
 
