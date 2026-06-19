@@ -243,7 +243,7 @@ const SharedReport = ({ openAuthModal }) => {
               Learning roadmap
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {(roadmap.mastery_path || roadmap.roadmap || roadmap).slice(0, 3).map((step, i) => {
+              {(Array.isArray(roadmap.mastery_path || roadmap.roadmap || roadmap) ? roadmap.mastery_path || roadmap.roadmap || roadmap : []).slice(0, 3).map((step, i) => {
                 const stepData = typeof step === 'string' ? { step: i + 1, title: step, skills: [] } : step;
                 return (
                   <div key={i} style={{

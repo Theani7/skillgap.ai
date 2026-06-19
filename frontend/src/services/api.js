@@ -27,8 +27,8 @@ api.interceptors.response.use(
       if (logoutHandler) {
         logoutHandler();
       }
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        window.history.pushState({}, '', '/login');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+        window.history.pushState({}, '', '/');
         window.dispatchEvent(new PopStateEvent('popstate'));
       }
     }

@@ -74,8 +74,6 @@ const Admin = () => {
   const [uploadsOverTime, setUploadsOverTime] = useState([]);
   const [skillGaps, setSkillGaps] = useState([]);
   const [roleDistribution, setRoleDistribution] = useState([]);
-  const [analysisCache, setAnalysisCache] = useState([]);
-  const [cacheTotal, setCacheTotal] = useState(0);
   const PAGE_SIZE = 20;
   const toastTimerRef = useRef(null);
 

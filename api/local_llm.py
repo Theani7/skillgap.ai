@@ -3,11 +3,10 @@ import logging
 import os
 from typing import Optional
 
-from llama_cpp import Llama
-
 logger = logging.getLogger("resume-analyzer")
 
-_model: Optional[Llama] = None
+_model = None
+_Llama = None
 MODEL_PATH = os.getenv(
     "LOCAL_LLM_MODEL_PATH",
     os.path.join(
@@ -16,6 +15,18 @@ MODEL_PATH = os.getenv(
         "qwen2-0_5b-instruct-q4_k_m.gguf",
     ),
 )
+
+
+def _get_llama_class():
+    """Lazy import of llama_cpp to avoid crash if not installed."""
+    global _Llama
+    if _Llama is None:
+        try:
+            from llama_cpp import Llama
+            _Llama = Llama
+        except ImportError:
+            raise ImportError("llama-cpp-python is not installed. Install it with: pip install llama-cpp-python")
+    return _Llama
 
 DEFAULT_RESUME = {
     "name": None, "email": None, "mobile_number": None,
@@ -27,13 +38,14 @@ DEFAULT_RESUME = {
 }
 
 
-def get_model() -> Llama:
+def get_model():
     """Lazy-load the Qwen2-0.5B-Instruct model (singleton)."""
     global _model
     if _model is None:
         if not os.path.exists(MODEL_PATH):
             raise FileNotFoundError(f"Model not found: {MODEL_PATH}")
         logger.info(f"Loading Qwen2-0.5B-Instruct from {MODEL_PATH}")
+        Llama = _get_llama_class()
         _model = Llama(
             model_path=MODEL_PATH,
             n_ctx=4096,
