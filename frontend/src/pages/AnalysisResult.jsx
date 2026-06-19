@@ -1067,7 +1067,9 @@ const AnalysisResult = () => {
       await api.delete(`/api/user/analysis/${data.id}`, { _skipAuthRedirect: true });
       setData(null);
       setDeleteConfirm(false);
+      navigate('/app', { replace: true });
     } catch (_err) {
+      setDeleteConfirm(false);
       setError('Could not delete the analysis. Please try again.');
     } finally {
       setDeleting(false);
