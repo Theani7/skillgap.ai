@@ -85,6 +85,7 @@ const Sidebar = () => {
           flexDirection: 'column',
           transition: 'width 200ms ease, min-width 200ms ease',
           overflow: 'hidden',
+          zIndex: 40,
         }}
       >
         {/* Logo */}
