@@ -137,10 +137,10 @@ const Sidebar = () => {
       }}
     >
       <div style={{
-        display: 'flex', alignItems: 'center',
-        justifyContent: collapsed ? 'center' : 'space-between',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
         padding: collapsed ? '20px 0' : '20px 20px',
         minHeight: '72px',
+        gap: '12px',
       }}>
         <Link
           to="/app"
@@ -159,13 +159,12 @@ const Sidebar = () => {
             </span>
           ) : (
             <div style={{
-              width: '32px', height: '32px', borderRadius: 'var(--radius-md)',
+              width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
               background: 'var(--color-secondary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
-              flexShrink: 0,
             }}>
-              <Zap size={16} color="white" />
+              <Zap size={18} color="white" />
             </div>
           )}
         </Link>
@@ -173,23 +172,25 @@ const Sidebar = () => {
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           style={{
-            width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--color-border)', background: 'transparent',
+            width: collapsed ? '36px' : '28px',
+            height: collapsed ? '36px' : '28px',
+            borderRadius: 'var(--radius-md)',
+            border: 'none',
+            background: collapsed ? 'var(--color-bg)' : 'transparent',
             color: 'var(--color-text-muted)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 150ms ease',
-            flexShrink: 0,
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--color-bg)';
             e.currentTarget.style.color = 'var(--color-text)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.background = collapsed ? 'var(--color-bg)' : 'transparent';
             e.currentTarget.style.color = 'var(--color-text-muted)';
           }}
         >
-          <Menu size={14} />
+          <Menu size={collapsed ? 18 : 14} />
         </button>
       </div>
 
@@ -369,9 +370,6 @@ const Sidebar = () => {
   return (
     <>
       {sidebarContent}
-
-      <style>{`
-      `}</style>
 
       <AnimatePresence>
         {showLogoutConfirm && (
