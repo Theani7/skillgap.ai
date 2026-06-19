@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,7 +6,7 @@ import {
   UploadCloud, Sparkles, Briefcase, FileText, X, CheckCircle2, Clock, Zap,
 } from 'lucide-react';
 
-const targetRoles = [
+const defaultRoles = [
   'Software Engineering', 'Frontend Development', 'Backend Development',
   'Data Science', 'DevOps', 'Mobile Development', 'Full Stack Development',
   'Cybersecurity',
@@ -25,7 +25,22 @@ const Analyzer = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [targetRoles, setTargetRoles] = useState(defaultRoles);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const res = await api.get('/api/job-roles');
+        if (res.data?.roles?.length > 0) {
+          setTargetRoles(res.data.roles);
+        }
+      } catch {
+        // use defaults
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0];

@@ -394,3 +394,76 @@ def get_skill_trends(current_user: dict = Depends(get_current_user)):
         "latest_skills": list(analyses[-1]["skills"]) if analyses else [],
         "latest_gaps": list(analyses[-1]["gaps"]) if analyses else [],
     }
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+@router.delete("/account")
+def delete_account(payload: DeleteAccountRequest, current_user: dict = Depends(get_current_user)):
+    """Delete the current user's account and all associated data."""
+    if not current_user or 'id' not in current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized request")
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+
+        # Verify password
+        cursor.execute("SELECT password_hash FROM users WHERE id = ?", (current_user['id'],))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        from api.security import verify_password
+        if not verify_password(payload.password, row['password_hash']):
+            raise HTTPException(status_code=400, detail="Incorrect password")
+
+        user_id = current_user['id']
+
+        # Delete all user data
+        cursor.execute("DELETE FROM user_data WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM user_roadmap_progress WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM shared_reports WHERE owner_user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+        conn.commit()
+    finally:
+        conn.close()
+
+    return {"status": "success", "message": "Account deleted"}
+
+
+class ContactSupportRequest(BaseModel):
+    subject: str = Field(..., min_length=5, max_length=200)
+    message: str = Field(..., min_length=10, max_length=2000)
+
+
+@router.post("/contact-support")
+def contact_support(payload: ContactSupportRequest, current_user: dict = Depends(get_current_user)):
+    """Submit a support request (stored in DB for admin review)."""
+    if not current_user or 'id' not in current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized request")
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO notifications (user_id, channel, message, status, created_at)
+            VALUES (?, 'support', ?, 'pending', ?)""",
+            (
+                current_user['id'],
+                f"[{payload.subject}] {payload.message}",
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return {"status": "success", "message": "Support request submitted"}

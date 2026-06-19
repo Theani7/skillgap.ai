@@ -111,6 +111,40 @@ app.include_router(misc_router)
 logger = logging.getLogger("resume-analyzer")
 logging.basicConfig(level=logging.INFO)
 
+# Seed skills taxonomy and load cache
+from api.database import (
+    seed_skills_taxonomy, load_skills_cache,
+    seed_market_data, load_market_cache,
+    seed_skill_recommendations, load_skill_recs_cache,
+    seed_roadmap_templates, load_roadmaps_cache,
+    seed_learning_actions, load_actions_cache,
+    seed_learning_resources, load_resources_cache,
+    seed_skill_difficulty, load_difficulty_cache,
+    seed_skill_clusters, load_clusters_cache,
+    seed_video_resources, load_videos_cache,
+    seed_role_configs, load_role_configs_cache,
+)
+seed_skills_taxonomy()
+load_skills_cache()
+seed_market_data()
+load_market_cache()
+seed_skill_recommendations()
+load_skill_recs_cache()
+seed_roadmap_templates()
+load_roadmaps_cache()
+seed_learning_actions()
+load_actions_cache()
+seed_learning_resources()
+load_resources_cache()
+seed_skill_difficulty()
+load_difficulty_cache()
+seed_skill_clusters()
+load_clusters_cache()
+seed_video_resources()
+load_videos_cache()
+seed_role_configs()
+load_role_configs_cache()
+
 _validate_env()
 
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))

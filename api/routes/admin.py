@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from api.auth import get_current_admin
 from api.database import get_db_connection
 from api.scraper import simulate_trend_update
+from api.course_scraper import scrape_courses_for_field, FIELD_SEARCH_QUERIES
 
 logger = logging.getLogger("resume-analyzer")
 
@@ -268,7 +269,9 @@ def get_all_courses(current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, field, course_name, course_url, created_at FROM courses ORDER BY field, id DESC")
+        cursor.execute("""SELECT id, field, course_name, course_url, description,
+            instructor, rating, duration, price, platform, enrollment_count,
+            last_scraped, created_at FROM courses ORDER BY field, id DESC""")
         rows = cursor.fetchall()
     finally:
         conn.close()
@@ -320,6 +323,107 @@ def update_course(course_id: int, course: CourseInput, current_admin: dict = Dep
     finally:
         conn.close()
     return {"status": "success", "course": dict(updated)}
+
+
+class ScrapeRequest(BaseModel):
+    fields: List[str] = Field(..., min_length=1, max_length=20)
+    max_per_platform: int = Field(default=10, ge=1, le=50)
+
+
+# In-memory scrape status tracking
+_scrape_jobs = {}
+
+
+@router.post("/api/admin/scrape-courses")
+def scrape_courses(body: ScrapeRequest, current_admin: dict = Depends(get_current_admin)):
+    """Trigger course scraping for specified fields."""
+    job_id = f"scrape_{int(__import__('time').time())}"
+    _scrape_jobs[job_id] = {"status": "running", "fields": body.fields, "results": {}}
+
+    total_added = 0
+    total_updated = 0
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        for field in body.fields:
+            try:
+                courses = scrape_courses_for_field(field, body.max_per_platform)
+                added = 0
+                updated = 0
+                for course in courses:
+                    # Check if course already exists by URL
+                    cursor.execute("SELECT id FROM courses WHERE course_url = ?", (course["course_url"],))
+                    existing = cursor.fetchone()
+
+                    if existing:
+                        # Update existing course
+                        cursor.execute(
+                            """UPDATE courses SET
+                            course_name = ?, description = ?, instructor = ?,
+                            rating = ?, duration = ?, price = ?, platform = ?,
+                            enrollment_count = ?, last_scraped = CURRENT_TIMESTAMP
+                            WHERE course_url = ?""",
+                            (
+                                course["course_name"], course["description"],
+                                course["instructor"], course["rating"],
+                                course["duration"], course["price"],
+                                course["platform"], course["enrollment_count"],
+                                course["course_url"],
+                            )
+                        )
+                        updated += 1
+                    else:
+                        # Insert new course
+                        cursor.execute(
+                            """INSERT INTO courses
+                            (field, course_name, course_url, description, instructor,
+                            rating, duration, price, platform, enrollment_count, last_scraped)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+                            (
+                                field, course["course_name"], course["course_url"],
+                                course["description"], course["instructor"],
+                                course["rating"], course["duration"],
+                                course["price"], course["platform"],
+                                course["enrollment_count"],
+                            )
+                        )
+                        added += 1
+
+                conn.commit()
+                total_added += added
+                total_updated += updated
+                _scrape_jobs[job_id]["results"][field] = {"added": added, "updated": updated}
+                log_audit_action(current_admin, "scrape_courses", "field", field, f"Added: {added}, Updated: {updated}")
+            except Exception as e:
+                logger.error(f"Scraping failed for field '{field}': {e}")
+                _scrape_jobs[job_id]["results"][field] = {"error": str(e)}
+    finally:
+        conn.close()
+
+    _scrape_jobs[job_id]["status"] = "completed"
+    _scrape_jobs[job_id]["summary"] = {"total_added": total_added, "total_updated": total_updated}
+
+    return {
+        "status": "success",
+        "job_id": job_id,
+        "total_added": total_added,
+        "total_updated": total_updated,
+        "results": _scrape_jobs[job_id]["results"],
+    }
+
+
+@router.get("/api/admin/scrape-status/{job_id}")
+def get_scrape_status(job_id: str, current_admin: dict = Depends(get_current_admin)):
+    """Get the status of a scraping job."""
+    if job_id not in _scrape_jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return _scrape_jobs[job_id]
+
+
+@router.get("/api/admin/scrape-fields")
+def get_scrape_fields(current_admin: dict = Depends(get_current_admin)):
+    """Get list of fields that can be scraped."""
+    return {"fields": list(FIELD_SEARCH_QUERIES.keys())}
 
 
 @router.get("/api/admin/analytics")
@@ -761,7 +865,14 @@ def admin_reset_password(body: PasswordResetInput, current_admin: dict = Depends
 @router.get("/api/admin/export/{table_name}")
 def export_table(table_name: str, current_admin: dict = Depends(get_current_admin)):
     """Export a table as JSON."""
-    allowed_tables = ["users", "user_data", "courses", "user_feedback", "job_roles", "audit_logs"]
+    allowed_tables = [
+        "users", "user_data", "courses", "user_feedback", "job_roles", "audit_logs",
+        "skill_categories", "skills", "role_synonyms", "skill_aliases",
+        "field_keywords", "industry_trends", "market_role_aliases",
+        "skill_recommendations", "roadmap_templates", "learning_actions",
+        "learning_resources", "skill_difficulty", "skill_clusters",
+        "video_resources", "role_configs",
+    ]
     if table_name not in allowed_tables:
         raise HTTPException(status_code=400, detail=f"Cannot export table: {table_name}")
     conn = get_db_connection()
@@ -772,3 +883,120 @@ def export_table(table_name: str, current_admin: dict = Depends(get_current_admi
     finally:
         conn.close()
     return {"table": table_name, "count": len(rows), "data": [dict(r) for r in rows]}
+
+
+# ============================================================
+# Taxonomy data view endpoints
+# ============================================================
+
+@router.get("/api/admin/taxonomy/overview")
+def get_taxonomy_overview(current_admin: dict = Depends(get_current_admin)):
+    """Get overview of all taxonomy tables."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        tables = {
+            "skill_categories": "SELECT COUNT(*) as count FROM skill_categories",
+            "skills": "SELECT COUNT(*) as count FROM skills",
+            "role_synonyms": "SELECT COUNT(*) as count FROM role_synonyms",
+            "skill_aliases": "SELECT COUNT(*) as count FROM skill_aliases",
+            "field_keywords": "SELECT COUNT(*) as count FROM field_keywords",
+            "industry_trends": "SELECT COUNT(*) as count FROM industry_trends",
+            "market_role_aliases": "SELECT COUNT(*) as count FROM market_role_aliases",
+            "skill_recommendations": "SELECT COUNT(*) as count FROM skill_recommendations",
+            "roadmap_templates": "SELECT COUNT(*) as count FROM roadmap_templates",
+            "learning_actions": "SELECT COUNT(*) as count FROM learning_actions",
+            "learning_resources": "SELECT COUNT(*) as count FROM learning_resources",
+            "skill_difficulty": "SELECT COUNT(*) as count FROM skill_difficulty",
+            "skill_clusters": "SELECT COUNT(*) as count FROM skill_clusters",
+            "video_resources": "SELECT COUNT(*) as count FROM video_resources",
+            "role_configs": "SELECT COUNT(*) as count FROM role_configs",
+        }
+        result = {}
+        for table, query in tables.items():
+            cursor.execute(query)
+            result[table] = cursor.fetchone()["count"]
+        return result
+    finally:
+        conn.close()
+
+
+@router.get("/api/admin/taxonomy/skills")
+def get_taxonomy_skills(current_admin: dict = Depends(get_current_admin)):
+    """Get all skills organized by category."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT sc.name as category, s.name as skill
+            FROM skill_categories sc
+            JOIN skills s ON sc.id = s.category_id
+            ORDER BY sc.sort_order, s.sort_order
+        """)
+        result = {}
+        for row in cursor.fetchall():
+            if row["category"] not in result:
+                result[row["category"]] = []
+            result[row["category"]].append(row["skill"])
+        return result
+    finally:
+        conn.close()
+
+
+@router.get("/api/admin/taxonomy/roadmaps")
+def get_taxonomy_roadmaps(current_admin: dict = Depends(get_current_admin)):
+    """Get all roadmap templates."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT field_name, step_number, title, duration, skills
+            FROM roadmap_templates
+            ORDER BY field_name, step_number
+        """)
+        result = {}
+        for row in cursor.fetchall():
+            if row["field_name"] not in result:
+                result[row["field_name"]] = []
+            result[row["field_name"]].append({
+                "step": row["step_number"],
+                "title": row["title"],
+                "duration": row["duration"],
+                "skills": json.loads(row["skills"]),
+            })
+        return result
+    finally:
+        conn.close()
+
+
+@router.get("/api/admin/taxonomy/role-configs")
+def get_taxonomy_role_configs(current_admin: dict = Depends(get_current_admin)):
+    """Get all role configurations."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM role_configs ORDER BY role_key")
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+@router.get("/api/admin/taxonomy/video-resources")
+def get_taxonomy_video_resources(
+    video_type: Optional[str] = Query(None),
+    current_admin: dict = Depends(get_current_admin)
+):
+    """Get video resources, optionally filtered by type."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        if video_type:
+            cursor.execute(
+                "SELECT * FROM video_resources WHERE video_type = ? ORDER BY field_name, sort_order",
+                (video_type,)
+            )
+        else:
+            cursor.execute("SELECT * FROM video_resources ORDER BY field_name, video_type, sort_order")
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
