@@ -553,11 +553,131 @@ def init_db():
                 ("Full Stack Development", "Develop both frontend and backend applications", "Engineering"),
                 ("Cybersecurity", "Protect systems and networks from security threats", "Security"),
             ]
+            default_role_skills = {
+                "Software Engineering": ["Python", "Java", "Git", "Data Structures", "Algorithms", "OOP", "SQL", "Testing"],
+                "Frontend Development": ["JavaScript", "React", "HTML", "CSS", "TypeScript", "Git", "REST APIs", "Responsive Design"],
+                "Backend Development": ["Python", "Node.js", "SQL", "REST APIs", "Docker", "Git", "PostgreSQL", "Linux"],
+                "Data Science": ["Python", "R", "SQL", "Machine Learning", "Pandas", "NumPy", "Statistics", "TensorFlow"],
+                "DevOps": ["Docker", "Kubernetes", "AWS", "CI/CD", "Terraform", "Linux", "Git", "Monitoring"],
+                "Mobile Development": ["React Native", "Flutter", "Swift", "Kotlin", "Git", "REST APIs", "Firebase", "UI/UX"],
+                "Full Stack Development": ["JavaScript", "React", "Node.js", "Python", "SQL", "Docker", "Git", "REST APIs"],
+                "Cybersecurity": ["Networking", "Linux", "Python", "SIEM", "Penetration Testing", "Encryption", "Firewalls", "Compliance"],
+            }
+            default_roadmaps = {
+                "Software Engineering": {
+                    "title": "Software Engineering Career Path",
+                    "description": "Master the fundamentals of software engineering",
+                    "duration_weeks": 24,
+                    "steps": [
+                        {"step": 1, "title": "Programming Fundamentals", "description": "Learn core programming concepts", "duration_weeks": 4, "skills": "Python,OOP,Data Structures", "resources": "https://www.youtube.com/results?search_query=python+programming+fundamentals"},
+                        {"step": 2, "title": "Version Control", "description": "Master Git and collaboration workflows", "duration_weeks": 2, "skills": "Git,GitHub,Branching", "resources": "https://www.youtube.com/results?search_query=git+tutorial"},
+                        {"step": 3, "title": "Testing & Quality", "description": "Write reliable, tested code", "duration_weeks": 3, "skills": "Unit Testing,TDD,Debugging", "resources": "https://www.youtube.com/results?search_query=software+testing"},
+                        {"step": 4, "title": "System Design", "description": "Design scalable software systems", "duration_weeks": 5, "skills": "Architecture,Design Patterns,APIs", "resources": "https://www.youtube.com/results?search_query=system+design"},
+                    ]
+                },
+                "Frontend Development": {
+                    "title": "Frontend Developer Roadmap",
+                    "description": "Build modern, responsive web interfaces",
+                    "duration_weeks": 20,
+                    "steps": [
+                        {"step": 1, "title": "HTML & CSS", "description": "Master web fundamentals", "duration_weeks": 3, "skills": "HTML5,CSS3,Flexbox,Grid", "resources": "https://www.youtube.com/results?search_query=html+css+tutorial"},
+                        {"step": 2, "title": "JavaScript", "description": "Learn modern JavaScript", "duration_weeks": 4, "skills": "JavaScript,ES6+,DOM", "resources": "https://www.youtube.com/results?search_query=javascript+tutorial"},
+                        {"step": 3, "title": "React", "description": "Build component-based UIs", "duration_weeks": 5, "skills": "React,Hooks,State Management", "resources": "https://www.youtube.com/results?search_query=react+tutorial"},
+                        {"step": 4, "title": "Performance", "description": "Optimize web applications", "duration_weeks": 3, "skills": "Lighthouse,Webpack,Optimization", "resources": "https://www.youtube.com/results?search_query=web+performance"},
+                    ]
+                },
+                "Backend Development": {
+                    "title": "Backend Developer Roadmap",
+                    "description": "Build robust server-side applications",
+                    "duration_weeks": 22,
+                    "steps": [
+                        {"step": 1, "title": "Programming Basics", "description": "Learn a backend language", "duration_weeks": 4, "skills": "Python,Node.js,Go", "resources": "https://www.youtube.com/results?search_query=backend+programming"},
+                        {"step": 2, "title": "Databases", "description": "Master data persistence", "duration_weeks": 4, "skills": "SQL,PostgreSQL,MongoDB", "resources": "https://www.youtube.com/results?search_query=database+tutorial"},
+                        {"step": 3, "title": "APIs", "description": "Design and build APIs", "duration_weeks": 4, "skills": "REST,GraphQL,Authentication", "resources": "https://www.youtube.com/results?search_query=rest+api+tutorial"},
+                        {"step": 4, "title": "DevOps Basics", "description": "Deploy and scale applications", "duration_weeks": 4, "skills": "Docker,Linux,CI/CD", "resources": "https://www.youtube.com/results?search_query=devops+tutorial"},
+                    ]
+                },
+                "Data Science": {
+                    "title": "Data Science Career Path",
+                    "description": "Analyze data and build ML models",
+                    "duration_weeks": 26,
+                    "steps": [
+                        {"step": 1, "title": "Python for Data", "description": "Learn data manipulation", "duration_weeks": 4, "skills": "Python,Pandas,NumPy", "resources": "https://www.youtube.com/results?search_query=python+data+science"},
+                        {"step": 2, "title": "Statistics", "description": "Master statistical concepts", "duration_weeks": 4, "skills": "Statistics,Probability,Hypothesis Testing", "resources": "https://www.youtube.com/results?search_query=statistics+for+data+science"},
+                        {"step": 3, "title": "Machine Learning", "description": "Build predictive models", "duration_weeks": 6, "skills": "Scikit-learn,ML Algorithms,Model Evaluation", "resources": "https://www.youtube.com/results?search_query=machine+learning+tutorial"},
+                        {"step": 4, "title": "Deep Learning", "description": "Neural networks and advanced ML", "duration_weeks": 6, "skills": "TensorFlow,PyTorch,Neural Networks", "resources": "https://www.youtube.com/results?search_query=deep+learning+tutorial"},
+                    ]
+                },
+                "DevOps": {
+                    "title": "DevOps Engineer Roadmap",
+                    "description": "Master infrastructure and deployment",
+                    "duration_weeks": 24,
+                    "steps": [
+                        {"step": 1, "title": "Linux & Networking", "description": "Master OS fundamentals", "duration_weeks": 4, "skills": "Linux,Bash,Networking", "resources": "https://www.youtube.com/results?search_query=linux+tutorial"},
+                        {"step": 2, "title": "Containers", "description": "Learn containerization", "duration_weeks": 4, "skills": "Docker,Kubernetes,Container Orchestration", "resources": "https://www.youtube.com/results?search_query=docker+kubernetes+tutorial"},
+                        {"step": 3, "title": "CI/CD", "description": "Automate deployments", "duration_weeks": 4, "skills": "GitHub Actions,Jenkins,Pipelines", "resources": "https://www.youtube.com/results?search_query=ci+cd+tutorial"},
+                        {"step": 4, "title": "Cloud", "description": "Master cloud platforms", "duration_weeks": 5, "skills": "AWS,Azure,GCP,Terraform", "resources": "https://www.youtube.com/results?search_query=aws+cloud+tutorial"},
+                    ]
+                },
+                "Mobile Development": {
+                    "title": "Mobile Developer Roadmap",
+                    "description": "Build cross-platform mobile apps",
+                    "duration_weeks": 22,
+                    "steps": [
+                        {"step": 1, "title": "Mobile Fundamentals", "description": "Learn mobile development concepts", "duration_weeks": 3, "skills": "Mobile UX,App Architecture,State", "resources": "https://www.youtube.com/results?search_query=mobile+development+basics"},
+                        {"step": 2, "title": "React Native / Flutter", "description": "Build cross-platform apps", "duration_weeks": 6, "skills": "React Native,Flutter,Dart", "resources": "https://www.youtube.com/results?search_query=react+native+tutorial"},
+                        {"step": 3, "title": "Backend Integration", "description": "Connect to APIs and services", "duration_weeks": 4, "skills": "REST APIs,Firebase,Authentication", "resources": "https://www.youtube.com/results?search_query=mobile+backend+integration"},
+                        {"step": 4, "title": "Publishing", "description": "Deploy to app stores", "duration_weeks": 3, "skills": "App Store,Play Store,App Optimization", "resources": "https://www.youtube.com/results?search_query=app+store+publishing"},
+                    ]
+                },
+                "Full Stack Development": {
+                    "title": "Full Stack Developer Roadmap",
+                    "description": "Master both frontend and backend",
+                    "duration_weeks": 28,
+                    "steps": [
+                        {"step": 1, "title": "Frontend Basics", "description": "Learn HTML, CSS, JavaScript", "duration_weeks": 4, "skills": "HTML,CSS,JavaScript,React", "resources": "https://www.youtube.com/results?search_query=frontend+web+development"},
+                        {"step": 2, "title": "Backend Basics", "description": "Learn server-side programming", "duration_weeks": 4, "skills": "Node.js,Express,REST APIs", "resources": "https://www.youtube.com/results?search_query=nodejs+backend+tutorial"},
+                        {"step": 3, "title": "Databases", "description": "Master data storage", "duration_weeks": 4, "skills": "SQL,MongoDB,Redis", "resources": "https://www.youtube.com/results?search_query=database+tutorial"},
+                        {"step": 4, "title": "Full Stack Projects", "description": "Build complete applications", "duration_weeks": 6, "skills": "Authentication,Deployment,Testing", "resources": "https://www.youtube.com/results?search_query=full+stack+project"},
+                    ]
+                },
+                "Cybersecurity": {
+                    "title": "Cybersecurity Career Path",
+                    "description": "Protect systems from security threats",
+                    "duration_weeks": 26,
+                    "steps": [
+                        {"step": 1, "title": "Networking Security", "description": "Master network fundamentals", "duration_weeks": 4, "skills": "TCP/IP,Firewalls,VPNs", "resources": "https://www.youtube.com/results?search_query=network+security+tutorial"},
+                        {"step": 2, "title": "Operating Systems", "description": "Secure Linux and Windows", "duration_weeks": 4, "skills": "Linux,Windows,Hardening", "resources": "https://www.youtube.com/results?search_query=linux+security"},
+                        {"step": 3, "title": "Ethical Hacking", "description": "Learn penetration testing", "duration_weeks": 6, "skills": "Kali Linux,Metasploit,Nmap", "resources": "https://www.youtube.com/results?search_query=ethical+hacking+tutorial"},
+                        {"step": 4, "title": "Security Operations", "description": "Implement security frameworks", "duration_weeks": 5, "skills": "SIEM,Incident Response,Compliance", "resources": "https://www.youtube.com/results?search_query=security+operations"},
+                    ]
+                },
+            }
             for title, desc, category in default_roles:
                 cursor.execute(
                     "INSERT INTO job_roles (title, description, category) VALUES (?, ?, ?)",
                     (title, desc, category)
                 )
+                role_id = cursor.lastrowid
+                # Add default skills for each role
+                for skill in default_role_skills.get(title, []):
+                    cursor.execute(
+                        "INSERT INTO job_role_skills (job_role_id, skill_name, is_required) VALUES (?, ?, 1)",
+                        (role_id, skill)
+                    )
+                # Add default roadmap for each role
+                roadmap = default_roadmaps.get(title)
+                if roadmap:
+                    cursor.execute(
+                        "INSERT INTO career_roadmaps (job_role_id, title, description, duration_weeks, sort_order) VALUES (?, ?, ?, ?, 1)",
+                        (role_id, roadmap['title'], roadmap['description'], roadmap['duration_weeks'])
+                    )
+                    roadmap_id = cursor.lastrowid
+                    for step in roadmap['steps']:
+                        cursor.execute(
+                            "INSERT INTO roadmap_steps (roadmap_id, step_number, title, description, duration_weeks, skills, resources) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (roadmap_id, step['step'], step['title'], step['description'], step['duration_weeks'], step['skills'], step['resources'])
+                        )
 
         conn.commit()
     except Exception:
