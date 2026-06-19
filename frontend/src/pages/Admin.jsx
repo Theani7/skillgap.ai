@@ -57,6 +57,7 @@ const Admin = () => {
   const [registeredUsers, setRegisteredUsers] = useState([]);
   const [userSearch, setUserSearch] = useState('');
   const [courses, setCourses] = useState([]);
+  const [jobRoles, setJobRoles] = useState([]);
   const [analytics, setAnalytics] = useState({ most_sought_role: '', most_common_missing_skill: '' });
   const [qualityMetrics, setQualityMetrics] = useState(null);
   const [scrapeStatus, setScrapeStatus] = useState('');
@@ -88,7 +89,7 @@ const Admin = () => {
   const fetchAdminData = useCallback(async (signal) => {
     setLoading(true);
     try {
-      const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes, uploadsRes, skillGapsRes, roleDistRes] = await Promise.all([
+      const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes, uploadsRes, skillGapsRes, roleDistRes, jobRolesRes] = await Promise.all([
         api.get(`/api/admin/users?limit=${PAGE_SIZE}&offset=${resumePage * PAGE_SIZE}`, { signal }),
         api.get(`/api/admin/feedback?limit=${PAGE_SIZE}&offset=${feedbackPage * PAGE_SIZE}`, { signal }),
         api.get('/api/admin/registered-users', { signal }),
@@ -98,6 +99,7 @@ const Admin = () => {
         api.get('/api/admin/analytics/uploads-over-time', { signal }),
         api.get('/api/admin/analytics/skill-gaps', { signal }),
         api.get('/api/admin/analytics/role-distribution', { signal }),
+        api.get('/api/admin/job-roles', { signal }),
       ]);
       setResumes(usersRes.data.users || []);
       setResumeTotal(usersRes.data.total || 0);
@@ -110,6 +112,7 @@ const Admin = () => {
       setUploadsOverTime(uploadsRes.data.data || []);
       setSkillGaps(skillGapsRes.data.data || []);
       setRoleDistribution(roleDistRes.data.data || []);
+      setJobRoles(jobRolesRes.data.job_roles || []);
     } catch (_err) {
       if (_err?.name !== 'CanceledError' && _err?.code !== 'ERR_CANCELED') {
         console.error(_err);
@@ -531,13 +534,17 @@ const Admin = () => {
                 <Plus size={16} color="var(--color-primary)" /> {editingCourse ? 'Edit course' : 'Add course recommendation'}
               </h3>
               <form onSubmit={(e) => { e.preventDefault(); editingCourse ? handleSaveCourse() : handleAddCourse(e); }} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-                <input
-                  type="text" placeholder="Field (e.g. Data Science)"
+                <select
                   value={editingCourse ? editingCourse.field : newCourse.field}
                   onChange={(e) => editingCourse ? setEditingCourse({ ...editingCourse, field: e.target.value }) : setNewCourse({ ...newCourse, field: e.target.value })}
-                  aria-label="Field"
-                  style={fieldStyle(false)}
-                />
+                  aria-label="Job Role"
+                  style={{ ...fieldStyle(false), cursor: 'pointer' }}
+                >
+                  <option value="">Select job role...</option>
+                  {jobRoles.map((role) => (
+                    <option key={role.id} value={role.title}>{role.title}</option>
+                  ))}
+                </select>
                 <input
                   type="text" placeholder="Course name"
                   value={editingCourse ? editingCourse.course_name : newCourse.course_name}
