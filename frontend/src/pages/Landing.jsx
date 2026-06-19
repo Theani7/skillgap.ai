@@ -289,6 +289,7 @@ const Landing = ({ openAuthModal }) => {
           background: var(--navy-50);
           border-color: var(--navy-200);
           box-shadow: none;
+          color: var(--color-text);
         }
 
         .mc-stats {
