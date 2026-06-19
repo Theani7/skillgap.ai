@@ -1589,6 +1589,7 @@ select.input {
 }
 
 .analysis-tab:hover { color: var(--color-text); }
+.analysis-tab:hover.analysis-tab-active { color: white; }
 .analysis-tab:active { transform: scale(0.98); }
 
 .analysis-tab-active {
