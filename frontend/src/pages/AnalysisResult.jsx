@@ -1059,11 +1059,18 @@ const AnalysisResult = () => {
   const resumeScore = analysis?.resume_score ?? data?.resume_score ?? 0;
   const missingSkills = Array.isArray(analysis?.missing_skill_names) ? analysis.missing_skill_names : [];
   const roleSkills = Array.isArray(data?.role_skills) ? data.role_skills : [];
+  const roleSkillNames = new Set(roleSkills.map(rs => rs.skill.toLowerCase()));
   const roleSkillsMap = Object.fromEntries(roleSkills.map(rs => [rs.skill.toLowerCase(), rs.is_required]));
   let matchedSkills = Array.isArray(analysis?.data?.matched_role_skills) && analysis.data.matched_role_skills.length > 0
     ? analysis.data.matched_role_skills
-    : (Array.isArray(resumeInfo?.skills) ? resumeInfo.skills : []);
-  // If matchedSkills are plain strings (old format), annotate with is_required from role_skills
+    : [];
+  // If matched_role_skills is empty (old analysis), compute from resume skills filtered to role
+  if (matchedSkills.length === 0 && Array.isArray(resumeInfo?.skills)) {
+    matchedSkills = resumeInfo.skills
+      .filter(s => roleSkillNames.has(s.toLowerCase()))
+      .map(s => ({ skill: s, is_required: roleSkillsMap[s.toLowerCase()] || false }));
+  }
+  // If still plain strings, annotate
   if (matchedSkills.length > 0 && typeof matchedSkills[0] === 'string') {
     matchedSkills = matchedSkills.map(s => ({
       skill: s,
