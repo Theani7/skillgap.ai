@@ -205,6 +205,16 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
         </button>
         
         <div className="auth-modal-body">
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+            <span style={{
+              fontWeight: 'var(--font-extrabold)', fontSize: '24px',
+              letterSpacing: 'var(--tracking-tight)',
+              color: 'var(--color-text)',
+            }}>
+              Skill<span className="mc-gradient">Gap.ai</span>
+            </span>
+          </div>
+          
           <div className="auth-modal-tabs">
             <button
               className={`auth-modal-tab ${activeTab === 'login' ? 'active' : ''}`}
