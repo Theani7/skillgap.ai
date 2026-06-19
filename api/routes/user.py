@@ -1,5 +1,7 @@
 import json
 import logging
+from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -273,3 +275,122 @@ def update_preferences(payload: PreferencesInput, current_user: dict = Depends(g
     finally:
         conn.close()
     return {"status": "success"}
+
+
+class RoadmapProgressUpdate(BaseModel):
+    analysis_id: Optional[int] = None
+    phase_index: int = Field(..., ge=0)
+    task_index: int = Field(..., ge=0)
+    completed: bool
+
+
+@router.get("/roadmap-progress")
+def get_roadmap_progress(analysis_id: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    """Get all roadmap progress for the logged-in user."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        if analysis_id:
+            cursor.execute(
+                "SELECT phase_index, task_index, completed FROM user_roadmap_progress WHERE user_id = ? AND analysis_id = ?",
+                (current_user["id"], analysis_id),
+            )
+        else:
+            cursor.execute(
+                "SELECT phase_index, task_index, completed, analysis_id FROM user_roadmap_progress WHERE user_id = ?",
+                (current_user["id"],),
+            )
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
+
+    progress = {}
+    for row in rows:
+        key = f"{row['phase_index']}:{row['task_index']}"
+        progress[key] = bool(row["completed"])
+
+    return {"progress": progress}
+
+
+@router.put("/roadmap-progress")
+def update_roadmap_progress(payload: RoadmapProgressUpdate, current_user: dict = Depends(get_current_user)):
+    """Update a single roadmap task's completion status."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO user_roadmap_progress (user_id, analysis_id, phase_index, task_index, completed, completed_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id, analysis_id, phase_index, task_index)
+            DO UPDATE SET completed = excluded.completed,
+                completed_at = CASE WHEN excluded.completed = 1 THEN CURRENT_TIMESTAMP ELSE NULL END""",
+            (
+                current_user["id"],
+                payload.analysis_id,
+                payload.phase_index,
+                payload.task_index,
+                1 if payload.completed else 0,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S") if payload.completed else None,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return {"status": "success"}
+
+
+@router.get("/skill-trends")
+def get_skill_trends(current_user: dict = Depends(get_current_user)):
+    """Get skill improvement trends across all analyses."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """SELECT ID, Timestamp, Actual_skills, missing_skills
+            FROM user_data
+            WHERE user_id = ?
+            ORDER BY ID ASC""",
+            (current_user["id"],),
+        )
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
+
+    if not rows:
+        return {"trends": [], "summary": {"improved": [], "new": [], "lost": []}}
+
+    analyses = []
+    for row in rows:
+        actual = set(s.strip() for s in (row["Actual_skills"] or "").split(",") if s.strip())
+        missing = set(s.strip() for s in (row["missing_skills"] or "").split(",") if s.strip())
+        analyses.append({
+            "id": row["ID"],
+            "timestamp": row["Timestamp"],
+            "skills": actual,
+            "gaps": missing,
+        })
+
+    trends = []
+    if len(analyses) >= 2:
+        first = analyses[0]
+        latest = analyses[-1]
+
+        gained = latest["skills"] - first["skills"]
+        lost = first["skills"] - latest["skills"]
+        still_missing = latest["gaps"] - first["gaps"]
+        resolved = first["gaps"] - latest["gaps"]
+
+        trends = [
+            {"type": "improved", "skills": list(resolved), "count": len(resolved)},
+            {"type": "gained", "skills": list(gained), "count": len(gained)},
+            {"type": "lost", "skills": list(lost), "count": len(lost)},
+            {"type": "new_gaps", "skills": list(still_missing), "count": len(still_missing)},
+        ]
+
+    return {
+        "trends": trends,
+        "analyses_count": len(analyses),
+        "latest_skills": list(analyses[-1]["skills"]) if analyses else [],
+        "latest_gaps": list(analyses[-1]["gaps"]) if analyses else [],
+    }

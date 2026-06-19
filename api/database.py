@@ -307,6 +307,20 @@ def init_db():
         ''')
 
         cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_roadmap_progress (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                analysis_id INTEGER,
+                phase_index INTEGER NOT NULL,
+                task_index INTEGER NOT NULL,
+                completed INTEGER DEFAULT 0,
+                completed_at TIMESTAMP,
+                UNIQUE(user_id, analysis_id, phase_index, task_index),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
+
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS login_attempts (
                 username VARCHAR(100) PRIMARY KEY,
                 attempts INTEGER DEFAULT 0,

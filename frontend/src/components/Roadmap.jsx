@@ -1,18 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, ChevronDown, ChevronUp, Check, Square, ExternalLink, BookOpen, Video, FileText, Award } from 'lucide-react';
+import api from '../services/api';
 
-const RoadmapStep = ({ step, index, isLast }) => {
+const RoadmapStep = ({ step, index, isLast, analysisId, progress, onToggle }) => {
   const [isExpanded, setIsExpanded] = useState(index === 0);
-  const [completedTasks, setCompletedTasks] = useState(new Set());
 
-  const toggleTask = (taskIndex) => {
-    setCompletedTasks((prev) => {
-      const next = new Set(prev);
-      if (next.has(taskIndex)) next.delete(taskIndex);
-      else next.add(taskIndex);
-      return next;
-    });
+  const getTaskDone = (taskIndex) => {
+    const key = `${index}:${taskIndex}`;
+    return progress[key] || false;
   };
 
   return (
@@ -72,7 +68,7 @@ const RoadmapStep = ({ step, index, isLast }) => {
               </span>
               {Array.isArray(step.action_items) && step.action_items.length > 0 && (
                 <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                  {completedTasks.size} / {step.action_items.length} tasks
+                  {step.action_items.filter((_, i) => getTaskDone(i)).length} / {step.action_items.length} tasks
                 </span>
               )}
             </div>
@@ -148,11 +144,11 @@ const RoadmapStep = ({ step, index, isLast }) => {
                     </h5>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {step.action_items.map((action, i) => {
-                        const isDone = completedTasks.has(i);
+                        const isDone = getTaskDone(i);
                         return (
                           <div
                             key={i}
-                            onClick={(e) => { e.stopPropagation(); toggleTask(i); }}
+                            onClick={(e) => { e.stopPropagation(); onToggle(index, i); }}
                             style={{
                               display: 'flex', alignItems: 'flex-start', gap: '10px',
                               padding: '10px 12px', borderRadius: 'var(--radius-md)',
@@ -239,7 +235,40 @@ const RoadmapStep = ({ step, index, isLast }) => {
   );
 };
 
-const Roadmap = ({ path }) => {
+const Roadmap = ({ path, analysisId }) => {
+  const [progress, setProgress] = useState({});
+
+  useEffect(() => {
+    if (!analysisId) return;
+    const loadProgress = async () => {
+      try {
+        const res = await api.get(`/api/user/roadmap-progress?analysis_id=${analysisId}`);
+        setProgress(res.data.progress || {});
+      } catch {
+        // ignore
+      }
+    };
+    loadProgress();
+  }, [analysisId]);
+
+  const handleToggle = useCallback(async (phaseIndex, taskIndex) => {
+    const key = `${phaseIndex}:${taskIndex}`;
+    const newCompleted = !progress[key];
+
+    setProgress(prev => ({ ...prev, [key]: newCompleted }));
+
+    try {
+      await api.put('/api/user/roadmap-progress', {
+        analysis_id: analysisId,
+        phase_index: phaseIndex,
+        task_index: taskIndex,
+        completed: newCompleted,
+      });
+    } catch {
+      setProgress(prev => ({ ...prev, [key]: !newCompleted }));
+    }
+  }, [analysisId, progress]);
+
   if (!Array.isArray(path) || path.length === 0) return null;
 
   return (
@@ -250,6 +279,9 @@ const Roadmap = ({ path }) => {
           step={step}
           index={index}
           isLast={index === path.length - 1}
+          analysisId={analysisId}
+          progress={progress}
+          onToggle={handleToggle}
         />
       ))}
     </div>
