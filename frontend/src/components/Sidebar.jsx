@@ -81,13 +81,13 @@ const Sidebar = () => {
           borderRadius: 'var(--radius-md)',
           fontSize: '14px', fontWeight: active ? 'var(--font-semibold)' : '500',
           textDecoration: 'none',
-          color: active ? 'var(--color-primary)' : 'var(--color-text-muted)',
-          background: active ? 'var(--indigo-50)' : 'transparent',
+          color: active ? 'var(--color-secondary)' : 'var(--color-text-muted)',
+          background: active ? 'rgba(255, 107, 53, 0.08)' : 'transparent',
           transition: 'background 150ms ease, color 150ms ease',
         }}
         onMouseEnter={(e) => {
           if (!active) {
-            e.currentTarget.style.background = 'var(--color-bg)';
+            e.currentTarget.style.background = 'rgba(255, 107, 53, 0.04)';
             e.currentTarget.style.color = 'var(--color-text)';
           }
         }}
@@ -104,7 +104,7 @@ const Sidebar = () => {
             style={{
               position: 'absolute', left: 0, top: '8px', bottom: '8px',
               width: '3px', borderRadius: '0 3px 3px 0',
-              background: 'var(--color-primary)',
+              background: 'var(--color-secondary)',
             }}
           />
         )}
@@ -328,8 +328,8 @@ const Sidebar = () => {
             transition: 'border-color 150ms ease, background 150ms ease',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--indigo-200)';
-            e.currentTarget.style.background = 'var(--color-bg)';
+            e.currentTarget.style.borderColor = 'var(--color-secondary)';
+            e.currentTarget.style.background = 'rgba(255, 107, 53, 0.04)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = 'var(--color-border)';
