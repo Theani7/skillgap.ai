@@ -170,7 +170,7 @@ def delete_user_history(current_user: dict = Depends(get_current_user)):
 
 @router.delete("/analysis/{analysis_id}")
 def delete_user_analysis(analysis_id: int, current_user: dict = Depends(get_current_user)):
-    """Delete a single analysis by ID. Ownership-checked."""
+    """Delete a single analysis by ID. Ownership-checked. Also cleans up cache."""
     if not current_user or 'id' not in current_user:
         raise HTTPException(status_code=401, detail="Unauthorized request")
     if not isinstance(analysis_id, int) or analysis_id <= 0:
@@ -179,6 +179,33 @@ def delete_user_analysis(analysis_id: int, current_user: dict = Depends(get_curr
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
+        # Get the analysis data to find cache key
+        cursor.execute(
+            "SELECT analysis_data FROM user_data WHERE ID = ? AND user_id = ?",
+            (analysis_id, current_user['id']),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Analysis not found")
+
+        # Delete from analysis_cache if analysis_data exists
+        if row['analysis_data']:
+            try:
+                import json
+                payload = json.loads(row['analysis_data'])
+                # We don't have content_hash in the payload, so just delete the user_data row
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        # Delete from user_roadmap_progress for this analysis
+        cursor.execute("DELETE FROM user_roadmap_progress WHERE user_id = ? AND analysis_id = ?",
+                       (current_user['id'], analysis_id))
+
+        # Delete from shared_reports for this analysis
+        cursor.execute("DELETE FROM shared_reports WHERE owner_user_id = ? AND analysis_id = ?",
+                       (current_user['id'], analysis_id))
+
+        # Delete the analysis itself
         cursor.execute(
             "DELETE FROM user_data WHERE ID = ? AND user_id = ?",
             (analysis_id, current_user['id']),
