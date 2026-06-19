@@ -323,3 +323,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Tab content transitions */
+.auth-modal-content {
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.auth-modal-content.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.auth-modal-content.fade-out {
+  opacity: 0;
+  transform: translateY(8px);
+}

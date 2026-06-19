@@ -21,6 +21,7 @@ const strengthColor = ['', 'var(--color-error)', 'var(--color-error)', 'var(--co
 
 const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -177,6 +178,15 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
     }
   };
 
+  const handleTabSwitch = (tab) => {
+    if (tab === activeTab || isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setActiveTab(tab);
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 150);
+  };
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -218,19 +228,20 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
           <div className="auth-modal-tabs">
             <button
               className={`auth-modal-tab ${activeTab === 'login' ? 'active' : ''}`}
-              onClick={() => setActiveTab('login')}
+              onClick={() => handleTabSwitch('login')}
             >
               Sign In
             </button>
             <button
               className={`auth-modal-tab ${activeTab === 'register' ? 'active' : ''}`}
-              onClick={() => setActiveTab('register')}
+              onClick={() => handleTabSwitch('register')}
             >
               Create account
             </button>
           </div>
 
-          {activeTab === 'login' ? (
+          <div className={`auth-modal-content ${isTransitioning ? 'fade-out' : 'fade-in'}`}>
+            {activeTab === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="auth-modal-form" noValidate>
               {registrationSuccess && (
                 <div className="auth-modal-success" role="alert">
@@ -302,7 +313,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
 
               <div className="auth-modal-footer">
                 New here?{' '}
-                <span className="auth-modal-footer-link" onClick={() => setActiveTab('register')}>
+                <span className="auth-modal-footer-link" onClick={() => handleTabSwitch('register')}>
                   Create an account
                 </span>
               </div>
@@ -535,12 +546,13 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
 
               <div className="auth-modal-footer">
                 Already have an account?{' '}
-                <span className="auth-modal-footer-link" onClick={() => setActiveTab('login')}>
+                <span className="auth-modal-footer-link" onClick={() => handleTabSwitch('login')}>
                   Sign in
                 </span>
               </div>
             </form>
           )}
+          </div>
         </div>
       </div>
     </div>
