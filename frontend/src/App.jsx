@@ -15,6 +15,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Admin = lazy(() => import('./pages/Admin'));
 const JobRoles = lazy(() => import('./pages/JobRoles'));
+const Roadmaps = lazy(() => import('./pages/Roadmaps'));
 const AIMonitoring = lazy(() => import('./pages/AIMonitoring'));
 const SharedReport = lazy(() => import('./pages/SharedReport'));
 const MockInterview = lazy(() => import('./pages/MockInterview'));
@@ -97,6 +98,7 @@ const Layout = () => {
             <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
             <Route path="/admin/courses" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
             <Route path="/admin/job-roles" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<JobRoles />)}</ProtectedRoute>} />
+            <Route path="/admin/roadmaps" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Roadmaps />)}</ProtectedRoute>} />
             <Route path="/admin/ai-monitoring" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<AIMonitoring />)}</ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute>{withBoundary(<Profile />)}</ProtectedRoute>} />
             <Route path="/mock-interview" element={<ProtectedRoute excludedRoles={['admin']} redirectTo="/admin">{withBoundary(<MockInterview />)}</ProtectedRoute>} />
