@@ -149,26 +149,13 @@ const Sidebar = () => {
             textDecoration: 'none', overflow: 'hidden',
           }}
         >
-          {!collapsed && (
-            <span style={{
-              fontWeight: 'var(--font-extrabold)', fontSize: '20px',
-              letterSpacing: 'var(--tracking-tight)',
-              color: 'var(--color-text)',
-            }}>
-              Skill<span className="mc-gradient">Gap.ai</span>
-            </span>
-          )}
-          {collapsed && (
-            <div style={{
-              width: '32px', height: '32px', borderRadius: 'var(--radius-md)',
-              background: 'var(--color-secondary)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
-              flexShrink: 0,
-            }}>
-              <Zap size={16} color="white" />
-            </div>
-          )}
+          <span style={{
+            fontWeight: 'var(--font-extrabold)', fontSize: '20px',
+            letterSpacing: 'var(--tracking-tight)',
+            color: 'var(--color-text)',
+          }}>
+            Skill<span className="mc-gradient">Gap.ai</span>
+          </span>
         </Link>
         {!collapsed && (
           <button
@@ -198,20 +185,22 @@ const Sidebar = () => {
             onClick={() => setCollapsed(false)}
             aria-label="Expand sidebar"
             style={{
-              position: 'absolute',
-              top: '20px',
-              right: '-12px',
-              width: '24px', height: '24px', borderRadius: '50%',
-              border: '1px solid var(--color-border)', background: 'var(--color-surface)',
+              width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)', background: 'transparent',
               color: 'var(--color-text-muted)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: 'var(--shadow-sm)',
-              opacity: 0,
-              transition: 'opacity 150ms ease',
+              transition: 'all 150ms ease',
             }}
-            className="sidebar-expand-btn"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--color-bg)';
+              e.currentTarget.style.color = 'var(--color-text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--color-text-muted)';
+            }}
           >
-            <Menu size={12} />
+            <Menu size={14} />
           </button>
         )}
       </div>
@@ -396,9 +385,6 @@ const Sidebar = () => {
       <style>{`
         .sidebar-expand-btn:hover {
           opacity: 1 !important;
-        }
-        aside:hover .sidebar-expand-btn {
-          opacity: 1;
         }
       `}</style>
 
