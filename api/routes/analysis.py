@@ -94,58 +94,61 @@ async def analyze_resume(
     if cache_row:
         # Cache hit - reuse the result but STILL insert a new user_data row
         # so that /api/user/latest-analysis always reflects the latest upload.
+        final_response_payload = None
         try:
             final_response_payload = json.loads(cache_row["result_json"])
         except (json.JSONDecodeError, TypeError):
             logger.warning(f"Corrupt cache entry for {safe_filename}, deleting and re-parsing")
             cursor.execute("DELETE FROM analysis_cache WHERE content_hash = ? AND target_role = ?", (content_hash, t_role))
             conn.commit()
-            cache_row = None
         else:
             logger.info(f"Cache hit for {safe_filename} - reusing result, saving new user_data row")
-        try:
-            sec_token = secrets.token_hex(16)
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            u_id = current_user['id'] if current_user and 'id' in current_user else -1
-            resume_data_c = final_response_payload.get("data", {})
-            skills_c = resume_data_c.get('skills', [])
-            recommended_skills_c = final_response_payload.get("recommended_skills", [])
-            missing_skills_c = final_response_payload.get("missing_skill_names", [])
-            missing_skills_str_c = ", ".join(missing_skills_c) if missing_skills_c else ""
-            resume_score_c = final_response_payload.get("resume_score", 0)
-            predicted_field_c = final_response_payload.get("predicted_field", "")
-            cursor.execute(
-                """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    sec_token,
-                    resume_data_c.get('name') or 'N/A',
-                    resume_data_c.get('email') or 'N/A',
-                    resume_data_c.get('mobile_number') or 'N/A',
-                    resume_data_c.get('name') or 'N/A',
-                    resume_data_c.get('email') or 'N/A',
-                    str(resume_score_c),
-                    timestamp,
-                    str(resume_data_c.get('no_of_pages', 1)),
-                    predicted_field_c,
-                    "Unknown Level",
-                    ", ".join(skills_c) if skills_c else "",
-                    ", ".join(recommended_skills_c) if recommended_skills_c else "",
-                    "Courses mapped via API",
-                    safe_filename,
-                    t_role,
-                    missing_skills_str_c,
-                    u_id,
-                    json.dumps(final_response_payload)
+
+        if final_response_payload is not None:
+            try:
+                sec_token = secrets.token_hex(16)
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                u_id = current_user['id'] if current_user and 'id' in current_user else -1
+                resume_data_c = final_response_payload.get("data", {})
+                skills_c = resume_data_c.get('skills', [])
+                recommended_skills_c = final_response_payload.get("recommended_skills", [])
+                missing_skills_c = final_response_payload.get("missing_skill_names", [])
+                missing_skills_str_c = ", ".join(missing_skills_c) if missing_skills_c else ""
+                resume_score_c = final_response_payload.get("resume_score", 0)
+                predicted_field_c = final_response_payload.get("predicted_field", "")
+                cursor.execute(
+                    """INSERT INTO user_data (sec_token, act_name, act_mail, act_mob, Name, Email_ID, resume_score, Timestamp, Page_no, Predicted_Field, User_level, Actual_skills, Recommended_skills, Recommended_courses, pdf_name, target_role, missing_skills, user_id, analysis_data)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        sec_token,
+                        resume_data_c.get('name') or 'N/A',
+                        resume_data_c.get('email') or 'N/A',
+                        resume_data_c.get('mobile_number') or 'N/A',
+                        resume_data_c.get('name') or 'N/A',
+                        resume_data_c.get('email') or 'N/A',
+                        str(resume_score_c),
+                        timestamp,
+                        str(resume_data_c.get('no_of_pages', 1)),
+                        predicted_field_c,
+                        "Unknown Level",
+                        ", ".join(skills_c) if skills_c else "",
+                        ", ".join(recommended_skills_c) if recommended_skills_c else "",
+                        "Courses mapped via API",
+                        safe_filename,
+                        t_role,
+                        missing_skills_str_c,
+                        u_id,
+                        json.dumps(final_response_payload)
+                    )
                 )
-            )
-            conn.commit()
-        except Exception as db_error:
-            conn.rollback()
-            logger.error(f"Cache-hit user_data insert failed: {db_error}")
-        finally:
-            conn.close()
-        return final_response_payload
+                conn.commit()
+            except Exception as db_error:
+                conn.rollback()
+                logger.error(f"Cache-hit user_data insert failed: {db_error}")
+            finally:
+                conn.close()
+            return final_response_payload
+        conn.close()
 
     tmp_path = None
     try:
@@ -242,20 +245,21 @@ async def analyze_resume(
         missing_skills = resume_data.get('missing_skills', [])
         missing_skills_videos = []
         
-        from api.courses import predict_field_with_ai, SKILL_RECOMMENDATIONS, RESUME_VIDEOS, INTERVIEW_VIDEOS, generate_youtube_search_links, ROADMAPS
+        from api.courses import predict_field_with_ai, generate_youtube_search_links
+        from api.database import get_skill_recommendations, get_roadmaps, get_resume_videos, get_interview_videos
         
         # Call out to our new ML Model to get the closest semantic field
         predicted_field = predict_field_with_ai(resume_data)
         
         
-        dynamic_resume_videos = RESUME_VIDEOS.get('General', [])
-        dynamic_interview_videos = INTERVIEW_VIDEOS.get('General', [])
+        dynamic_resume_videos = get_resume_videos().get('General', [])
+        dynamic_interview_videos = get_interview_videos().get('General', [])
         skill_videos = []
         
         # Extract dynamic roadmap from Gemini payload
         roadmap = resume_data.get('roadmap', [])
         if not roadmap:
-            roadmap = ROADMAPS.get('General', [])
+            roadmap = get_roadmaps().get('General', [])
             
         trends = get_market_trends_for_role('General')
         
@@ -273,7 +277,8 @@ async def analyze_resume(
 
         if mapping_field != "Unknown":
             # Personalized recommendations: only suggest skills the user is actually missing
-            all_field_skills = SKILL_RECOMMENDATIONS.get(mapping_field, [])
+            skill_recs = get_skill_recommendations()
+            all_field_skills = skill_recs.get(mapping_field, [])
             found_skills_lower = {s.lower() for s in (resume_data.get("skills") or [])}
             recommended_skills = [s for s in all_field_skills if s.lower() not in found_skills_lower]
             if not recommended_skills:
@@ -287,10 +292,12 @@ async def analyze_resume(
 
             # Fallback to static roadmap only if dynamic extraction failed
             if not resume_data.get('roadmap', []):
-                roadmap = ROADMAPS.get(mapping_field, ROADMAPS['General'])
+                roadmap = get_roadmaps().get(mapping_field, get_roadmaps().get('General', []))
             trends = get_market_trends_for_role(mapping_field)
-            dynamic_resume_videos = RESUME_VIDEOS.get(mapping_field, RESUME_VIDEOS['General'])
-            dynamic_interview_videos = INTERVIEW_VIDEOS.get(mapping_field, INTERVIEW_VIDEOS['General'])
+            resume_vids = get_resume_videos()
+            interview_vids = get_interview_videos()
+            dynamic_resume_videos = resume_vids.get(mapping_field, resume_vids.get('General', []))
+            dynamic_interview_videos = interview_vids.get(mapping_field, interview_vids.get('General', []))
             # Generate personalized youtube links for missing skills specifically
             skill_videos = generate_youtube_search_links(recommended_skills[:6])
             
@@ -393,3 +400,27 @@ def submit_feedback(feedback: Feedback, current_user: dict = Depends(get_current
     finally:
         conn.close()
     return {"status": "success", "message": "Feedback saved."}
+
+
+@router.get("/api/job-roles")
+def get_public_job_roles():
+    """Get active job roles for the target role selector (no auth required)."""
+    default_roles = [
+        'Software Engineering', 'Frontend Development', 'Backend Development',
+        'Data Science', 'DevOps', 'Mobile Development', 'Full Stack Development',
+        'Cybersecurity',
+    ]
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT title FROM job_roles WHERE is_active = 1 ORDER BY title")
+        rows = cursor.fetchall()
+        db_roles = [row["title"] for row in rows]
+    except Exception:
+        db_roles = []
+    finally:
+        conn.close()
+
+    combined = list(dict.fromkeys(db_roles + default_roles))
+    return {"roles": combined}

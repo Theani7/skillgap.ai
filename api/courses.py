@@ -462,6 +462,9 @@ FIELD_KEYWORDS = {
     }
 }
 
+from api.database import get_field_keywords
+
+
 def predict_field_with_ai(resume_data: dict) -> str:
     """
     Takes the full parsed resume dictionary, and uses a weighted keyword 
@@ -471,8 +474,12 @@ def predict_field_with_ai(resume_data: dict) -> str:
     # Defensive check
     if not resume_data:
         return "Unknown"
+    
+    field_keywords = get_field_keywords()
+    if not field_keywords:
+        return "Unknown"
         
-    scores = {field: 0 for field in FIELD_KEYWORDS.keys()}
+    scores = {field: 0 for field in field_keywords.keys()}
     
     # Extract readable text fields
     skills = resume_data.get('skills', []) or []
@@ -484,7 +491,7 @@ def predict_field_with_ai(resume_data: dict) -> str:
     user_desig_lower = [str(d).lower().strip() for d in designation]
     objective_lower = str(objective).lower()
     
-    for field, keyword_weights in FIELD_KEYWORDS.items():
+    for field, keyword_weights in field_keywords.items():
         for kw, weight in keyword_weights.items():
             kw = kw.lower()
             

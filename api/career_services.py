@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 
 from api.market_data import get_market_trends_for_role
 from api.job_hunt_services import _target_categories_for_role
-from api.skills_taxonomy import SKILLS_TAXONOMY
+from api.database import get_skills_taxonomy
 
 
 # Action verbs that signal strong, results-oriented bullets
@@ -188,8 +188,9 @@ def compute_resume_score_breakdown(resume_data: Dict[str, Any], target_role: str
         if target_role:
             categories = _target_categories_for_role(target_role)
             target_skills_set = set()
+            taxonomy = get_skills_taxonomy()
             for cat in categories:
-                for s in SKILLS_TAXONOMY.get(cat, []):
+                for s in taxonomy.get(cat, []):
                     target_skills_set.add(s.lower())
             relevant_count = sum(1 for s in skills if s.lower() in target_skills_set)
             irrelevant_count = skill_count - relevant_count

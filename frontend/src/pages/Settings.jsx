@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Settings as SettingsIcon, Database, AlertTriangle, LogOut,
   Download, Trash2, RefreshCw, ShieldAlert, ExternalLink, Check, FileDown,
-  Lock, Eye, EyeOff,
+  Lock, Eye, EyeOff, Send, MessageSquare,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
@@ -56,7 +56,7 @@ const Section = (props) => {
 };
 
 const ConfirmModal = (props) => {
-  const { open, onClose, onConfirm, title, message, confirmText, danger = false, busy = false } = props;
+  const { open, onClose, onConfirm, title, message, confirmText, danger = false, busy = false, children } = props;
   return (
     <AnimatePresence>
       {open && (
@@ -97,6 +97,7 @@ const ConfirmModal = (props) => {
             <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: '0 0 24px' }}>
               {message}
             </p>
+            {children}
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 type="button" onClick={onClose} disabled={busy}
@@ -173,6 +174,7 @@ const Settings = () => {
   const [showLogout, setShowLogout] = useState(false);
   const [showClearHistory, setShowClearHistory] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [showContactSupport, setShowContactSupport] = useState(false);
 
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
@@ -186,6 +188,14 @@ const Settings = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [supportForm, setSupportForm] = useState({ subject: '', message: '' });
+  const [supportErrors, setSupportErrors] = useState({});
+  const [supportLoading, setSupportLoading] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -276,6 +286,47 @@ const Settings = () => {
       }
     } finally {
       setPasswordLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setDeleteError('Password is required');
+      return;
+    }
+    setDeleteError('');
+    setDeleteLoading(true);
+    try {
+      await api.delete('/api/user/account', { data: { password: deletePassword } });
+      await logout();
+      navigate('/');
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setDeleteError(typeof detail === 'string' ? detail : 'Failed to delete account');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleContactSupport = async (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!supportForm.subject || supportForm.subject.length < 5) errors.subject = 'Subject must be at least 5 characters';
+    if (!supportForm.message || supportForm.message.length < 10) errors.message = 'Message must be at least 10 characters';
+    if (Object.keys(errors).length > 0) { setSupportErrors(errors); return; }
+
+    setSupportErrors({});
+    setSupportLoading(true);
+    try {
+      await api.post('/api/user/contact-support', supportForm);
+      setSupportForm({ subject: '', message: '' });
+      setShowContactSupport(false);
+      showToast('Support request submitted');
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setSupportErrors({ message: typeof detail === 'string' ? detail : 'Failed to submit' });
+    } finally {
+      setSupportLoading(false);
     }
   };
 
@@ -567,9 +618,29 @@ const Settings = () => {
                 display: 'flex', alignItems: 'center', gap: '4px',
               }}>
                 <ExternalLink size={10} />
-                Account deletion is currently manual - contact support to complete.
+                You will be logged out after deletion.
               </p>
             </div>
+          </Section>
+
+          <Section
+            icon={MessageSquare}
+            title="Contact Support"
+            description="Need help? Send us a message."
+            accent="indigo"
+          >
+            <button
+              onClick={() => setShowContactSupport(true)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                height: '38px', padding: '0 18px', borderRadius: 'var(--radius-md)',
+                background: 'var(--color-primary)', color: 'white',
+                fontSize: '13px', fontWeight: 'var(--font-semibold)',
+                border: 'none', cursor: 'pointer',
+              }}
+            >
+              <Send size={14} /> Send Message
+            </button>
           </Section>
         </div>
       </div>
@@ -596,13 +667,128 @@ const Settings = () => {
 
       <ConfirmModal
         open={showDeleteAccount}
-        onClose={() => setShowDeleteAccount(false)}
-        onConfirm={() => { setShowDeleteAccount(false); showToast('Contact support@skillgap.ai to complete account deletion', 'success'); }}
+        onClose={() => { setShowDeleteAccount(false); setDeletePassword(''); setDeleteError(''); }}
+        onConfirm={handleDeleteAccount}
         title="Delete account?"
-        message="This permanently removes your account and all associated data. This action cannot be undone."
-        confirmText="Got it"
+        message="This permanently removes your account and all associated data. Enter your password to confirm."
+        confirmText="Delete account"
         danger
-      />
+        busy={deleteLoading}
+      >
+        <div style={{ marginTop: '12px', textAlign: 'left' }}>
+          <input
+            type="password"
+            placeholder="Enter your password"
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+            style={{
+              width: '100%', height: '40px', padding: '0 12px',
+              borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
+              background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: '14px',
+              outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+          {deleteError && (
+            <p style={{ fontSize: '12px', color: 'var(--color-error)', margin: '4px 0 0' }}>{deleteError}</p>
+          )}
+        </div>
+      </ConfirmModal>
+
+      <AnimatePresence>
+        {showContactSupport && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowContactSupport(false)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(15, 23, 42, 0.45)',
+              backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '16px', zIndex: 50,
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'var(--color-surface)', borderRadius: 'var(--radius-2xl)',
+                boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)',
+                maxWidth: '480px', width: '100%', padding: '28px',
+              }}
+            >
+              <h3 style={{ fontSize: '18px', fontWeight: 'var(--font-bold)', color: 'var(--color-text)', margin: '0 0 16px' }}>
+                Contact Support
+              </h3>
+              <form onSubmit={handleContactSupport} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 'var(--font-semibold)', color: 'var(--color-text)', display: 'block', marginBottom: '6px' }}>
+                    Subject
+                  </label>
+                  <input
+                    value={supportForm.subject}
+                    onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
+                    placeholder="How can we help?"
+                    style={{
+                      width: '100%', height: '40px', padding: '0 12px',
+                      borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
+                      background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: '14px',
+                      outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                  {supportErrors.subject && (
+                    <p style={{ fontSize: '12px', color: 'var(--color-error)', margin: '4px 0 0' }}>{supportErrors.subject}</p>
+                  )}
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 'var(--font-semibold)', color: 'var(--color-text)', display: 'block', marginBottom: '6px' }}>
+                    Message
+                  </label>
+                  <textarea
+                    value={supportForm.message}
+                    onChange={(e) => setSupportForm({ ...supportForm, message: e.target.value })}
+                    placeholder="Describe your issue or question..."
+                    rows={4}
+                    style={{
+                      width: '100%', padding: '10px 12px',
+                      borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
+                      background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: '14px',
+                      outline: 'none', resize: 'vertical', boxSizing: 'border-box',
+                    }}
+                  />
+                  {supportErrors.message && (
+                    <p style={{ fontSize: '12px', color: 'var(--color-error)', margin: '4px 0 0' }}>{supportErrors.message}</p>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button" onClick={() => setShowContactSupport(false)}
+                    style={{
+                      height: '38px', padding: '0 18px', borderRadius: 'var(--radius-md)',
+                      background: 'transparent', border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-muted)', fontSize: '13px', fontWeight: 'var(--font-semibold)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit" disabled={supportLoading}
+                    style={{
+                      height: '38px', padding: '0 18px', borderRadius: 'var(--radius-md)',
+                      background: 'var(--color-primary)', color: 'white',
+                      fontSize: '13px', fontWeight: 'var(--font-semibold)',
+                      border: 'none', cursor: supportLoading ? 'not-allowed' : 'pointer',
+                      opacity: supportLoading ? 0.7 : 1,
+                    }}
+                  >
+                    {supportLoading ? 'Sending...' : 'Send'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {toast && (
