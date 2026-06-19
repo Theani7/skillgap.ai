@@ -5,7 +5,6 @@ import {
   Zap, Sparkles, Settings, User, Shield, LogOut,
   ChevronLeft, ChevronRight, BarChart3, FileSearch, AlertTriangle, MessageSquare,
   LayoutDashboard, Activity, Users, MessageSquareText, BookOpen, Briefcase, Database,
-  Route,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -75,7 +74,6 @@ const Sidebar = () => {
         { path: '/admin/feedback', icon: MessageSquareText, label: 'Feedback' },
         { path: '/admin/courses', icon: BookOpen, label: 'Courses' },
         { path: '/admin/job-roles', icon: Briefcase, label: 'Job Roles' },
-        { path: '/admin/roadmaps', icon: Route, label: 'Roadmaps' },
         { path: '/admin/ai-monitoring', icon: Database, label: 'AI Monitoring' },
       ],
     });
