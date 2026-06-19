@@ -32,21 +32,24 @@ const PublicTopBar = ({ openAuthModal }) => {
         position: 'sticky', top: 0, zIndex: 30,
         background: 'var(--color-surface)',
         borderBottom: '1px solid var(--color-border)',
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
       }}
+      className="public-topbar"
     >
-      <div
-        style={{
-          maxWidth: '1200px', margin: '0 auto',
-          padding: '0 24px', height: '64px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}
-        className="public-topbar-inner"
-      >
+      <div style={{
+        flex: 1,
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '0 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
         <Link
           to="/"
-          style={{
-            textDecoration: 'none',
-          }}
+          style={{ textDecoration: 'none' }}
         >
           <span style={{
             fontWeight: 'var(--font-extrabold)', fontSize: '20px',
@@ -76,40 +79,47 @@ const PublicTopBar = ({ openAuthModal }) => {
               {link.label}
             </a>
           ))}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              onClick={() => openAuthModal('login')}
-              className="btn btn-primary"
-              style={{
-                padding: '10px 24px',
-                fontSize: '14px',
-                fontWeight: '500',
-                borderRadius: '50px',
-              }}
-            >
-              Log in
-            </button>
-            <button
-              onClick={() => openAuthModal('register')}
-              className="btn btn-secondary"
-              style={{
-                padding: '10px 24px',
-                fontSize: '14px',
-                fontWeight: '500',
-                borderRadius: '50px',
-                background: 'var(--slate-100)',
-                border: '1px solid var(--slate-200)',
-              }}
-            >
-              Sign up
-            </button>
-          </div>
         </nav>
       </div>
 
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        paddingRight: '24px',
+        marginLeft: 'auto',
+      }}>
+        <button
+          onClick={() => openAuthModal('login')}
+          className="btn btn-primary"
+          style={{
+            padding: '10px 24px',
+            fontSize: '14px',
+            fontWeight: '500',
+            borderRadius: '50px',
+          }}
+        >
+          Log in
+        </button>
+        <button
+          onClick={() => openAuthModal('register')}
+          className="btn btn-secondary"
+          style={{
+            padding: '10px 24px',
+            fontSize: '14px',
+            fontWeight: '500',
+            borderRadius: '50px',
+            background: 'var(--slate-100)',
+            border: '1px solid var(--slate-200)',
+          }}
+        >
+          Sign up
+        </button>
+      </div>
+
       <style>{`
-        @media (max-width: 480px) {
-          .public-topbar-inner { padding: 0 16px !important; }
+        @media (max-width: 768px) {
+          .public-topbar nav { display: none !important; }
         }
         html {
           scroll-behavior: smooth;
