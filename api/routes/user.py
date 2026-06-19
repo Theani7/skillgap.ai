@@ -60,6 +60,17 @@ def get_latest_analysis(current_user: dict = Depends(get_current_user)):
             (current_user['id'],),
         )
         row = cursor.fetchone()
+
+        # Fetch role skills info for Core/nice-to-have badges
+        role_skills_info = []
+        if row and row['target_role']:
+            cursor.execute(
+                "SELECT js.skill_name, js.is_required FROM job_role_skills js "
+                "JOIN job_roles jr ON js.job_role_id = jr.id "
+                "WHERE jr.title = ? AND jr.is_active = 1",
+                (row['target_role'],),
+            )
+            role_skills_info = [{"skill": r[0], "is_required": bool(r[1])} for r in cursor.fetchall()]
     finally:
         conn.close()
 
@@ -104,6 +115,7 @@ def get_latest_analysis(current_user: dict = Depends(get_current_user)):
         "target_role": row['target_role'],
         "resume_score": float(row['resume_score']) if row['resume_score'] else 0,
         "analysis": payload,
+        "role_skills": role_skills_info,
     }
 
 

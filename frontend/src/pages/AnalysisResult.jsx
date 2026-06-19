@@ -1058,7 +1058,18 @@ const AnalysisResult = () => {
   const matchScore = analysis?.match_score;
   const resumeScore = analysis?.resume_score ?? data?.resume_score ?? 0;
   const missingSkills = Array.isArray(analysis?.missing_skill_names) ? analysis.missing_skill_names : [];
-  const matchedSkills = Array.isArray(analysis?.data?.matched_role_skills) ? analysis.data.matched_role_skills : (Array.isArray(resumeInfo?.skills) ? resumeInfo.skills : []);
+  const roleSkills = Array.isArray(data?.role_skills) ? data.role_skills : [];
+  const roleSkillsMap = Object.fromEntries(roleSkills.map(rs => [rs.skill.toLowerCase(), rs.is_required]));
+  let matchedSkills = Array.isArray(analysis?.data?.matched_role_skills) && analysis.data.matched_role_skills.length > 0
+    ? analysis.data.matched_role_skills
+    : (Array.isArray(resumeInfo?.skills) ? resumeInfo.skills : []);
+  // If matchedSkills are plain strings (old format), annotate with is_required from role_skills
+  if (matchedSkills.length > 0 && typeof matchedSkills[0] === 'string') {
+    matchedSkills = matchedSkills.map(s => ({
+      skill: s,
+      is_required: roleSkillsMap[s.toLowerCase()] || false,
+    }));
+  }
   const feedbackMsgs = Array.isArray(analysis?.feedback) ? analysis.feedback : [];
   const tutorials = Array.isArray(analysis?.videos?.tutorials) ? analysis.videos.tutorials : [];
   const roadmap = analysis?.roadmap;
