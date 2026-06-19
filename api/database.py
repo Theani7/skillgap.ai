@@ -519,15 +519,17 @@ def init_db():
             )
         ''')
 
-        if os.getenv("SEED_DEMO", "0") == "1":
-            cursor.execute("SELECT id FROM users WHERE username = 'admin'")
+        admin_user = os.getenv("ADMIN_USERNAME", "")
+        admin_pass = os.getenv("ADMIN_PASSWORD", "")
+        if admin_user and admin_pass:
+            cursor.execute("SELECT id FROM users WHERE username = ?", (admin_user,))
             if cursor.fetchone() is None:
                 from api.security import get_password_hash
-                default_hashed = get_password_hash("admin123")
+                hashed = get_password_hash(admin_pass)
                 cursor.execute('''
                     INSERT INTO users (username, email, full_name, hashed_password, role)
                     VALUES (?, ?, ?, ?, ?)
-                ''', ("admin", "admin@analyzer.com", "System Admin", default_hashed, "admin"))
+                ''', (admin_user, f"{admin_user}@skillgap.ai", "System Admin", hashed, "admin"))
 
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_user_id ON user_data(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_timestamp ON user_data(Timestamp)")

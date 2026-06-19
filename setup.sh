@@ -27,8 +27,10 @@ JWT_SECRET_KEY=dev-secret-key-change-in-production-min-32-chars!!
 DB_FILE=api/cv.db
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ENV=development
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
 EOF
-    echo "Created .env - add your GEMINI_API_KEY if you have one"
+    echo "Created .env - set ADMIN_USERNAME and ADMIN_PASSWORD for your admin account"
 fi
 
 echo ""
