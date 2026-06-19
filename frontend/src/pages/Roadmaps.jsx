@@ -2,17 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Route, ChevronDown, ChevronRight, Trash2, X, CheckCircle, AlertTriangle,
-  Plus, Sparkles, Clipboard, Layers, Clock, Target,
+  Plus, Sparkles, Clock, Target,
 } from 'lucide-react';
 import api from '../services/api';
 import PageLoader from '../components/Skeleton';
 
-const fieldStyle = (focus) => ({
-  width: '100%', height: '40px', padding: '0 12px',
-  border: `1px solid ${focus ? 'var(--color-primary)' : 'var(--color-border)'}`,
-  borderRadius: 'var(--radius-lg)', fontSize: '14px', color: 'var(--color-text)',
-  background: 'var(--color-surface)', outline: 'none',
-});
+const inputStyle = {
+  width: '100%', height: '36px', padding: '0 10px',
+  border: '1px solid var(--color-border)', borderRadius: '8px',
+  fontSize: '13px', color: 'var(--color-text)', background: 'var(--color-surface)', outline: 'none',
+};
 
 const Roadmaps = () => {
   const [loading, setLoading] = useState(true);
@@ -21,17 +20,19 @@ const Roadmaps = () => {
   const [expandedRole, setExpandedRole] = useState(null);
   const [expandedRoadmap, setExpandedRoadmap] = useState(null);
   const [toast, setToast] = useState(null);
-  const [templates, setTemplates] = useState({});
-  const [showImport, setShowImport] = useState(null);
-  const [bulkText, setBulkText] = useState('');
-  const [bulkTitle, setBulkTitle] = useState('');
   const [generating, setGenerating] = useState(false);
-  const toastTimerRef = { current: null };
+
+  // New roadmap form
+  const [showNewForm, setShowNewForm] = useState(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [newWeeks, setNewWeeks] = useState(4);
+  const [newSteps, setNewSteps] = useState([]);
+  const [stepTitle, setStepTitle] = useState('');
+  const [stepSkills, setStepSkills] = useState('');
 
   const showToast = (type, message) => {
     setToast({ type, message });
-    clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToast(null), 3500);
+    setTimeout(() => setToast(null), 3500);
   };
 
   const fetchRoles = useCallback(async () => {
@@ -66,43 +67,42 @@ const Roadmaps = () => {
     }
   };
 
-  const fetchTemplates = async (roleId) => {
-    try {
-      const res = await api.get('/api/admin/roadmap-templates');
-      setTemplates(res.data.templates || {});
-      setShowImport(roleId);
-    } catch {
-      showToast('error', 'Failed to load templates.');
-    }
+  const handleAddStep = () => {
+    if (!stepTitle.trim()) return;
+    setNewSteps([...newSteps, { title: stepTitle.trim(), skills: stepSkills.trim() }]);
+    setStepTitle('');
+    setStepSkills('');
   };
 
-  const handleImportTemplate = async (roleId, template) => {
-    try {
-      await api.post(`/api/admin/job-roles/${roleId}/roadmaps`, template);
-      showToast('success', 'Template imported.');
-      setShowImport(null);
-      await fetchRoadmaps(roleId);
-    } catch {
-      showToast('error', 'Failed to import template.');
-    }
+  const handleRemoveStep = (idx) => {
+    setNewSteps(newSteps.filter((_, i) => i !== idx));
   };
 
-  const handleBulkImport = async (roleId) => {
-    if (!bulkText.trim()) { showToast('error', 'Paste roadmap steps.'); return; }
+  const handleCreateRoadmap = async (roleId) => {
+    if (!newTitle.trim()) { showToast('error', 'Title required.'); return; }
+    if (newSteps.length === 0) { showToast('error', 'Add at least one step.'); return; }
     try {
-      const res = await api.post(`/api/admin/job-roles/${roleId}/roadmaps/bulk`, {
-        title: bulkTitle || 'Imported Roadmap',
+      const steps = newSteps.map((s, i) => ({
+        title: s.title,
         description: '',
-        duration_weeks: 12,
-        steps_text: bulkText,
+        duration_weeks: 2,
+        skills: s.skills,
+        resources: '',
+      }));
+      await api.post(`/api/admin/job-roles/${roleId}/roadmaps`, {
+        title: newTitle,
+        description: '',
+        duration_weeks: newWeeks,
+        steps,
       });
-      showToast('success', `Imported ${res.data.steps_imported} steps.`);
-      setBulkText('');
-      setBulkTitle('');
-      setShowImport(null);
+      showToast('success', 'Roadmap created.');
+      setShowNewForm(null);
+      setNewTitle('');
+      setNewWeeks(4);
+      setNewSteps([]);
       await fetchRoadmaps(roleId);
-    } catch (err) {
-      showToast('error', err.response?.data?.detail || 'Import failed.');
+    } catch {
+      showToast('error', 'Failed to create roadmap.');
     }
   };
 
@@ -138,7 +138,7 @@ const Roadmaps = () => {
         <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text)', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Route size={22} color="var(--color-primary)" /> Career Roadmaps
         </h1>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>Manage career roadmaps for each job role.</p>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>Create and manage roadmaps for each job role.</p>
       </div>
 
       {roles.length === 0 ? (
@@ -159,15 +159,10 @@ const Roadmaps = () => {
                   {expandedRole === role.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontWeight: '600', fontSize: '15px', color: 'var(--color-text)' }}>{role.title}</span>
-                    {role.category && (
-                      <span style={{ padding: '2px 8px', borderRadius: '10px', background: 'var(--color-bg)', fontSize: '11px', color: 'var(--color-text-muted)' }}>{role.category}</span>
-                    )}
-                  </div>
+                  <span style={{ fontWeight: '600', fontSize: '15px', color: 'var(--color-text)' }}>{role.title}</span>
                   <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
                     <span>{role.skills?.length || 0} skills</span>
-                    <span>{role.roadmap_count || 0} roadmaps</span>
+                    <span>{roadmaps[role.id]?.length || role.roadmap_count || 0} roadmaps</span>
                   </div>
                 </div>
               </div>
@@ -177,30 +172,91 @@ const Roadmaps = () => {
                 {expandedRole === role.id && (
                   <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} style={{ overflow: 'hidden', borderTop: '1px solid var(--color-border)' }}>
                     <div style={{ padding: '16px 20px' }}>
-                      {/* Skills */}
-                      {role.skills?.length > 0 && (
-                        <div style={{ marginBottom: '16px' }}>
-                          <p style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-text-muted)', margin: '0 0 8px' }}>Required Skills</p>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {role.skills.map((s) => (
-                              <span key={s.id} style={{ padding: '4px 10px', borderRadius: '12px', background: 'var(--color-bg)', fontSize: '12px', color: 'var(--color-text)' }}>{s.skill_name}</span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
                       {/* Action Buttons */}
-                      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                        <button onClick={() => fetchTemplates(role.id)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px' }}>
-                          <Layers size={12} /> Import Template
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                        <button
+                          onClick={() => { setShowNewForm(showNewForm === role.id ? null : role.id); setNewTitle(''); setNewWeeks(4); setNewSteps([]); }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--color-border)', background: showNewForm === role.id ? 'var(--color-primary)' : 'var(--color-surface)', color: showNewForm === role.id ? 'white' : 'var(--color-text)', cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}
+                        >
+                          <Plus size={12} /> {showNewForm === role.id ? 'Cancel' : 'Add Roadmap'}
                         </button>
-                        <button onClick={() => { setShowImport(role.id); setBulkText(''); setBulkTitle(''); }} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px' }}>
-                          <Clipboard size={12} /> Bulk Import
-                        </button>
-                        <button onClick={() => handleAIGenerate(role.id)} disabled={generating} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: 'none', background: generating ? 'var(--color-text-light)' : 'var(--color-primary)', color: 'white', cursor: generating ? 'not-allowed' : 'pointer', fontSize: '12px' }}>
+                        <button
+                          onClick={() => handleAIGenerate(role.id)}
+                          disabled={generating}
+                          style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', border: 'none', background: generating ? 'var(--color-text-light)' : 'var(--color-secondary)', color: 'white', cursor: generating ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: '500' }}
+                        >
                           <Sparkles size={12} /> {generating ? 'Generating...' : 'AI Generate'}
                         </button>
                       </div>
+
+                      {/* New Roadmap Form */}
+                      <AnimatePresence>
+                        {showNewForm === role.id && (
+                          <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} style={{ overflow: 'hidden', marginBottom: '16px' }}>
+                            <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                              <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                                <input
+                                  placeholder="Roadmap title"
+                                  value={newTitle}
+                                  onChange={(e) => setNewTitle(e.target.value)}
+                                  style={{ ...inputStyle, flex: 2 }}
+                                />
+                                <input
+                                  type="number"
+                                  placeholder="Weeks"
+                                  value={newWeeks}
+                                  onChange={(e) => setNewWeeks(parseInt(e.target.value) || 4)}
+                                  style={{ ...inputStyle, width: '80px' }}
+                                />
+                              </div>
+
+                              {/* Steps List */}
+                              {newSteps.length > 0 && (
+                                <div style={{ marginBottom: '10px' }}>
+                                  {newSteps.map((step, idx) => (
+                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', borderBottom: idx < newSteps.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+                                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', minWidth: '18px' }}>#{idx + 1}</span>
+                                      <span style={{ flex: 1, fontSize: '13px' }}>{step.title}</span>
+                                      {step.skills && <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{step.skills}</span>}
+                                      <button onClick={() => handleRemoveStep(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)', padding: 0 }}><X size={12} /></button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Add Step Row */}
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <input
+                                  placeholder="Step title"
+                                  value={stepTitle}
+                                  onChange={(e) => setStepTitle(e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
+                                  style={{ ...inputStyle, flex: 2, height: '32px', fontSize: '12px' }}
+                                />
+                                <input
+                                  placeholder="Skills (comma)"
+                                  value={stepSkills}
+                                  onChange={(e) => setStepSkills(e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
+                                  style={{ ...inputStyle, flex: 1, height: '32px', fontSize: '12px' }}
+                                />
+                                <button onClick={handleAddStep} style={{ padding: '0 10px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', cursor: 'pointer', fontSize: '12px' }}>
+                                  <Plus size={14} />
+                                </button>
+                              </div>
+
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                                <button
+                                  onClick={() => handleCreateRoadmap(role.id)}
+                                  style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', background: 'var(--color-primary)', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                                >
+                                  Create Roadmap ({newSteps.length} steps)
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
                       {/* Roadmaps List */}
                       {roadmaps[role.id]?.length > 0 ? (
@@ -226,28 +282,25 @@ const Roadmaps = () => {
                                 </button>
                               </div>
 
-                              {/* Roadmap Steps */}
+                              {/* Steps */}
                               <AnimatePresence>
                                 {expandedRoadmap === rm.id && rm.steps?.length > 0 && (
                                   <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} style={{ overflow: 'hidden', borderTop: '1px solid var(--color-border)' }}>
                                     <div style={{ padding: '0 16px 12px' }}>
                                       {rm.steps.map((step, idx) => (
                                         <div key={step.id} style={{ display: 'flex', gap: '12px', padding: '10px 0', borderBottom: idx < rm.steps.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
-                                          <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '600', flexShrink: 0 }}>
+                                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '600', flexShrink: 0 }}>
                                             {step.step_number}
                                           </div>
                                           <div style={{ flex: 1 }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                               <span style={{ fontWeight: '600', fontSize: '13px', color: 'var(--color-text)' }}>{step.title}</span>
-                                              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{step.duration_weeks} weeks</span>
+                                              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{step.duration_weeks}w</span>
                                             </div>
-                                            {step.description && (
-                                              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-muted)' }}>{step.description}</p>
-                                            )}
                                             {step.skills && (
-                                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                                                 {step.skills.split(',').map((s, i) => (
-                                                  <span key={i} style={{ padding: '2px 8px', borderRadius: '10px', background: 'var(--color-surface)', fontSize: '10px', color: 'var(--color-text-muted)' }}>{s.trim()}</span>
+                                                  <span key={i} style={{ padding: '2px 6px', borderRadius: '8px', background: 'var(--color-surface)', fontSize: '10px', color: 'var(--color-text-muted)' }}>{s.trim()}</span>
                                                 ))}
                                               </div>
                                             )}
@@ -262,53 +315,8 @@ const Roadmaps = () => {
                           ))}
                         </div>
                       ) : (
-                        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>No roadmaps yet. Use the buttons above to add one.</p>
+                        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>No roadmaps yet.</p>
                       )}
-
-                      {/* Template Import Panel */}
-                      <AnimatePresence>
-                        {showImport === role.id && (
-                          <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} style={{ overflow: 'hidden', marginTop: '12px' }}>
-                            <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                <h4 style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>Import Roadmap</h4>
-                                <button onClick={() => setShowImport(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}><X size={16} /></button>
-                              </div>
-
-                              {templates[role.title] ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '0 0 8px' }}>Select a template to import:</p>
-                                  {templates[role.title].map((tpl, idx) => (
-                                    <div key={idx} style={{ padding: '10px 12px', borderRadius: '6px', background: 'var(--color-bg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                      <div>
-                                        <span style={{ fontWeight: '600', fontSize: '13px' }}>{tpl.title}</span>
-                                        <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--color-text-muted)' }}>{tpl.duration_weeks} weeks · {tpl.steps.length} steps</span>
-                                      </div>
-                                      <button onClick={() => handleImportTemplate(role.id, tpl)} style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', background: 'var(--color-primary)', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>Import</button>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div>
-                                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '0 0 8px' }}>
-                                    Bulk import: one step per line, format: <code>Title | Description | Weeks | Skills | Resources</code>
-                                  </p>
-                                  <input placeholder="Roadmap title" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)} style={{ ...fieldStyle(false), marginBottom: '8px' }} />
-                                  <textarea
-                                    placeholder={"Programming Fundamentals | Learn core concepts | 4 | Python,OOP | https://youtube.com/..."}
-                                    value={bulkText}
-                                    onChange={(e) => setBulkText(e.target.value)}
-                                    style={{ ...fieldStyle(false), height: '120px', padding: '10px 12px', resize: 'vertical', fontFamily: 'monospace', fontSize: '12px' }}
-                                  />
-                                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
-                                    <button onClick={() => handleBulkImport(role.id)} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: 'var(--color-primary)', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>Import</button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </div>
                   </motion.div>
                 )}
