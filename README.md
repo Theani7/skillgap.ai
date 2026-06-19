@@ -1,125 +1,116 @@
-# SkillGap.ai - AI-Powered Resume Analyzer & Career Coach
+# SkillGap.ai
 
-An enterprise-grade, full-stack SaaS platform that leverages advanced Natural Language Processing (NLP) and Generative AI to analyze resumes, predict career trajectories, and generate personalized, actionable learning roadmaps.
+> AI-powered resume analysis, career coaching, and skill gap identification platform.
 
----
-
-## Table of Contents
-
-- [What is SkillGap.ai?](#what-is-skillgapai)
-- [Why Use SkillGap.ai?](#why-use-skillgapai)
-- [Core Features](#core-features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [API Documentation](#api-documentation)
-- [Usage Guide](#usage-guide)
-- [Security](#security)
-- [Future Roadmap](#future-roadmap)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-yellow.svg)](https://www.python.org/)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
 
 ---
 
-## What is SkillGap.ai?
+## Overview
 
-SkillGap.ai transforms the traditional, static resume review process into a dynamic, data-driven career coaching experience. By parsing a user's uploaded PDF or DOCX resume, the platform evaluates their current skills against real-time industry demands. It acts as an autonomous career coach, providing:
+SkillGap.ai is a full-stack SaaS platform that transforms static resume reviews into data-driven career coaching. It parses PDF/DOCX resumes, evaluates skills against real-time industry demands, and generates personalized learning roadmaps using NLP and Generative AI.
 
-- A personalized **Resume Score**
-- Identification of **critical knowledge gaps**
-- A step-by-step **learning curriculum** to help achieve target roles
-- **job market insights** including demand projections and salary trends
+### Who It's For
 
-### Who is this for?
-
-- **Job Seekers**: Looking to improve their resume and land their dream role
-- **Career Changers**: Transitioning into tech from another industry
-- **Recruiters**: Evaluating candidate fit for open positions
-- **Hiring Managers**: Understanding market trends and skill requirements
+| Audience | Use Case |
+|----------|----------|
+| **Job Seekers** | Improve resume, identify skill gaps, prepare for interviews |
+| **Career Changers** | Plan transition path into tech roles |
+| **Recruiters** | Evaluate candidate fit against job requirements |
+| **Hiring Managers** | Understand market trends and skill demands |
 
 ---
 
-## Why Use SkillGap.ai?
+## Features
 
-In today's competitive job market, candidates often struggle to:
+### Resume Analysis
+- Multi-format parsing (PDF, DOCX) with magic-byte validation
+- 22 predefined target roles (Data Science, Web Development, DevOps, Cloud Engineering, AI/ML, Cybersecurity, Mobile Development, and 15 more)
+- Skills classified as **required** (6 per role) and **nice-to-have** (9 per role)
+- Resume score breakdown across 5 dimensions with weighted scoring
+- Required skills weighted 2.4x in match score calculation
 
-| Problem | SkillGap.ai Solution |
-|--------|---------------------|
-| Uncertain if resume meets industry standards | Objective, AI-evaluated Resume Score |
-| Not knowing what skills are in demand | Real-time industry analytics |
-| Generic career advice doesn't address individual needs | Personalized, AI-generated learning roadmaps |
-| No way to track progress over time | Historical dashboard with score progression |
-| Difficulty aligning resume with target roles | Targeted role evaluation and recommendations |
+### AI-Powered Career Coaching
+- 4-phase learning roadmap generation (via Google Gemini or local fallback)
+- Interactive roadmap progress tracking with skill-level checkpoints
+- Actionable learning recommendations per skill gap
+- Course suggestions from Coursera and Udemy with platform-branded thumbnails
 
----
+### Career Toolkit
+- **Mock Interview** — Practice mode (static questions) + AI mode (dynamic, LLM-generated)
+- **Job Matches** — Market-aligned job suggestions with role fit scores
+- **Resume Rewrite** — Rewrites experience bullets with stronger action/outcome framing
+- **JD Comparator** — Keyword coverage analysis against job descriptions
+- **Project Optimizer** — Portfolio project recommendations based on skill gaps
+- **Team Ranking** — Rank multiple candidates with unified scoring
 
-## Core Features
+### User Dashboard
+- Historical analysis tracking with score progression charts
+- Skill trends visualization (learned vs. missing over time)
+- Roadmap progress persistence across sessions
+- Account settings with password change and self-deletion
 
-### 1. Intelligent Resume Parsing & Analysis
-- **Multi-Format Support**: Seamlessly parses text and metadata from PDF and DOCX files
-- **Target Role Evaluation**: Select from industries like Data Science, Web Development, DevOps, etc.
-- **Micro-Skill Extraction**: Identifies both possessed skills and **Crucial Missing Skills**
+### Market Intelligence
+- Skill demand trends by role (area, bar, and pie charts)
+- Salary ranges and job posting trends
+- Workplace distribution (remote/hybrid/onsite)
+- Regional market comparisons
 
-### 2. AI-Powered Career Coaching
-- **Dynamic Learning Roadmaps**: 4-phase chronological curriculum generated by Google Gemini
-- **Actionable Steps**: Focused on closing the gap between current skills and desired role
-- **Interactive Checklist**: Track progress with expandable phases and checkable steps
-
-### 3. Advanced Career Toolkit
-- **Explainable Scoring**: Weighted breakdown + evidence per criterion
-- **Job Match Feed**: Market-aligned job suggestions with role fit scores
-- **Mock Interview Copilot**: Auto-generated behavioral + technical questions
-- **Resume Rewrite Mode**: Rewrites experience bullets with stronger action/outcome framing
-- **Team Candidate Ranking**: Rank multiple candidates with unified scores
-- **JD Comparator**: Keyword coverage analysis against job descriptions
-- **Project Optimizer**: Portfolio project recommendations
-
-### 4. User Dashboard & History Ledger
-- **Data Persistence**: All analysis runs saved securely to SQLite
-- **Progress Tracking**: Area Chart plotting Resume Score over time
-- **Component Analysis**: Radar Chart visualizing strengths (ATS Match, Formatting, Keywords, Experience, Education)
-- **Interactive Ledger**: Replay past analyses and roadmaps
-
-### 5. Industry Analytics Dashboard
-- **Job Demand Projection**: Historical and projected market demand
-- **Highest Paying Skills**: Salary data for top skills
-- **Workplace Environment**: Remote vs. Hybrid vs. On-site splits
-- **Top Competitive Hubs**: Regional salary comparisons
-
-### 6. Admin Command Center
-- **Overview Metrics**: Total users, resumes analyzed, average scores
-- **Market Intelligence**: Most Sought-After Role, Top Missing Skill
-- **User Management**: View users and read feedback
+### Admin Panel
+- **Dashboard** — Total users, resumes analyzed, average scores, upload trends
+- **User Management** — Search, role toggle, activate/deactivate accounts
+- **Resume Logs** — Paginated resume detail view with delete
+- **Feedback** — Sentiment analysis (positive/negative/neutral ratio), color-coded ratings, distribution chart
+- **Courses** — CRUD for course recommendations per role
+- **Job Roles** — Read-only predefined roles with inline course management
+- **Market Data** — Role-specific skill demand, salary trends, workforce distribution
+- **AI Monitoring** — Analysis cache management, API usage tracking
+- **Audit Logs** — Full activity audit trail
+- **Data Export** — CSV export for any table
+- **Taxonomy** — Skills, roadmaps, role configs, video resources management
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-| Technology | Purpose |
-|------------|---------|
-| React 19.x | UI Framework |
-| Vite 7.x | Build Tool & Dev Server |
-| React Router DOM 7.x | Client-side Routing |
-| Recharts | Data Visualization |
-| Framer Motion | Animations |
-| Axios | HTTP Client |
-| Lucide React | Icon Library |
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 19.x | UI framework |
+| Vite | 7.x | Build tool and dev server |
+| React Router DOM | 7.x | Client-side routing |
+| Recharts | — | Data visualization (area, bar, pie, radar charts) |
+| Framer Motion | — | Animations and transitions |
+| Lucide React | — | Icon library |
+| Axios | — | HTTP client |
 
 ### Backend
-| Technology | Purpose |
-|------------|---------|
-| Python 3.9+ | Runtime |
-| FastAPI 0.115.x | Web Framework |
-| Uvicorn | ASGI Server |
-| SQLite | Database (WAL mode) |
-| llama-cpp-python | Local LLM (Qwen2-0.5B) |
-| google-generativeai | Google Gemini AI (optional) |
-| PyJWT | JWT Handling |
-| bcrypt | Password Hashing |
 
-### Local AI Model
-- **Qwen2-0.5B-Instruct** (Q4_K_M quantized, 379MB)
-- Runs offline for resume parsing when Gemini API is unavailable
-- Stored in `api/llm/qwen2-0_5b-instruct-q4_k_m.gguf`
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Python | 3.9+ | Runtime |
+| FastAPI | 0.115+ | Web framework |
+| Uvicorn | — | ASGI server |
+| SQLite | — | Database (WAL mode, 40+ tables) |
+| SQLAlchemy | 2.0+ | Database engine |
+| PyJWT | 2.10+ | JWT token management |
+| bcrypt | 4.2+ | Password hashing |
+| Google Generative AI | 0.8+ | Gemini API (optional) |
+| llama-cpp-python | 0.3+ | Local LLM runtime |
+| PyMuPDF | 1.24+ | PDF parsing |
+| python-docx | 1.1+ | DOCX parsing |
+| defusedxml | 0.7+ | Safe XML parsing |
+
+### AI Models
+
+| Model | Size | Usage |
+|-------|------|-------|
+| **Google Gemini 2.0 Flash** | Cloud | Primary analysis, roadmap generation, interview questions |
+| **Qwen2-0.5B-Instruct** (Q4_K_M) | 379MB | Offline fallback for resume parsing |
 
 ---
 
@@ -127,28 +118,72 @@ In today's competitive job market, candidates often struggle to:
 
 ```
 skillgap.ai/
-├── api/                        # Backend (FastAPI)
-│   ├── main.py                 # FastAPI app entry point
-│   ├── local_llm.py            # Local LLM (Qwen2) integration
-│   ├── extractor.py            # Resume text extraction
-│   ├── career_services.py      # AI career coaching logic
-│   ├── job_hunt_services.py    # Job matching services
-│   ├── auth.py                 # JWT & password utilities
-│   ├── database.py             # SQLAlchemy setup
-│   └── llm/                    # Local model storage
-│       └── qwen2-0_5b-instruct-q4_k_m.gguf
+├── api/                            # Backend (FastAPI)
+│   ├── main.py                     # App entry, routes, middleware, CORS
+│   ├── database.py                 # Schema, migrations, seeding, caching
+│   ├── auth.py                     # JWT creation/validation, auth dependencies
+│   ├── security.py                 # Password hashing (bcrypt)
+│   ├── extractor.py                # Resume text extraction (PDF/DOCX/Gemini)
+│   ├── local_llm.py                # Local Qwen2 model integration
+│   ├── career_services.py          # Resume scoring, skill analysis
+│   ├── job_hunt_services.py        # Job matching, JD comparison
+│   ├── courses.py                  # Course data, skill recommendations
+│   ├── market_data.py              # Market trend data + cache
+│   ├── mock_interview.py           # Static interview questions
+│   ├── mock_interview_ai.py        # AI-generated interview sessions
+│   ├── course_scraper.py           # Coursera scraping, Udemy fallback
+│   ├── scraper.py                  # Market data simulation
+│   ├── requirements.txt            # Python dependencies
+│   ├── routes/
+│   │   ├── admin.py                # Admin CRUD, audit, export, scrape
+│   │   ├── auth.py                 # Register, login, logout, refresh, password
+│   │   ├── user.py                 # Profile, preferences, history, analysis
+│   │   ├── analysis.py             # Resume analysis pipeline
+│   │   └── jobs.py                 # Job matches, interview, JD compare
+│   ├── data/
+│   │   └── mock_questions.json     # Static interview questions
+│   └── llm/
+│       └── qwen2-0_5b-instruct-q4_k_m.gguf  # Local model (379MB)
 │
-├── frontend/                   # Frontend (React)
+├── frontend/                       # Frontend (React + Vite)
 │   ├── src/
-│   │   ├── pages/              # Route components
-│   │   ├── components/         # Reusable UI
-│   │   └── context/            # Auth state
+│   │   ├── App.jsx                 # Routes (lazy-loaded)
+│   │   ├── main.jsx                # Entry point
+│   │   ├── pages/
+│   │   │   ├── Landing.jsx         # Public landing page
+│   │   │   ├── Analyzer.jsx        # Resume upload + analysis
+│   │   │   ├── AnalysisResult.jsx  # Results (7 tabs)
+│   │   │   ├── MockInterview.jsx   # Mock interview (Practice + AI)
+│   │   │   ├── Admin.jsx           # Admin dashboard
+│   │   │   ├── Settings.jsx        # User settings
+│   │   │   ├── Profile.jsx         # User profile + skill trends
+│   │   │   ├── Dashboard.jsx       # User dashboard
+│   │   │   ├── JobRoles.jsx        # Admin job role management
+│   │   │   ├── AIMonitoring.jsx    # Admin AI monitoring
+│   │   │   └── SharedReport.jsx    # Shared report viewer
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx          # Public navigation bar
+│   │   │   ├── Sidebar.jsx         # App sidebar (collapsible)
+│   │   │   ├── AuthModal.jsx       # Login/register modal
+│   │   │   ├── ErrorBoundary.jsx   # Error recovery UI
+│   │   │   ├── ProtectedRoute.jsx  # Auth guard (roles + exclusions)
+│   │   │   ├── Roadmap.jsx         # Interactive roadmap
+│   │   │   ├── TrendDashboard.jsx  # Market trend charts
+│   │   │   └── Skeleton.jsx        # Loading skeletons
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx     # Auth state management
+│   │   ├── services/
+│   │   │   └── api.js              # Axios instance + interceptors
+│   │   └── styles/
+│   │       ├── theme.css           # Design tokens + global styles
+│   │       └── animations.css      # Keyframe animations
 │   └── package.json
 │
-├── setup.sh                    # One-time setup script
-├── package.json                # Root scripts (setup, dev)
-├── .env                        # Environment variables
-└── venvapp/                    # Python virtual environment
+├── setup.sh                        # Cross-platform setup script
+├── run.js                          # Cross-platform npm script helper
+├── package.json                    # Root scripts (setup, dev, build)
+├── .env.example                    # Environment variable template
+└── venvapp/                        # Python virtual environment
 ```
 
 ---
@@ -159,43 +194,71 @@ skillgap.ai/
 
 - **Node.js** v18+ (v22 recommended)
 - **Python** v3.9+
-- **Google Gemini API Key** (Optional - app works without it using local Qwen2-0.5B model)
+- **Google Gemini API key** (optional — app works without it using local Qwen2-0.5B model)
 
-### Quick Start (Recommended)
+### Quick Start
 
 ```bash
-# Clone the repo
+# Clone the repository
 git clone https://github.com/Theani7/skillgap.ai.git
 cd skillgap.ai
 
-# Setup everything (venv, Python deps, Node deps, .env)
+# One-time setup (creates venv, installs all dependencies, creates .env)
 npm run setup
 
 # Start both backend and frontend
 npm run dev
 ```
 
-That's it! The app runs at:
+The application will be available at:
 - **Frontend**: http://localhost:5173
-- **Backend**: http://localhost:8000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
-### Available Commands
+### NPM Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run setup` | One-time setup: creates venv, installs all dependencies |
+| `npm run setup` | One-time setup: creates venv, installs Python + Node dependencies |
 | `npm run dev` | Starts backend + frontend in parallel |
 | `npm run dev:backend` | Starts only the backend server |
 | `npm run dev:frontend` | Starts only the frontend dev server |
-| `npm run build` | Build frontend for production |
+| `npm run build` | Production build of the frontend |
+| `npm run lint` | Run ESLint on frontend code |
 
-### Option B: Docker
+### Environment Variables
 
-```bash
-docker compose up --build
+Create a `.env` file in the project root (or copy `.env.example`):
+
+```env
+# Required for AI features
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Security (required in production)
+JWT_SECRET_KEY=at-least-32-random-characters-please
+
+# Database
+DB_FILE=api/cv.db
+
+# CORS
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+
+# Environment
+ENV=development
+
+# Admin account (auto-created on first boot if both set)
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
 ```
 
-### Option C: Manual Setup
+Optional:
+```env
+MARKET_DATA_PROVIDER=theirstack
+THEIRSTACK_API_KEY=your_key
+RATE_LIMIT_PER_MINUTE=120
+```
+
+### Manual Setup
 
 <details>
 <summary>Manual setup instructions</summary>
@@ -204,7 +267,8 @@ docker compose up --build
 
 ```bash
 python3 -m venv venvapp
-source venvapp/bin/activate
+source venvapp/bin/activate          # macOS/Linux
+# venvapp\Scripts\activate           # Windows
 pip install -r api/requirements.txt
 uvicorn api.main:app --reload --port 8000
 ```
@@ -221,98 +285,182 @@ npm run dev
 
 ---
 
-## API Documentation
+## API Reference
 
-Once the backend is running, visit:
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
+### Authentication
 
-### Key Endpoints
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/auth/register` | Create new user account | No |
+| POST | `/api/auth/login` | Authenticate (returns httpOnly cookies) | No |
+| POST | `/api/auth/logout` | Invalidate refresh token | Yes |
+| POST | `/api/auth/refresh` | Rotate refresh token | Cookie |
+| POST | `/api/auth/change-password` | Change password | Yes |
+| GET | `/api/auth/me` | Get current user profile | Cookie |
+| GET | `/api/auth/check-username/{username}` | Check username availability | No |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Create new user |
-| POST | `/api/auth/login` | Authenticate & get token |
-| POST | `/api/analyze` | Upload & analyze resume |
-| GET | `/api/user/history` | Get upload history |
-| POST | `/api/jobs/matches` | Job match feed |
-| POST | `/api/interview/copilot` | Mock interview questions |
-| POST | `/api/rewrite-resume` | Resume bullet rewriting |
-| POST | `/api/team/rank-candidates` | Candidate ranking |
-| GET | `/api/billing/plans` | Subscription plans |
+### Analysis
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/analyze` | Upload and analyze resume | Yes |
+| GET | `/api/user/latest-analysis` | Get most recent analysis | Yes |
+| GET | `/api/user/history` | Get analysis history | Yes |
+| DELETE | `/api/user/analysis/{id}` | Delete specific analysis | Yes |
+
+### Career Toolkit
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/jobs/matches` | Get job match suggestions | Optional |
+| POST | `/api/interview/copilot` | Generate interview questions | Optional |
+| POST | `/api/rewrite-resume` | Rewrite experience bullets | Optional |
+| POST | `/api/jd/compare` | Compare resume against JD | Optional |
+| POST | `/api/projects/recommend` | Get project recommendations | Optional |
+| POST | `/api/team/rank-candidates` | Rank multiple candidates | Optional |
+
+### Mock Interview
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/mock-interview` | List available roles | No |
+| GET | `/api/mock-interview/{role}` | Get questions for role | No |
+| POST | `/api/mock-interview/start` | Start AI interview session | Yes |
+| POST | `/api/mock-interview/answer` | Submit answer, get feedback | Yes |
+| POST | `/api/mock-interview/finish/{id}` | End session, get evaluation | Yes |
+
+### User
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/user/profile` | Get user profile | Yes |
+| PUT | `/api/user/profile` | Update profile | Yes |
+| GET | `/api/user/preferences` | Get preferences | Yes |
+| PUT | `/api/user/preferences` | Update preferences | Yes |
+| GET | `/api/user/skill-trends` | Get skill trend data | Yes |
+| GET | `/api/user/roadmap-progress` | Get roadmap progress | Yes |
+| PUT | `/api/user/roadmap-progress` | Update roadmap progress | Yes |
+| POST | `/api/user/contact-support` | Send support message | Yes |
+| DELETE | `/api/user/account` | Delete account + all data | Yes |
+
+### Admin
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/users` | List all users (paginated) | Admin |
+| GET | `/api/admin/feedback` | List feedback (paginated) | Admin |
+| GET | `/api/admin/feedback/stats` | Feedback sentiment stats | Admin |
+| GET | `/api/admin/courses` | List all courses | Admin |
+| POST | `/api/admin/courses` | Add course | Admin |
+| PATCH | `/api/admin/courses/{id}` | Update course | Admin |
+| DELETE | `/api/admin/courses/{id}` | Delete course | Admin |
+| GET | `/api/admin/job-roles` | List job roles | Admin |
+| PATCH | `/api/admin/job-roles/{id}/status` | Toggle role active/inactive | Admin |
+| GET | `/api/admin/analytics` | Platform analytics | Admin |
+| GET | `/api/admin/analytics/uploads-over-time` | Upload trend data | Admin |
+| GET | `/api/admin/analytics/skill-gaps` | Skill gap distribution | Admin |
+| GET | `/api/admin/analytics/role-distribution` | Role distribution data | Admin |
+| GET | `/api/admin/quality-metrics` | Analysis quality metrics | Admin |
+| GET | `/api/admin/audit-logs` | Activity audit trail | Admin |
+| GET | `/api/admin/analysis-cache` | Cached analyses | Admin |
+| GET | `/api/admin/export/{table}` | Export table as CSV | Admin |
+
+### Public
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/health` | Health check | No |
+| GET | `/api/job-roles` | List active job roles | No |
+| POST | `/api/feedback` | Submit feedback | Yes |
 
 ---
 
-## Usage Guide
+## Database
 
-### 1. Access the App
+SQLite database (`api/cv.db`) with 40+ tables:
 
-Open `http://localhost:5173` in your browser.
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts with roles (admin/user) |
+| `user_data` | Resume analysis history + full analysis JSON |
+| `refresh_tokens` | SHA-256 hashed refresh JWTs |
+| `job_roles` | 22 predefined career roles |
+| `job_role_skills` | 330 skills (6 required + 9 nice-to-have per role) |
+| `career_roadmaps` | 22 role-specific career roadmaps |
+| `roadmap_steps` | 88 roadmap steps with resources |
+| `courses` | 66 course recommendations (Coursera/Udemy) |
+| `skill_recommendations` | 167 skill-specific learning recommendations |
+| `learning_resources` | 54 curated learning resources |
+| `learning_actions` | 81 actionable learning steps |
+| `video_resources` | 186 video tutorials by skill |
+| `skill_difficulty` | Difficulty ratings for 94 skills |
+| `analysis_cache` | Cached analysis results (7-day TTL) |
+| `audit_logs` | Admin activity audit trail |
+| `request_logs` | API request logging |
 
-### 2. User Flow
+### Seeding
 
-1. **Register**: Create an account
-2. **Select Target Role**: Choose your desired industry (e.g., Data Science)
-3. **Upload Resume**: Upload a PDF or DOCX file
-4. **View Results**: See your Resume Score, skill gaps, and learning roadmap
-5. **Track Progress**: Use the Dashboard to monitor improvement over time
-
-### 3. Demo Accounts
-
-Set `SEED_DEMO=1` in `.env` before first run to create an `admin`/`admin123` account. Or create your own admin:
-
-```sql
-UPDATE users SET role = 'admin' WHERE username = 'yourname';
-```
-
-### 4. Admin Features
-
-Log in as admin to access:
-- Global platform metrics
-- User management
-- Simulated market scraper
-- Quality metrics dashboard
+On first boot, the database is automatically seeded with:
+- 22 job roles with 15 skills each (6 required + 9 nice-to-have)
+- 22 career roadmaps with 4 steps each
+- 66 courses from Coursera/Udemy
+- Skill recommendations, learning resources, video tutorials, and difficulty ratings
 
 ---
 
 ## Security
 
-- **JWT Authentication**: HS256, 30-min access + 30-day refresh tokens. Access token in `skillgap_access` cookie, refresh in `skillgap_refresh`. Both are httpOnly, `SameSite=Strict`, `Secure` in production.
-- **Refresh token rotation**: every `/api/auth/refresh` deletes the previous token hash and inserts a new one. Logout and password reset invalidate all sessions.
-- **Password Hashing**: `bcrypt` directly (passlib is unmaintained and broken with bcrypt ≥ 4.1).
-- **Protected Routes**: FastAPI dependency validation
-- **Input Validation**: Pydantic models
-- **File Type Checking**: PDF/DOCX only
-- **CORS Configuration**: Restricted to localhost:5173
+| Feature | Implementation |
+|---------|---------------|
+| **Authentication** | httpOnly cookies (`skillgap_access`, `skillgap_refresh`) with `SameSite=Strict` |
+| **JWT** | HS256, 30-min access + 30-day refresh tokens |
+| **Token Rotation** | Refresh tokens are SHA-256 hashed in DB, rotated on every refresh |
+| **Password Hashing** | bcrypt (direct usage, no passlib) |
+| **Account Deactivation** | `is_active` flag enforced at login + all auth dependencies |
+| **File Validation** | Magic-byte checking (`%PDF`, `PK\x03\x04`), not just extension |
+| **Input Validation** | Pydantic models with `max_length` and pattern constraints |
+| **Rate Limiting** | IP-based bucketing middleware |
+| **CORS** | Restricted to configured origins |
+| **Admin Protection** | Role-based route exclusion (`excludedRoles` prop) |
 
 ---
 
-## Future Roadmap
+## Architecture Decisions
 
-### Short Term
-- [ ] LinkedIn profile integration
-- [ ] Email verification
-- [ ] Resume template marketplace
+| Decision | Rationale |
+|----------|-----------|
+| SQLite over PostgreSQL | Zero-config, single-file deployment for MVP |
+| httpOnly cookies over localStorage JWT | Prevents XSS token theft |
+| SHA-256 hashed refresh tokens | Database stores hashes, not raw tokens |
+| Two-tier parsing (Gemini + local fallback) | Works offline, Gemini for quality |
+| Magic-byte file validation | Prevents malicious file uploads via renamed extensions |
+| In-memory cache for market data | Avoids repeated Gemini/DB calls |
+| Required vs nice-to-have skill weighting | Required skills weighted 2.4x in match score |
+| `run.js` cross-platform helper | npm scripts don't support `source` on Windows |
 
-### Long Term
-- [ ] Kubernetes deployment
-- [ ] PostgreSQL migration
-- [ ] Real-time job matching API
-- [ ] AI voice interview simulation
-- [ ] Multi-language support
+---
+
+## Development
+
+### Code Conventions
+
+- Group related changes into logical commits
+- Push when feature/fix is complete, not after every small change
+- Follow title case for UI text (e.g., "Log in", "Sign up")
+- Use design tokens from `tokens.css` and `theme.css`
+- No comments unless asked
+
+### Key Patterns
+
+- **Backend routing**: Split across `api/routes/` modules, included in `main.py`
+- **Frontend routes**: Lazy-loaded in `App.jsx` via `React.lazy`
+- **State management**: React Context (`AuthContext`) + local component state
+- **API calls**: Centralized Axios instance with 401 interceptor
+- **Database**: `sqlite3.Row` via `get_db_connection()`, WAL mode + foreign keys
+- **Caching**: In-memory dict caches loaded from DB on startup
 
 ---
 
 ## License
 
-MIT License
-
----
-
-## Credits
-
-Built with FastAPI, React, Qwen2-0.5B, and Google Gemini.
-
-**Version**: 3.0 (Local AI + Simplified Setup)
-
-For questions or support, please refer to the issue tracker.
+MIT License — see [LICENSE](LICENSE) for details.
