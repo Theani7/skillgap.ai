@@ -1,6 +1,9 @@
 from typing import Any, Dict, List, Optional
 import os
 import re
+import logging
+
+logger = logging.getLogger("resume-analyzer")
 
 SKIP_LOCAL_LLM = os.getenv("SKIP_LOCAL_LLM", "false").lower() in ("1", "true", "yes")
 
@@ -257,7 +260,7 @@ def compare_resume_to_jd(resume_skills: List[str], jd_text: str) -> Dict[str, An
 
 # ============ FALLBACK FUNCTIONS ============
 
-from api.database import get_skills_taxonomy, get_all_skills, get_role_synonyms, get_skill_aliases
+from api.database import get_skills_taxonomy, get_all_skills, get_role_synonyms, get_skill_aliases, get_db_connection
 
 # Canonical alias → taxonomy skill name.
 # Each key is a variation users write on resumes; the value is the canonical
@@ -621,31 +624,45 @@ def _target_categories_for_role(target_role: str) -> List[str]:
     return ["Other Technical"]
 
 
+def _get_role_skills_from_db(target_role: str) -> List[str]:
+    """Get skills for a role from job_role_skills table (admin-defined)."""
+    if not target_role:
+        return []
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT js.skill_name FROM job_role_skills js "
+            "JOIN job_roles jr ON js.job_role_id = jr.id "
+            "WHERE jr.title = ? AND jr.is_active = 1",
+            (target_role,)
+        )
+        skills = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return skills
+    except Exception as e:
+        logger.error(f"Failed to get role skills: {e}")
+        return []
+
+
 def _compute_local_match_score(
     found_skills: List[str], target_role: Optional[str]
 ) -> int:
-    """Compute a directional match score from overlap with the role's category skills.
-
-    We deliberately don't divide by `len(target_skills)`, because the union of
-    3-4 taxonomy categories can yield 50+ "target" skills - dividing makes even
-    a strong resume look like 10% overlap. Instead, we use overlap as a direct
-    signal with reasonable bounds:
-
-        0 matches → 35
-        5 matches → 75
-        8+ matches → 95 (cap)
-    """
+    """Compute match score based on admin-defined role skills."""
     if not target_role:
         return 70
-    categories = _target_categories_for_role(target_role)
-    target_skills: List[str] = []
-    taxonomy = get_skills_taxonomy()
-    for cat in categories:
-        target_skills.extend(taxonomy.get(cat, []))
+    target_skills = _get_role_skills_from_db(target_role)
+    if not target_skills:
+        # Fallback to taxonomy if no admin skills defined
+        categories = _target_categories_for_role(target_role)
+        taxonomy = get_skills_taxonomy()
+        for cat in categories:
+            target_skills.extend(taxonomy.get(cat, []))
     if not target_skills:
         return 50
     found_lower = {s.lower() for s in found_skills}
     overlap = sum(1 for s in target_skills if s.lower() in found_lower)
+    # Score: 0 matches → 35, 5+ → 75, 8+ → 95
     return max(25, min(95, 35 + overlap * 8))
 
 
@@ -1215,12 +1232,8 @@ def parse_resume_fallback(
     designations = [b["title"] for b in experience_blocks if b.get("title")]
     company_names = [b["company"] for b in experience_blocks if b.get("company")]
 
-    # 7. Missing skills for target role (prioritized by importance)
-    target_categories = _target_categories_for_role(target_role)
-    target_skills: List[str] = []
-    taxonomy = get_skills_taxonomy()
-    for cat in target_categories:
-        target_skills.extend(taxonomy.get(cat, []))
+    # 7. Missing skills for target role (use admin-defined skills from job_role_skills)
+    target_skills = _get_role_skills_from_db(target_role)
     raw_missing = [s for s in target_skills if s.title() not in found_skills]
     prioritized = prioritize_missing_skills(raw_missing, target_role, found_skills)
     missing_skills = [p["skill"] for p in prioritized[:8]]
