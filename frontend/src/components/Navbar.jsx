@@ -1,6 +1,31 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+
+const scrollToSection = (id) => {
+  const element = document.getElementById(id);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
 
 const PublicTopBar = ({ openAuthModal }) => {
+  const location = useLocation();
+  const isLanding = location.pathname === '/';
+
+  const navLinks = [
+    { label: 'Features', id: 'features' },
+    { label: 'How it works', id: 'how-it-works' },
+    { label: 'Why SkillGap.ai', id: 'why-skillgap' },
+  ];
+
+  const handleNavClick = (e, id) => {
+    e.preventDefault();
+    if (isLanding) {
+      scrollToSection(id);
+    } else {
+      window.location.href = `/#${id}`;
+    }
+  };
+
   return (
     <header
       style={{
@@ -33,35 +58,25 @@ const PublicTopBar = ({ openAuthModal }) => {
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-          <Link
-            to="/about"
-            style={{
-              fontSize: '15px',
-              fontWeight: '500',
-              color: 'var(--color-text-muted)',
-              textDecoration: 'none',
-              transition: 'color 150ms ease',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-muted)'}
-          >
-            About
-          </Link>
-          <Link
-            to="/who-we-are"
-            style={{
-              fontSize: '15px',
-              fontWeight: '500',
-              color: 'var(--color-text-muted)',
-              textDecoration: 'none',
-              transition: 'color 150ms ease',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-muted)'}
-          >
-            Who we are
-          </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '16px' }}>
+          {navLinks.map((link) => (
+            <a
+              key={link.id}
+              href={`#${link.id}`}
+              onClick={(e) => handleNavClick(e, link.id)}
+              style={{
+                fontSize: '15px',
+                fontWeight: '500',
+                color: 'var(--color-text-muted)',
+                textDecoration: 'none',
+                transition: 'color 150ms ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-muted)'}
+            >
+              {link.label}
+            </a>
+          ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               onClick={() => openAuthModal('login')}
               className="btn btn-primary"
@@ -95,6 +110,9 @@ const PublicTopBar = ({ openAuthModal }) => {
       <style>{`
         @media (max-width: 480px) {
           .public-topbar-inner { padding: 0 16px !important; }
+        }
+        html {
+          scroll-behavior: smooth;
         }
       `}</style>
     </header>

@@ -684,7 +684,7 @@ const Landing = ({ openAuthModal }) => {
       <div className="mc-divider" />
 
       {/* FEATURES */}
-      <section className="section">
+      <section id="features" className="section">
         <div className="container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
@@ -746,7 +746,7 @@ const Landing = ({ openAuthModal }) => {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="section" style={{ background: 'var(--navy-950)', color: 'white' }}>
+      <section id="how-it-works" className="section" style={{ background: 'var(--navy-950)', color: 'white' }}>
         <div className="container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
@@ -817,7 +817,7 @@ const Landing = ({ openAuthModal }) => {
       </section>
 
       {/* WHY SKILLGAP.AI */}
-      <section className="section">
+      <section id="why-skillgap" className="section">
         <div className="container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
