@@ -76,6 +76,12 @@ SQLite file: `api/cv.db`. Key tables:
 - All routes are lazy-loaded (`React.lazy`) for code splitting
 - Uses React Router DOM 7.x for routing
 
+## Development Workflow
+
+- After every change, commit and push to GitHub immediately.
+- Use clear, concise commit messages describing what changed.
+- Follow title case for UI text (e.g., "Log in", "Sign up").
+
 ## Key Conventions
 
 - Resume analysis uses a two-tier approach: high-confidence local parsing (>85%) or Gemini fallback
