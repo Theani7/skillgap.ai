@@ -186,33 +186,29 @@ def compute_resume_score_breakdown(resume_data: Dict[str, Any], target_role: str
 
         # If a target role is provided, score by RELEVANT skills (from job_role_skills)
         if target_role:
-            from api.job_hunt_services import _get_role_skills_from_db
+            from api.job_hunt_services import _get_role_skills_from_db, _get_required_skills_from_db
             role_skills = _get_role_skills_from_db(target_role)
+            required_skills = _get_required_skills_from_db(target_role)
             role_skills_lower = {s.lower() for s in role_skills}
+            required_lower = {s.lower() for s in required_skills}
             relevant_count = sum(1 for s in skills if s.lower() in role_skills_lower)
+            required_matched = sum(1 for s in skills if s.lower() in required_lower)
+            nice_matched = relevant_count - required_matched
 
-            if relevant_count >= 10:
-                breakdown["skills"]["score"] = 25
-            elif relevant_count >= 7:
-                breakdown["skills"]["score"] = 20
-            elif relevant_count >= 5:
-                breakdown["skills"]["score"] = 15
-            elif relevant_count >= 3:
-                breakdown["skills"]["score"] = 10
-            elif relevant_count >= 1:
-                breakdown["skills"]["score"] = 5
-            else:
-                breakdown["skills"]["score"] = 0
+            # Required skills count 2x: base 0 + required*3 + nice*1, max 25
+            score = min(25, required_matched * 3 + nice_matched * 1)
+            breakdown["skills"]["score"] = score
 
             if relevant_count == 0:
                 feedback_msgs.append(
                     f"None of your {skill_count} skills match {target_role}. "
                     f"Add skills like: {', '.join(role_skills[:5])}."
                 )
-            elif relevant_count < len(role_skills) // 2:
+            elif required_matched < len(required_skills):
+                missing_required = [s for s in required_skills if s.lower() not in {sk.lower() for sk in skills}]
                 feedback_msgs.append(
-                    f"You have {relevant_count} relevant skills for {target_role}. "
-                    f"Consider adding more from: {', '.join([s for s in role_skills if s.lower() not in {sk.lower() for sk in skills}][:3])}."
+                    f"You have {required_matched}/{len(required_skills)} core skills for {target_role}. "
+                    f"Add missing core skills: {', '.join(missing_required[:3])}."
                 )
         else:
             # No target role - count-based scoring (original behavior)
