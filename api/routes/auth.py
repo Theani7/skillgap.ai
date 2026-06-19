@@ -16,6 +16,7 @@ from api.auth import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    get_current_user,
     get_current_user_from_cookie,
     hash_token,
 )
@@ -356,6 +357,11 @@ class PasswordResetConfirm(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
 
+class ChangePassword(BaseModel):
+    current_password: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
 RESET_COOLDOWN_SECONDS = 5 * 60
 
 
@@ -418,3 +424,30 @@ def reset_password(payload: PasswordResetConfirm):
     finally:
         conn.close()
     return {"status": "success", "message": "Password reset successful"}
+
+
+@router.post("/change-password")
+def change_password(payload: ChangePassword, request: Request, current_user: dict = Depends(get_current_user)):
+    _check_strict_rate_limit(f"change-pwd:{_client_ip(request)}")
+
+    if payload.current_password == payload.new_password:
+        raise HTTPException(status_code=400, detail="New password must be different from current password")
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT hashed_password FROM users WHERE id = ?", (current_user["id"],))
+        row = cursor.fetchone()
+        if not row or not verify_password(payload.current_password, row["hashed_password"]):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+        cursor.execute(
+            "UPDATE users SET hashed_password = ? WHERE id = ?",
+            (get_password_hash(payload.new_password), current_user["id"]),
+        )
+        cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (current_user["id"],))
+        conn.commit()
+    finally:
+        conn.close()
+
+    return {"status": "success", "message": "Password changed successfully"}
