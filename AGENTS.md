@@ -78,7 +78,8 @@ SQLite file: `api/cv.db`. Key tables:
 
 ## Development Workflow
 
-- After every change, commit and push to GitHub immediately.
+- Group related changes into logical commits (e.g., all footer cleanup in one commit).
+- Push to GitHub when a feature or fix is complete, not after every small change.
 - Use clear, concise commit messages describing what changed.
 - Follow title case for UI text (e.g., "Log in", "Sign up").
 
