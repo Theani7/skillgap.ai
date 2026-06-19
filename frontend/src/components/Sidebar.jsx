@@ -252,6 +252,7 @@ const Sidebar = () => {
           style={{
             borderTop: '1px solid var(--color-border)',
             padding: '8px',
+            position: 'relative',
           }}
           ref={userMenuRef}
         >
@@ -262,15 +263,18 @@ const Sidebar = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
                 style={{
-                  position: 'absolute', bottom: '60px', left: '8px', right: '8px',
+                  position: 'fixed',
+                  bottom: '70px',
+                  left: collapsed ? '72px' : '8px',
+                  width: '200px',
                   background: 'var(--color-surface)',
                   border: '1px solid var(--color-border)',
-                  borderRadius: '10px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                  padding: '6px', zIndex: 50,
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                  padding: '6px', zIndex: 100,
                 }}
               >
-                <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--color-border)', marginBottom: '4px' }}>
+                <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--color-border)', marginBottom: '4px' }}>
                   <p style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-text)', margin: 0 }}>
                     {user?.full_name || user?.username}
                   </p>
@@ -283,7 +287,7 @@ const Sidebar = () => {
                   onClick={() => setUserMenuOpen(false)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '8px 10px', borderRadius: '6px',
+                    padding: '8px 12px', borderRadius: '8px',
                     fontSize: '13px', color: 'var(--color-text)', textDecoration: 'none',
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
@@ -296,7 +300,7 @@ const Sidebar = () => {
                   onClick={() => setUserMenuOpen(false)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '8px 10px', borderRadius: '6px',
+                    padding: '8px 12px', borderRadius: '8px',
                     fontSize: '13px', color: 'var(--color-text)', textDecoration: 'none',
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
@@ -309,9 +313,10 @@ const Sidebar = () => {
                   onClick={() => setShowLogoutConfirm(true)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '8px 10px', borderRadius: '6px',
+                    padding: '8px 12px', borderRadius: '8px',
                     fontSize: '13px', color: 'var(--color-error)',
                     background: 'transparent', border: 'none', cursor: 'pointer', width: '100%',
+                    textAlign: 'left',
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-error-light)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
