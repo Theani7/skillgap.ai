@@ -814,6 +814,241 @@ def delete_roadmap(roadmap_id: int, current_admin: dict = Depends(get_current_ad
     return {"status": "success", "message": "Roadmap deleted."}
 
 
+ROADMAP_TEMPLATES = {
+    "Software Engineering": [
+        {
+            "title": "Full SWE Career Path",
+            "description": "Comprehensive path from fundamentals to system design",
+            "duration_weeks": 24,
+            "steps": [
+                {"title": "Programming Fundamentals", "description": "Master core programming concepts", "duration_weeks": 4, "skills": "Python,OOP,Data Structures,Algorithms", "resources": "https://www.youtube.com/results?search_query=python+programming+fundamentals"},
+                {"title": "Version Control & Collaboration", "description": "Git workflows, branching strategies, code reviews", "duration_weeks": 2, "skills": "Git,GitHub,Pull Requests,Code Review", "resources": "https://www.youtube.com/results?search_query=git+tutorial"},
+                {"title": "Testing & Quality Assurance", "description": "Write reliable, tested code with TDD", "duration_weeks": 3, "skills": "Unit Testing,Integration Testing,TDD,Pytest", "resources": "https://www.youtube.com/results?search_query=software+testing"},
+                {"title": "APIs & Backend Basics", "description": "REST APIs, authentication, middleware", "duration_weeks": 4, "skills": "REST,HTTP,Authentication,JSON", "resources": "https://www.youtube.com/results?search_query=rest+api+tutorial"},
+                {"title": "Databases & SQL", "description": "Relational and NoSQL databases", "duration_weeks": 3, "skills": "SQL,PostgreSQL,MongoDB,ORM", "resources": "https://www.youtube.com/results?search_query=sql+tutorial"},
+                {"title": "System Design", "description": "Design scalable, distributed systems", "duration_weeks": 5, "skills": "Architecture,Microservices,Caching,Load Balancing", "resources": "https://www.youtube.com/results?search_query=system+design"},
+                {"title": "DevOps & Deployment", "description": "CI/CD, containers, cloud deployment", "duration_weeks": 3, "skills": "Docker,Kubernetes,CI/CD,AWS", "resources": "https://www.youtube.com/results?search_query=devops+tutorial"},
+            ]
+        }
+    ],
+    "Frontend Development": [
+        {
+            "title": "Modern Frontend Developer",
+            "description": "From HTML basics to React mastery",
+            "duration_weeks": 20,
+            "steps": [
+                {"title": "HTML & CSS Foundations", "description": "Semantic HTML, CSS Grid, Flexbox", "duration_weeks": 3, "skills": "HTML5,CSS3,Flexbox,Grid,Responsive Design", "resources": "https://www.youtube.com/results?search_query=html+css+tutorial"},
+                {"title": "JavaScript Essentials", "description": "ES6+, DOM manipulation, async/await", "duration_weeks": 4, "skills": "JavaScript,ES6+,DOM,Async/Await,Promises", "resources": "https://www.youtube.com/results?search_query=javascript+tutorial"},
+                {"title": "React & Components", "description": "Component architecture, hooks, state management", "duration_weeks": 5, "skills": "React,Hooks,Context API,State Management", "resources": "https://www.youtube.com/results?search_query=react+tutorial"},
+                {"title": "TypeScript", "description": "Type-safe JavaScript development", "duration_weeks": 3, "skills": "TypeScript,Generics,Interfaces,Types", "resources": "https://www.youtube.com/results?search_query=typescript+tutorial"},
+                {"title": "Testing Frontend Apps", "description": "Unit and integration testing", "duration_weeks": 2, "skills": "Jest,React Testing Library,Cypress", "resources": "https://www.youtube.com/results?search_query=frontend+testing"},
+                {"title": "Performance Optimization", "description": "Core Web Vitals, lazy loading, code splitting", "duration_weeks": 3, "skills": "Lighthouse,Webpack,Code Splitting,Optimization", "resources": "https://www.youtube.com/results?search_query=web+performance"},
+            ]
+        }
+    ],
+    "Backend Development": [
+        {
+            "title": "Backend Developer Mastery",
+            "description": "Build robust, scalable server-side applications",
+            "duration_weeks": 22,
+            "steps": [
+                {"title": "Language & Framework", "description": "Master a backend language (Python/Node.js/Go)", "duration_weeks": 4, "skills": "Python,Node.js,FastAPI,Express", "resources": "https://www.youtube.com/results?search_query=backend+programming"},
+                {"title": "Database Design", "description": "Schema design, indexing, query optimization", "duration_weeks": 4, "skills": "SQL,PostgreSQL,MongoDB,Indexing,ORM", "resources": "https://www.youtube.com/results?search_query=database+design"},
+                {"title": "RESTful API Design", "description": "API standards, versioning, documentation", "duration_weeks": 3, "skills": "REST,OpenAPI,GraphQL,Versioning", "resources": "https://www.youtube.com/results?search_query=rest+api+design"},
+                {"title": "Authentication & Security", "description": "JWT, OAuth, input validation, rate limiting", "duration_weeks": 3, "skills": "JWT,OAuth,Encryption,Rate Limiting", "resources": "https://www.youtube.com/results?search_query=api+security"},
+                {"title": "Caching & Performance", "description": "Redis, CDN, query optimization", "duration_weeks": 3, "skills": "Redis,CDN,Query Optimization,Connection Pooling", "resources": "https://www.youtube.com/results?search_query=caching+tutorial"},
+                {"title": "Containerization & Deployment", "description": "Docker, cloud services, monitoring", "duration_weeks": 5, "skills": "Docker,AWS,GCP,Monitoring,Logging", "resources": "https://www.youtube.com/results?search_query=docker+deployment"},
+            ]
+        }
+    ],
+    "Data Science": [
+        {
+            "title": "Data Scientist Path",
+            "description": "From data analysis to machine learning",
+            "duration_weeks": 26,
+            "steps": [
+                {"title": "Python for Data", "description": "NumPy, Pandas, data manipulation", "duration_weeks": 4, "skills": "Python,NumPy,Pandas,Data Cleaning", "resources": "https://www.youtube.com/results?search_query=python+data+science"},
+                {"title": "Statistics & Probability", "description": "Statistical concepts for analysis", "duration_weeks": 4, "skills": "Statistics,Probability,Hypothesis Testing,Distributions", "resources": "https://www.youtube.com/results?search_query=statistics+data+science"},
+                {"title": "Data Visualization", "description": "Matplotlib, Seaborn, Plotly", "duration_weeks": 3, "skills": "Matplotlib,Seaborn,Plotly,Tableau", "resources": "https://www.youtube.com/results?search_query=data+visualization"},
+                {"title": "Machine Learning", "description": "Supervised and unsupervised learning", "duration_weeks": 6, "skills": "Scikit-learn,Regression,Classification,Clustering", "resources": "https://www.youtube.com/results?search_query=machine+learning+tutorial"},
+                {"title": "Deep Learning", "description": "Neural networks, CNNs, RNNs", "duration_weeks": 5, "skills": "TensorFlow,PyTorch,Neural Networks,CNN", "resources": "https://www.youtube.com/results?search_query=deep+learning+tutorial"},
+                {"title": "MLOps & Deployment", "description": "Model deployment, monitoring, A/B testing", "duration_weeks": 4, "skills": "MLflow,Docker,API Integration,Monitoring", "resources": "https://www.youtube.com/results?search_query=mlops+tutorial"},
+            ]
+        }
+    ],
+    "DevOps": [
+        {
+            "title": "DevOps Engineer Path",
+            "description": "Master infrastructure automation and deployment",
+            "duration_weeks": 24,
+            "steps": [
+                {"title": "Linux & Networking", "description": "OS fundamentals, networking protocols", "duration_weeks": 4, "skills": "Linux,Bash,TCP/IP,DNS,HTTP", "resources": "https://www.youtube.com/results?search_query=linux+tutorial"},
+                {"title": "Scripting & Automation", "description": "Python/Bash scripting for automation", "duration_weeks": 3, "skills": "Python,Bash,Ansible,Automation", "resources": "https://www.youtube.com/results?search_query=devops+scripting"},
+                {"title": "Containers", "description": "Docker, container orchestration", "duration_weeks": 4, "skills": "Docker,Docker Compose,Containerization", "resources": "https://www.youtube.com/results?search_query=docker+tutorial"},
+                {"title": "Kubernetes", "description": "Container orchestration at scale", "duration_weeks": 5, "skills": "Kubernetes,Helm,Pods,Services,Ingress", "resources": "https://www.youtube.com/results?search_query=kubernetes+tutorial"},
+                {"title": "CI/CD Pipelines", "description": "Automated testing and deployment", "duration_weeks": 4, "skills": "GitHub Actions,Jenkins,GitLab CI,Pipelines", "resources": "https://www.youtube.com/results?search_query=ci+cd+tutorial"},
+                {"title": "Cloud Platforms", "description": "AWS/Azure/GCP services and architecture", "duration_weeks": 4, "skills": "AWS,Azure,GCP,Terraform,IaC", "resources": "https://www.youtube.com/results?search_query=aws+cloud+tutorial"},
+            ]
+        }
+    ],
+    "Mobile Development": [
+        {
+            "title": "Mobile Developer Path",
+            "description": "Build cross-platform mobile applications",
+            "duration_weeks": 22,
+            "steps": [
+                {"title": "Mobile Fundamentals", "description": "App architecture, lifecycle, UI principles", "duration_weeks": 3, "skills": "Mobile UX,App Architecture,State Management", "resources": "https://www.youtube.com/results?search_query=mobile+development+basics"},
+                {"title": "Cross-Platform Framework", "description": "React Native or Flutter", "duration_weeks": 6, "skills": "React Native,Flutter,Dart,Components", "resources": "https://www.youtube.com/results?search_query=react+native+tutorial"},
+                {"title": "Backend Integration", "description": "APIs, authentication, local storage", "duration_weeks": 4, "skills": "REST APIs,Firebase,JWT,AsyncStorage", "resources": "https://www.youtube.com/results?search_query=mobile+backend+integration"},
+                {"title": "UI/UX & Navigation", "description": "Polished interfaces and navigation patterns", "duration_weeks": 3, "skills": "React Navigation,Animations,Gestures", "resources": "https://www.youtube.com/results?search_query=mobile+ui+design"},
+                {"title": "Testing & Debugging", "description": "Unit tests, integration tests, debugging tools", "duration_weeks": 3, "skills": "Jest,Detox,Flipper,Debugging", "resources": "https://www.youtube.com/results?search_query=mobile+testing"},
+                {"title": "Publishing & Maintenance", "description": "App Store, Play Store, analytics", "duration_weeks": 3, "skills": "App Store,Play Store,Analytics,Beta Testing", "resources": "https://www.youtube.com/results?search_query=app+store+publishing"},
+            ]
+        }
+    ],
+    "Full Stack Development": [
+        {
+            "title": "Full Stack Developer Path",
+            "description": "Master both frontend and backend development",
+            "duration_weeks": 28,
+            "steps": [
+                {"title": "Frontend Foundations", "description": "HTML, CSS, JavaScript, React", "duration_weeks": 5, "skills": "HTML,CSS,JavaScript,React,Responsive Design", "resources": "https://www.youtube.com/results?search_query=frontend+web+development"},
+                {"title": "Backend Foundations", "description": "Node.js, Express, server-side logic", "duration_weeks": 4, "skills": "Node.js,Express,REST APIs,Middleware", "resources": "https://www.youtube.com/results?search_query=nodejs+backend+tutorial"},
+                {"title": "Database Design", "description": "SQL, MongoDB, data modeling", "duration_weeks": 4, "skills": "SQL,MongoDB,Schema Design,Queries", "resources": "https://www.youtube.com/results?search_query=database+tutorial"},
+                {"title": "Authentication & Security", "description": "JWT, sessions, security best practices", "duration_weeks": 3, "skills": "JWT,Sessions,OAuth,Security", "resources": "https://www.youtube.com/results?search_query=authentication+tutorial"},
+                {"title": "Full Stack Integration", "description": "Connect frontend and backend", "duration_weeks": 5, "skills": "API Integration,State Management,Error Handling", "resources": "https://www.youtube.com/results?search_query=full+stack+integration"},
+                {"title": "Testing & Deployment", "description": "End-to-end testing, CI/CD, hosting", "duration_weeks": 4, "skills": "Jest,Cypress,Docker,Deployment", "resources": "https://www.youtube.com/results?search_query=full+stack+deployment"},
+                {"title": "Advanced Topics", "description": "WebSockets, real-time, performance", "duration_weeks": 3, "skills": "WebSockets,Real-time,Caching,Performance", "resources": "https://www.youtube.com/results?search_query=advanced+web+development"},
+            ]
+        }
+    ],
+    "Cybersecurity": [
+        {
+            "title": "Cybersecurity Analyst Path",
+            "description": "Protect systems from security threats",
+            "duration_weeks": 26,
+            "steps": [
+                {"title": "Networking Fundamentals", "description": "TCP/IP, protocols, network security", "duration_weeks": 4, "skills": "TCP/IP,HTTP,DNS,Firewalls,VPN", "resources": "https://www.youtube.com/results?search_query=network+security+tutorial"},
+                {"title": "Operating Systems Security", "description": "Linux and Windows hardening", "duration_weeks": 4, "skills": "Linux,Windows,Hardening,Permissions", "resources": "https://www.youtube.com/results?search_query=linux+security"},
+                {"title": "Security Tools", "description": "SIEM, vulnerability scanners, packet analyzers", "duration_weeks": 4, "skills": "SIEM,Nmap,Wireshark,MetaSploit", "resources": "https://www.youtube.com/results?search_query=security+tools"},
+                {"title": "Ethical Hacking", "description": "Penetration testing methodologies", "duration_weeks": 5, "skills": "Kali Linux,Penetration Testing,Exploits,Recon", "resources": "https://www.youtube.com/results?search_query=ethical+hacking+tutorial"},
+                {"title": "Cryptography", "description": "Encryption, hashing, PKI", "duration_weeks": 4, "skills": "Encryption,Hashing,SSL/TLS,PKI", "resources": "https://www.youtube.com/results?search_query=cryptography+tutorial"},
+                {"title": "Incident Response", "description": "Detection, containment, recovery", "duration_weeks": 5, "skills": "Incident Response,Forensics,Compliance,Reporting", "resources": "https://www.youtube.com/results?search_query=incident+response"},
+            ]
+        }
+    ],
+}
+
+
+@router.get("/api/admin/roadmap-templates")
+def get_roadmap_templates(current_admin: dict = Depends(get_current_admin)):
+    return {"templates": ROADMAP_TEMPLATES}
+
+
+@router.post("/api/admin/job-roles/{role_id}/roadmaps/bulk")
+def bulk_import_roadmap(role_id: int, body: dict, current_admin: dict = Depends(get_current_admin)):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM job_roles WHERE id = ?", (role_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Job role not found")
+
+        title = body.get("title", "Imported Roadmap")
+        description = body.get("description", "")
+        duration_weeks = body.get("duration_weeks", 12)
+        raw_text = body.get("steps_text", "")
+
+        steps = []
+        for line in raw_text.strip().split("\n"):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in line.split("|")]
+            step = {
+                "title": parts[0] if len(parts) > 0 else "",
+                "description": parts[1] if len(parts) > 1 else "",
+                "duration_weeks": int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 2,
+                "skills": parts[3] if len(parts) > 3 else "",
+                "resources": parts[4] if len(parts) > 4 else "",
+            }
+            if step["title"]:
+                steps.append(step)
+
+        if not steps:
+            raise HTTPException(status_code=400, detail="No valid steps found. Use format: Title | Description | Weeks | Skills | Resources")
+
+        cursor.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM career_roadmaps WHERE job_role_id = ?", (role_id,))
+        next_order = cursor.fetchone()[0]
+        cursor.execute(
+            "INSERT INTO career_roadmaps (job_role_id, title, description, duration_weeks, sort_order) VALUES (?, ?, ?, ?, ?)",
+            (role_id, title, description, duration_weeks, next_order)
+        )
+        roadmap_id = cursor.lastrowid
+        for i, step in enumerate(steps, 1):
+            cursor.execute(
+                "INSERT INTO roadmap_steps (roadmap_id, step_number, title, description, duration_weeks, skills, resources) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (roadmap_id, i, step["title"], step["description"], step["duration_weeks"], step["skills"], step["resources"])
+            )
+        conn.commit()
+        cursor.execute("SELECT id, job_role_id, title, description, duration_weeks, sort_order, created_at FROM career_roadmaps WHERE id = ?", (roadmap_id,))
+        rm = dict(cursor.fetchone())
+        cursor.execute("SELECT id, step_number, title, description, duration_weeks, skills, resources FROM roadmap_steps WHERE roadmap_id = ? ORDER BY step_number", (roadmap_id,))
+        rm["steps"] = [dict(s) for s in cursor.fetchall()]
+    finally:
+        conn.close()
+    return {"status": "success", "roadmap": rm, "steps_imported": len(steps)}
+
+
+@router.post("/api/admin/job-roles/{role_id}/roadmaps/ai-generate")
+def ai_generate_roadmap(role_id: int, current_admin: dict = Depends(get_current_admin)):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, title, description FROM job_roles WHERE id = ?", (role_id,))
+        role = cursor.fetchone()
+        if not role:
+            raise HTTPException(status_code=404, detail="Job role not found")
+
+        cursor.execute("SELECT skill_name FROM job_role_skills WHERE job_role_id = ?", (role_id,))
+        skills = [row['skill_name'] for row in cursor.fetchall()]
+
+        role_title = role['title']
+        role_desc = role['description'] or ''
+    finally:
+        conn.close()
+
+    try:
+        from api.main import generate_roadmap_with_ai
+        roadmap_data = generate_roadmap_with_ai(role_title, role_desc, skills)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM career_roadmaps WHERE job_role_id = ?", (role_id,))
+        next_order = cursor.fetchone()[0]
+        cursor.execute(
+            "INSERT INTO career_roadmaps (job_role_id, title, description, duration_weeks, sort_order) VALUES (?, ?, ?, ?, ?)",
+            (role_id, roadmap_data.get("title", f"{role_title} Roadmap"), roadmap_data.get("description", ""), roadmap_data.get("duration_weeks", 16), next_order)
+        )
+        roadmap_id = cursor.lastrowid
+        for i, step in enumerate(roadmap_data.get("steps", []), 1):
+            cursor.execute(
+                "INSERT INTO roadmap_steps (roadmap_id, step_number, title, description, duration_weeks, skills, resources) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (roadmap_id, i, step.get("title", ""), step.get("description", ""), step.get("duration_weeks", 2), step.get("skills", ""), step.get("resources", ""))
+            )
+        conn.commit()
+        cursor.execute("SELECT id, job_role_id, title, description, duration_weeks, sort_order, created_at FROM career_roadmaps WHERE id = ?", (roadmap_id,))
+        rm = dict(cursor.fetchone())
+        cursor.execute("SELECT id, step_number, title, description, duration_weeks, skills, resources FROM roadmap_steps WHERE roadmap_id = ? ORDER BY step_number", (roadmap_id,))
+        rm["steps"] = [dict(s) for s in cursor.fetchall()]
+    finally:
+        conn.close()
+    return {"status": "success", "roadmap": rm}
+
+
 @router.get("/api/admin/audit-logs")
 def get_audit_logs(
     current_admin: dict = Depends(get_current_admin),

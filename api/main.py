@@ -97,6 +97,75 @@ async def general_exception_handler(request: Request, exc: Exception):
         }
     )
 
+
+def generate_roadmap_with_ai(role_title: str, role_description: str, skills: list) -> dict:
+    """Generate a career roadmap using Gemini AI."""
+    import json
+    try:
+        import google.generativeai as genai
+        api_key = os.getenv("GEMINI_API_KEY", "").strip()
+        if not api_key or api_key == "test-key":
+            raise RuntimeError("GEMINI_API_KEY not configured")
+
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.0-flash')
+
+        skills_str = ", ".join(skills[:10]) if skills else "general skills"
+        prompt = f"""Generate a detailed career roadmap for a {role_title} position.
+
+Role Description: {role_description}
+Key Skills: {skills_str}
+
+Return ONLY a JSON object (no markdown, no code fences) with this exact structure:
+{{
+    "title": "Career Roadmap for {role_title}",
+    "description": "A structured path to master {role_title}",
+    "duration_weeks": <total_weeks>,
+    "steps": [
+        {{
+            "title": "Step title",
+            "description": "What to learn in this step",
+            "duration_weeks": <weeks>,
+            "skills": "Skill1,Skill2,Skill3",
+            "resources": "https://www.youtube.com/results?search_query=<topic>+tutorial"
+        }}
+    ]
+}}
+
+Create 5-8 progressive steps from fundamentals to advanced topics. Each step should build on the previous one.
+Include relevant YouTube search URLs as resources.
+Be specific to {role_title} - don't use generic advice."""
+
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.7,
+                max_output_tokens=2000,
+            )
+        )
+
+        text = response.text.strip()
+        if text.startswith("```"):
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+        return json.loads(text)
+
+    except Exception as e:
+        logger.error(f"AI roadmap generation failed: {e}")
+        return {
+            "title": f"{role_title} Roadmap",
+            "description": role_description or f"Career path for {role_title}",
+            "duration_weeks": 16,
+            "steps": [
+                {"title": "Fundamentals", "description": "Learn core concepts", "duration_weeks": 4, "skills": skills_str if skills else "Fundamentals", "resources": f"https://www.youtube.com/results?search_query={role_title.replace(' ', '+')}+fundamentals"},
+                {"title": "Intermediate", "description": "Build practical skills", "duration_weeks": 4, "skills": "Intermediate Skills", "resources": f"https://www.youtube.com/results?search_query={role_title.replace(' ', '+')}+intermediate"},
+                {"title": "Advanced", "description": "Master advanced topics", "duration_weeks": 4, "skills": "Advanced Skills", "resources": f"https://www.youtube.com/results?search_query={role_title.replace(' ', '+')}+advanced"},
+                {"title": "Projects", "description": "Build real-world projects", "duration_weeks": 4, "skills": "Project Building,Portfolio", "resources": f"https://www.youtube.com/results?search_query={role_title.replace(' ', '+')}+projects"},
+            ]
+        }
+
+
 app.include_router(mock_interview_router)
 app.include_router(mock_interview_ai_router)
 app.include_router(auth_router)
