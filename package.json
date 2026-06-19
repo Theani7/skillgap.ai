@@ -5,15 +5,16 @@
   "description": "AI-powered career coaching platform",
   "scripts": {
     "setup": "npm run setup:python && npm run setup:frontend",
-    "setup:python": "source venvapp/bin/activate && pip install -r api/requirements.txt",
+    "setup:python": "node run.js pip install -r api/requirements.txt",
     "setup:frontend": "cd frontend && npm install && cd ..",
     "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "source venvapp/bin/activate && uvicorn api.main:app --reload --port 8000",
+    "dev:backend": "node run.js uvicorn api.main:app --reload --port 8000",
     "dev:frontend": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "lint": "cd frontend && npm run lint"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "cross-env": "^10.1.0"
   }
 }
