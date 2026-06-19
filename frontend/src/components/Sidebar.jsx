@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Zap, Sparkles, Settings, User, Shield, LogOut,
   ChevronLeft, ChevronRight, BarChart3, FileSearch, AlertTriangle, MessageSquare,
+  LayoutDashboard, Activity, Users, MessageSquareText, BookOpen, Briefcase, Database,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -60,11 +61,21 @@ const Sidebar = () => {
   const sidebarWidth = collapsed ? 64 : 220;
 
   const isAdmin = user?.role === 'admin';
-  const sectionsToRender = [...SECTIONS];
+  const sectionsToRender = isAdmin
+    ? []
+    : [...SECTIONS];
   if (isAdmin) {
     sectionsToRender.push({
       label: 'Manage',
-      items: [{ path: '/admin', icon: Shield, label: 'Admin' }],
+      items: [
+        { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { path: '/admin/resumes', icon: Activity, label: 'Resume Logs' },
+        { path: '/admin/users', icon: Users, label: 'Users' },
+        { path: '/admin/feedback', icon: MessageSquareText, label: 'Feedback' },
+        { path: '/admin/courses', icon: BookOpen, label: 'Courses' },
+        { path: '/admin/job-roles', icon: Briefcase, label: 'Job Roles' },
+        { path: '/admin/ai-monitoring', icon: Database, label: 'AI Monitoring' },
+      ],
     });
   }
 

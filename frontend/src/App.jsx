@@ -14,6 +14,8 @@ const AnalysisResult = lazy(() => import('./pages/AnalysisResult'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Admin = lazy(() => import('./pages/Admin'));
+const JobRoles = lazy(() => import('./pages/JobRoles'));
+const AIMonitoring = lazy(() => import('./pages/AIMonitoring'));
 const SharedReport = lazy(() => import('./pages/SharedReport'));
 const MockInterview = lazy(() => import('./pages/MockInterview'));
 
@@ -85,13 +87,20 @@ const Layout = () => {
       >
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/app" element={<ProtectedRoute>{withBoundary(<Analyzer />)}</ProtectedRoute>} />
-            <Route path="/analysis" element={<ProtectedRoute>{withBoundary(<AnalysisResult />)}</ProtectedRoute>} />
+            <Route path="/app" element={<ProtectedRoute excludedRoles={['admin']} redirectTo="/admin">{withBoundary(<Analyzer />)}</ProtectedRoute>} />
+            <Route path="/analysis" element={<ProtectedRoute excludedRoles={['admin']} redirectTo="/admin">{withBoundary(<AnalysisResult />)}</ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute>{withBoundary(<Settings />)}</ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
+            <Route path="/admin/resumes" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
+            <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
+            <Route path="/admin/courses" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<Admin />)}</ProtectedRoute>} />
+            <Route path="/admin/job-roles" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<JobRoles />)}</ProtectedRoute>} />
+            <Route path="/admin/ai-monitoring" element={<ProtectedRoute allowedRoles={['admin']}>{withBoundary(<AIMonitoring />)}</ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute>{withBoundary(<Profile />)}</ProtectedRoute>} />
-            <Route path="/mock-interview" element={<ProtectedRoute>{withBoundary(<MockInterview />)}</ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/app" replace />} />
+            <Route path="/mock-interview" element={<ProtectedRoute excludedRoles={['admin']} redirectTo="/admin">{withBoundary(<MockInterview />)}</ProtectedRoute>} />
+            <Route path="*" element={<Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/app'} replace />} />
           </Routes>
         </Suspense>
       </main>

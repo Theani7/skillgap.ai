@@ -37,11 +37,14 @@ def get_db():
         conn.close()
 
 
-def _ensure_column(cursor, table: str, col: str, typedef: str) -> None:
+def _ensure_column(cursor, table: str, col: str, typedef: str, default=None) -> None:
     cursor.execute(f"PRAGMA table_info({table})")
     existing = {row[1] for row in cursor.fetchall()}
     if col not in existing:
-        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}")
+        if default is not None:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typedef} DEFAULT {default}")
+        else:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}")
 
 
 def init_db():
@@ -111,12 +114,13 @@ def init_db():
                 email VARCHAR(120) UNIQUE NOT NULL,
                 full_name VARCHAR(100) DEFAULT 'User',
                 hashed_password VARCHAR(255) NOT NULL,
-                role text NOT NULL CHECK(role IN ('admin', 'user')),
+                role TEXT NOT NULL CHECK(role IN ('admin', 'user')),
+                is_active INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
 
-        _ensure_column(cursor, 'users', 'created_at', 'TEXT')
+        _ensure_column(cursor, 'users', 'is_active', 'INTEGER', '1')
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS market_trends_cache (
@@ -239,6 +243,68 @@ def init_db():
             )
         ''')
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_rate_limits_updated ON rate_limits(updated_at)")
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS job_roles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title VARCHAR(200) NOT NULL,
+                description TEXT DEFAULT '',
+                category VARCHAR(100) DEFAULT '',
+                is_active INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS job_role_skills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_role_id INTEGER NOT NULL,
+                skill_name VARCHAR(100) NOT NULL,
+                is_required INTEGER DEFAULT 1,
+                FOREIGN KEY (job_role_id) REFERENCES job_roles(id) ON DELETE CASCADE
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS career_roadmaps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_role_id INTEGER NOT NULL,
+                title VARCHAR(200) NOT NULL,
+                description TEXT DEFAULT '',
+                duration_weeks INTEGER DEFAULT 12,
+                sort_order INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (job_role_id) REFERENCES job_roles(id) ON DELETE CASCADE
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS roadmap_steps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                roadmap_id INTEGER NOT NULL,
+                step_number INTEGER NOT NULL,
+                title VARCHAR(200) NOT NULL,
+                description TEXT DEFAULT '',
+                duration_weeks INTEGER DEFAULT 2,
+                skills TEXT DEFAULT '',
+                resources TEXT DEFAULT '',
+                FOREIGN KEY (roadmap_id) REFERENCES career_roadmaps(id) ON DELETE CASCADE
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                admin_user_id INTEGER NOT NULL,
+                admin_username VARCHAR(50) NOT NULL,
+                action VARCHAR(100) NOT NULL,
+                target_type VARCHAR(50) NOT NULL,
+                target_id VARCHAR(100),
+                details TEXT DEFAULT '',
+                ip_address VARCHAR(50) DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS login_attempts (
