@@ -32,33 +32,63 @@ const PublicTopBar = ({ openAuthModal }) => {
           </span>
         </Link>
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            onClick={() => openAuthModal('login')}
-            className="btn btn-primary"
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <Link
+            to="/about"
             style={{
-              padding: '10px 24px',
-              fontSize: '14px',
+              fontSize: '15px',
               fontWeight: '500',
-              borderRadius: '50px',
+              color: 'var(--color-text-muted)',
+              textDecoration: 'none',
+              transition: 'color 150ms ease',
             }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-muted)'}
           >
-            Log in
-          </button>
-          <button
-            onClick={() => openAuthModal('register')}
-            className="btn btn-secondary"
+            About
+          </Link>
+          <Link
+            to="/who-we-are"
             style={{
-              padding: '10px 24px',
-              fontSize: '14px',
+              fontSize: '15px',
               fontWeight: '500',
-              borderRadius: '50px',
-              background: 'var(--slate-100)',
-              border: '1px solid var(--slate-200)',
+              color: 'var(--color-text-muted)',
+              textDecoration: 'none',
+              transition: 'color 150ms ease',
             }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-text)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-muted)'}
           >
-            Sign up
-          </button>
+            Who we are
+          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '16px' }}>
+            <button
+              onClick={() => openAuthModal('login')}
+              className="btn btn-primary"
+              style={{
+                padding: '10px 24px',
+                fontSize: '14px',
+                fontWeight: '500',
+                borderRadius: '50px',
+              }}
+            >
+              Log in
+            </button>
+            <button
+              onClick={() => openAuthModal('register')}
+              className="btn btn-secondary"
+              style={{
+                padding: '10px 24px',
+                fontSize: '14px',
+                fontWeight: '500',
+                borderRadius: '50px',
+                background: 'var(--slate-100)',
+                border: '1px solid var(--slate-200)',
+              }}
+            >
+              Sign up
+            </button>
+          </div>
         </nav>
       </div>
 
