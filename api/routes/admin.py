@@ -120,6 +120,33 @@ def get_admin_feedback(
     return {"feedback": [dict(r) for r in rows], "total": total, "limit": limit, "offset": offset}
 
 
+@router.get("/api/admin/feedback/stats")
+def get_feedback_stats(current_admin: dict = Depends(get_current_admin)):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) as total FROM user_feedback")
+        total = cursor.fetchone()["total"]
+        cursor.execute("SELECT feed_score, COUNT(*) as count FROM user_feedback GROUP BY feed_score")
+        by_score = {row["feed_score"]: row["count"] for row in cursor.fetchall()}
+    finally:
+        conn.close()
+
+    positive = by_score.get(4, 0) + by_score.get(5, 0)
+    neutral = by_score.get(3, 0)
+    negative = by_score.get(1, 0) + by_score.get(2, 0)
+    ratio = round(positive / negative, 2) if negative > 0 else (float('inf') if positive > 0 else 0)
+
+    return {
+        "total": total,
+        "positive": positive,
+        "neutral": neutral,
+        "negative": negative,
+        "ratio": ratio if ratio != float('inf') else "∞",
+        "by_score": {i: by_score.get(i, 0) for i in range(1, 6)},
+    }
+
+
 @router.delete("/api/admin/users/{user_id}")
 def delete_admin_user(user_id: int, current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
