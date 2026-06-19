@@ -959,14 +959,11 @@ const Landing = ({ openAuthModal }) => {
           <div className="mc-divider" style={{ marginBottom: '24px' }} />
 
           <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexWrap: 'wrap', gap: '12px',
           }}>
             <p style={{ fontSize: '12px', color: 'var(--color-text-light)', margin: 0 }}>
               © {new Date().getFullYear()} SkillGap.ai - Built for serious job seekers.
-            </p>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-light)', margin: 0 }}>
-              No subscription. No ads. No data selling.
             </p>
           </div>
         </div>
