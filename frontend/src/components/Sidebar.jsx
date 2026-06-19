@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Zap, Sparkles, Settings, User, Shield, LogOut,
-  Menu, X, BarChart3, FileSearch, AlertTriangle, MessageSquare,
+  ChevronLeft, ChevronRight, BarChart3, FileSearch, AlertTriangle, MessageSquare,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -42,7 +42,7 @@ const Sidebar = () => {
   const userMenuRef = useRef(null);
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (_) { /* noop */ }
+    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (_) {}
   }, [collapsed]);
 
   useEffect(() => {
@@ -57,59 +57,7 @@ const Sidebar = () => {
   }, [userMenuOpen]);
 
   const isActive = (path) => location.pathname === path;
-
-  const renderLink = (link) => {
-    const active = isActive(link.path);
-    const Icon = link.icon;
-    return (
-      <Link
-        key={link.path}
-        to={link.path}
-        title={collapsed ? link.label : undefined}
-        style={{
-          position: 'relative',
-          display: 'flex', alignItems: 'center', gap: '12px',
-          height: '40px', padding: collapsed ? '0' : '0 12px',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          borderRadius: 'var(--radius-md)',
-          fontSize: '14px', fontWeight: active ? 'var(--font-semibold)' : '500',
-          textDecoration: 'none',
-          color: active ? 'var(--color-secondary)' : 'var(--color-text-muted)',
-          background: active ? 'rgba(255, 107, 53, 0.08)' : 'transparent',
-          transition: 'background 150ms ease, color 150ms ease',
-        }}
-        onMouseEnter={(e) => {
-          if (!active) {
-            e.currentTarget.style.background = 'rgba(255, 107, 53, 0.04)';
-            e.currentTarget.style.color = 'var(--color-text)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!active) {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = 'var(--color-text-muted)';
-          }
-        }}
-      >
-        {active && !collapsed && (
-          <motion.div
-            layoutId="sidebar-active-indicator"
-            style={{
-              position: 'absolute', left: 0, top: '8px', bottom: '8px',
-              width: '3px', borderRadius: '0 3px 3px 0',
-              background: 'var(--color-secondary)',
-            }}
-          />
-        )}
-        <Icon size={18} style={{ flexShrink: 0 }} />
-        {!collapsed && (
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {link.label}
-          </span>
-        )}
-      </Link>
-    );
-  };
+  const sidebarWidth = collapsed ? 64 : 220;
 
   const isAdmin = user?.role === 'admin';
   const sectionsToRender = [...SECTIONS];
@@ -123,317 +71,349 @@ const Sidebar = () => {
   const userSubtitle = user?.email || (user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '');
 
   return (
-    <aside
-      style={{
-        position: 'sticky',
-        top: 0, left: 0,
-        height: '100vh',
-        width: collapsed ? 72 : 240,
-        background: 'var(--color-surface)',
-        borderRight: '1px solid var(--color-border)',
-        display: 'flex', flexDirection: 'column',
-        zIndex: 30,
-        transition: 'width 200ms ease',
-      }}
-    >
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: collapsed ? '20px 0' : '20px 20px',
-        minHeight: '72px',
-      }}>
-        <Link
-          to="/app"
+    <>
+      <aside
+        style={{
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          width: sidebarWidth,
+          minWidth: sidebarWidth,
+          background: 'var(--color-surface)',
+          borderRight: '1px solid var(--color-border)',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'width 200ms ease, min-width 200ms ease',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Logo */}
+        <div
           style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            textDecoration: 'none', overflow: 'hidden',
-            flex: 1,
+            height: '64px',
+            padding: '0 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'space-between',
+            borderBottom: '1px solid var(--color-border)',
           }}
         >
-          {!collapsed ? (
-            <span style={{
-              fontWeight: 'var(--font-extrabold)', fontSize: '20px',
-              letterSpacing: 'var(--tracking-tight)',
-              color: 'var(--color-text)',
-            }}>
-              Skill<span className="mc-gradient">Gap.ai</span>
-            </span>
-          ) : (
-            <div style={{
-              width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
-              background: 'var(--color-secondary)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(255, 107, 53, 0.25)',
-              cursor: 'pointer',
-            }} onClick={(e) => { e.preventDefault(); setCollapsed(false); }}>
-              <Zap size={18} color="white" />
-            </div>
-          )}
-        </Link>
-        {!collapsed && (
-          <button
-            onClick={() => setCollapsed(true)}
-            style={{
-              width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
-              border: 'none', background: 'transparent',
-              color: 'var(--color-text-muted)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 150ms ease',
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--color-bg)';
-              e.currentTarget.style.color = 'var(--color-text)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = 'var(--color-text-muted)';
-            }}
-          >
-            <Menu size={16} />
-          </button>
-        )}
-      </div>
-
-      <nav style={{
-        flex: 1, overflowY: 'auto', overflowX: 'hidden',
-        padding: '8px 12px 16px',
-        display: 'flex', flexDirection: 'column', gap: '20px',
-      }}>
-        {sectionsToRender.map((section) => (
-          <div key={section.label}>
-            {!collapsed && (
-              <h3 style={{
-                fontSize: '11px', fontWeight: 'var(--font-bold)',
-                textTransform: 'uppercase', letterSpacing: '0.08em',
-                color: 'var(--color-text-light)', margin: '0 12px 8px',
+          <Link to="/app" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+            {collapsed ? (
+              <div
+                style={{
+                  width: '32px', height: '32px', borderRadius: '10px',
+                  background: 'var(--color-secondary)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <Zap size={18} color="white" />
+              </div>
+            ) : (
+              <span style={{
+                fontWeight: '800', fontSize: '18px',
+                letterSpacing: '-0.02em', color: 'var(--color-text)',
               }}>
-                {section.label}
-              </h3>
+                Skill<span style={{ color: 'var(--color-secondary)' }}>Gap.ai</span>
+              </span>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              {section.items.map((link) => renderLink(link))}
-            </div>
-          </div>
-        ))}
-
-        <div>
+          </Link>
           {!collapsed && (
-            <h3 style={{
-              fontSize: '11px', fontWeight: 'var(--font-bold)',
-              textTransform: 'uppercase', letterSpacing: '0.08em',
-              color: 'var(--color-text-light)', margin: '0 12px 8px',
-            }}>
-              Account
-            </h3>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {BOTTOM_LINKS.map((link) => renderLink(link))}
-          </div>
-        </div>
-      </nav>
-
-      <div style={{
-        borderTop: '1px solid var(--color-border)',
-        padding: collapsed ? '12px 8px' : '12px 12px',
-        position: 'relative',
-      }} ref={userMenuRef}>
-        <AnimatePresence>
-          {userMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.96 }}
-              transition={{ duration: 0.15 }}
+            <button
+              onClick={() => setCollapsed(true)}
               style={{
-                position: 'absolute', bottom: 'calc(100% + 8px)', left: '12px', right: '12px',
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-lg)',
-                padding: '6px', zIndex: 50,
+                width: '28px', height: '28px', borderRadius: '8px',
+                border: 'none', background: 'transparent',
+                color: 'var(--color-text-light)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
-              <div style={{
-                padding: '8px 10px', marginBottom: '4px',
-                borderBottom: '1px solid var(--color-border)',
-              }}>
-                <p style={{ fontSize: '13px', fontWeight: 'var(--font-bold)', color: 'var(--color-text)', margin: 0 }}>
-                  {user?.full_name || user?.username}
-                </p>
-                <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {userSubtitle}
-                </p>
-              </div>
-              <Link
-                to="/profile"
-                onClick={() => setUserMenuOpen(false)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 10px', borderRadius: 'var(--radius-md)',
-                  fontSize: '13px', fontWeight: '500', color: 'var(--color-text)',
-                  textDecoration: 'none',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <User size={14} color="var(--color-text-muted)" />
-                View profile
-              </Link>
-              <Link
-                to="/settings"
-                onClick={() => setUserMenuOpen(false)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 10px', borderRadius: 'var(--radius-md)',
-                  fontSize: '13px', fontWeight: '500', color: 'var(--color-text)',
-                  textDecoration: 'none',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <Settings size={14} color="var(--color-text-muted)" />
-                Settings
-              </Link>
-              <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 0' }} />
-              <button
-                onClick={() => setShowLogoutConfirm(true)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 10px', borderRadius: 'var(--radius-md)',
-                  fontSize: '13px', fontWeight: '500', color: 'var(--color-error)',
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  width: '100%', textAlign: 'left',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-error-light)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <LogOut size={14} />
-                Log out
-              </button>
-            </motion.div>
+              <ChevronLeft size={16} />
+            </button>
           )}
-        </AnimatePresence>
+        </div>
 
-        <button
-          onClick={() => setUserMenuOpen(!userMenuOpen)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            width: '100%', padding: collapsed ? '6px' : '8px 10px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-surface)',
-            cursor: 'pointer',
-            color: 'var(--color-text)',
-            transition: 'border-color 150ms ease, background 150ms ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-secondary)';
-            e.currentTarget.style.background = 'rgba(255, 107, 53, 0.04)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-border)';
-            e.currentTarget.style.background = 'var(--color-surface)';
-          }}
-        >
-          <div style={{
-            width: '32px', height: '32px', borderRadius: '50%',
-            background: 'var(--color-primary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontSize: '13px', fontWeight: 'var(--font-bold)',
-            flexShrink: 0,
-          }}>
-            {(user?.full_name || user?.username || '?').charAt(0).toUpperCase()}
-          </div>
-          {(!collapsed) && (
-            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-              <p style={{
-                fontSize: '13px', fontWeight: 'var(--font-semibold)',
-                color: 'var(--color-text)', margin: 0,
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              }}>
-                {user?.full_name || user?.username}
-              </p>
-              <p style={{
-                fontSize: '11px', color: 'var(--color-text-muted)', margin: 0,
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              }}>
-                {userSubtitle}
-              </p>
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto', overflowX: 'hidden' }}>
+          {sectionsToRender.map((section) => (
+            <div key={section.label} style={{ marginBottom: '20px' }}>
+              {!collapsed && (
+                <div style={{
+                  fontSize: '11px', fontWeight: '600',
+                  textTransform: 'uppercase', letterSpacing: '0.06em',
+                  color: 'var(--color-text-light)',
+                  padding: '0 8px', marginBottom: '6px',
+                }}>
+                  {section.label}
+                </div>
+              )}
+              {section.items.map((link) => {
+                const active = isActive(link.path);
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    title={collapsed ? link.label : undefined}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      height: '36px',
+                      padding: collapsed ? '0' : '0 10px',
+                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      borderRadius: '8px',
+                      fontSize: '13px', fontWeight: active ? '600' : '500',
+                      textDecoration: 'none',
+                      color: active ? 'var(--color-secondary)' : 'var(--color-text-muted)',
+                      background: active ? 'rgba(255, 107, 53, 0.1)' : 'transparent',
+                      marginBottom: '2px',
+                      transition: 'background 100ms ease, color 100ms ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) e.currentTarget.style.background = 'var(--color-bg)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    <Icon size={18} />
+                    {!collapsed && <span>{link.label}</span>}
+                  </Link>
+                );
+              })}
             </div>
-          )}
-        </button>
-      </div>
-    </aside>
-  );
+          ))}
 
-  return (
-    <>
-      {sidebarContent}
+          <div style={{ marginBottom: '20px' }}>
+            {!collapsed && (
+              <div style={{
+                fontSize: '11px', fontWeight: '600',
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                color: 'var(--color-text-light)',
+                padding: '0 8px', marginBottom: '6px',
+              }}>
+                Account
+              </div>
+            )}
+            {BOTTOM_LINKS.map((link) => {
+              const active = isActive(link.path);
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  title={collapsed ? link.label : undefined}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    height: '36px',
+                    padding: collapsed ? '0' : '0 10px',
+                    justifyContent: collapsed ? 'center' : 'flex-start',
+                    borderRadius: '8px',
+                    fontSize: '13px', fontWeight: active ? '600' : '500',
+                    textDecoration: 'none',
+                    color: active ? 'var(--color-secondary)' : 'var(--color-text-muted)',
+                    background: active ? 'rgba(255, 107, 53, 0.1)' : 'transparent',
+                    transition: 'background 100ms ease, color 100ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.background = 'var(--color-bg)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <Icon size={18} />
+                  {!collapsed && <span>{link.label}</span>}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
 
+        {/* Expand button when collapsed */}
+        {collapsed && (
+          <div style={{ padding: '0 8px 8px' }}>
+            <button
+              onClick={() => setCollapsed(false)}
+              style={{
+                width: '100%', height: '36px', borderRadius: '8px',
+                border: 'none', background: 'var(--color-bg)',
+                color: 'var(--color-text-muted)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* User */}
+        <div
+          style={{
+            borderTop: '1px solid var(--color-border)',
+            padding: '8px',
+          }}
+          ref={userMenuRef}
+        >
+          <AnimatePresence>
+            {userMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                style={{
+                  position: 'absolute', bottom: '60px', left: '8px', right: '8px',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                  padding: '6px', zIndex: 50,
+                }}
+              >
+                <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--color-border)', marginBottom: '4px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-text)', margin: 0 }}>
+                    {user?.full_name || user?.username}
+                  </p>
+                  <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {userSubtitle}
+                  </p>
+                </div>
+                <Link
+                  to="/profile"
+                  onClick={() => setUserMenuOpen(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '6px',
+                    fontSize: '13px', color: 'var(--color-text)', textDecoration: 'none',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <User size={14} /> View profile
+                </Link>
+                <Link
+                  to="/settings"
+                  onClick={() => setUserMenuOpen(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '6px',
+                    fontSize: '13px', color: 'var(--color-text)', textDecoration: 'none',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Settings size={14} /> Settings
+                </Link>
+                <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 0' }} />
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '6px',
+                    fontSize: '13px', color: 'var(--color-error)',
+                    background: 'transparent', border: 'none', cursor: 'pointer', width: '100%',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-error-light)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <LogOut size={14} /> Log out
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              width: '100%',
+              padding: collapsed ? '6px' : '8px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: 'var(--color-text)',
+              transition: 'background 100ms ease',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <div style={{
+              width: '32px', height: '32px', borderRadius: '50%',
+              background: 'var(--color-secondary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'white', fontSize: '13px', fontWeight: '700', flexShrink: 0,
+            }}>
+              {(user?.full_name || user?.username || '?').charAt(0).toUpperCase()}
+            </div>
+            {!collapsed && (
+              <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                <div style={{ fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {user?.full_name || user?.username}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {userSubtitle}
+                </div>
+              </div>
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {/* Logout modal */}
       <AnimatePresence>
         {showLogoutConfirm && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setShowLogoutConfirm(false)}
             style={{
               position: 'fixed', inset: 0, zIndex: 910,
-              background: 'rgba(15, 15, 30, 0.4)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '24px',
+              background: 'rgba(0,0,0,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
             }}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
               style={{
                 background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '380px',
-                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.3)', padding: '28px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                textAlign: 'center',
+                borderRadius: '16px', width: '100%', maxWidth: '360px',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.2)', padding: '28px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
               }}
             >
               <div style={{
-                width: 52, height: 52, borderRadius: 14,
+                width: 48, height: 48, borderRadius: 12,
                 background: 'var(--color-error-light)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: 16,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16,
               }}>
-                <AlertTriangle size={24} color="var(--color-error)" />
+                <AlertTriangle size={22} color="var(--color-error)" />
               </div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 }}>
-                Log out of your account?
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 }}>
+                Log out?
               </h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: 24, lineHeight: 1.5 }}>
-                You'll need to sign in again to access your analyses and saved data.
+              <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginBottom: 20, lineHeight: 1.5 }}>
+                You'll need to sign in again to access your data.
               </p>
               <div style={{ display: 'flex', gap: 10, width: '100%' }}>
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
                   style={{
                     flex: 1, padding: '10px 0', borderRadius: 10,
-                    border: '1.5px solid var(--color-border)', background: 'var(--color-surface)',
-                    color: 'var(--color-text)', fontWeight: 600, fontSize: '0.9rem',
-                    cursor: 'pointer',
+                    border: '1px solid var(--color-border)', background: 'var(--color-surface)',
+                    color: 'var(--color-text)', fontWeight: 600, fontSize: '14px', cursor: 'pointer',
                   }}
                 >
                   Cancel
                 </button>
-<button
-                    onClick={async () => {
-                      await logout();
-                    }}
-                    style={{
+                <button
+                  onClick={async () => { await logout(); }}
+                  style={{
                     flex: 1, padding: '10px 0', borderRadius: 10,
                     border: 'none', background: 'var(--color-error)',
-                    color: 'white', fontWeight: 600, fontSize: '0.9rem',
-                    cursor: 'pointer',
+                    color: 'white', fontWeight: 600, fontSize: '14px', cursor: 'pointer',
                   }}
                 >
                   Log out
