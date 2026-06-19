@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 import {
-  Users, LayoutDashboard, MessageSquareText, Trash2, Server, Plus, BookOpen,
-  ShieldAlert, Activity, TrendingUp, UserCheck, CheckCircle, X, RefreshCw, AlertTriangle,
+  Users, MessageSquareText, Trash2, Server, Plus, BookOpen,
+  ShieldAlert, Activity, TrendingUp, UserCheck, CheckCircle, X, RefreshCw, AlertTriangle, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import PageLoader from '../components/Skeleton';
 
 const fieldStyle = (focus) => ({
@@ -45,28 +47,34 @@ const StatCard = (props) => {
   );
 };
 
-const TABS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'resumes', label: 'Resume Logs', icon: Activity },
-  { id: 'users', label: 'Users', icon: Users },
-  { id: 'feedback', label: 'Feedback', icon: MessageSquareText },
-  { id: 'courses', label: 'Courses', icon: BookOpen },
-];
-
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const location = useLocation();
+  const activeTab = location.pathname.split('/').pop() || 'dashboard';
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const [resumes, setResumes] = useState([]);
   const [feedback, setFeedback] = useState([]);
   const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState('');
   const [courses, setCourses] = useState([]);
   const [analytics, setAnalytics] = useState({ most_sought_role: '', most_common_missing_skill: '' });
   const [qualityMetrics, setQualityMetrics] = useState(null);
   const [scrapeStatus, setScrapeStatus] = useState('');
   const [newCourse, setNewCourse] = useState({ field: '', course_name: '', course_url: '' });
+  const [editingCourse, setEditingCourse] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [toast, setToast] = useState(null);
+  const [resumeDetail, setResumeDetail] = useState(null);
+  const [resumePage, setResumePage] = useState(0);
+  const [resumeTotal, setResumeTotal] = useState(0);
+  const [feedbackPage, setFeedbackPage] = useState(0);
+  const [feedbackTotal, setFeedbackTotal] = useState(0);
+  const [uploadsOverTime, setUploadsOverTime] = useState([]);
+  const [skillGaps, setSkillGaps] = useState([]);
+  const [roleDistribution, setRoleDistribution] = useState([]);
+  const [analysisCache, setAnalysisCache] = useState([]);
+  const [cacheTotal, setCacheTotal] = useState(0);
+  const PAGE_SIZE = 20;
   const toastTimerRef = useRef(null);
 
   useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
@@ -80,20 +88,28 @@ const Admin = () => {
   const fetchAdminData = useCallback(async (signal) => {
     setLoading(true);
     try {
-      const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes] = await Promise.all([
-        api.get('/api/admin/users', { signal }),
-        api.get('/api/admin/feedback', { signal }),
+      const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes, uploadsRes, skillGapsRes, roleDistRes] = await Promise.all([
+        api.get(`/api/admin/users?limit=${PAGE_SIZE}&offset=${resumePage * PAGE_SIZE}`, { signal }),
+        api.get(`/api/admin/feedback?limit=${PAGE_SIZE}&offset=${feedbackPage * PAGE_SIZE}`, { signal }),
         api.get('/api/admin/registered-users', { signal }),
         api.get('/api/admin/courses', { signal }),
         api.get('/api/admin/analytics', { signal }),
         api.get('/api/admin/quality-metrics', { signal }).catch(() => ({ data: null })),
+        api.get('/api/admin/analytics/uploads-over-time', { signal }),
+        api.get('/api/admin/analytics/skill-gaps', { signal }),
+        api.get('/api/admin/analytics/role-distribution', { signal }),
       ]);
       setResumes(usersRes.data.users || []);
+      setResumeTotal(usersRes.data.total || 0);
       setFeedback(feedbackRes.data.feedback || []);
+      setFeedbackTotal(feedbackRes.data.total || 0);
       setRegisteredUsers(regUsersRes.data.users || []);
       setCourses(coursesRes.data.courses || []);
       setAnalytics(analyticsRes.data);
       setQualityMetrics(qualityRes.data);
+      setUploadsOverTime(uploadsRes.data.data || []);
+      setSkillGaps(skillGapsRes.data.data || []);
+      setRoleDistribution(roleDistRes.data.data || []);
     } catch (_err) {
       if (_err?.name !== 'CanceledError' && _err?.code !== 'ERR_CANCELED') {
         console.error(_err);
@@ -102,7 +118,7 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [resumePage, feedbackPage]);
 
   useEffect(() => {
     if (!user?.username) return;
@@ -151,6 +167,20 @@ const Admin = () => {
     }, 'User deleted.'),
   });
 
+  const handleUpdateRole = async (userId, newRole) => {
+    await runAction('update role', async () => {
+      const res = await api.patch(`/api/admin/registered-users/${userId}/role`, { role: newRole });
+      setRegisteredUsers((prev) => prev.map((u) => (u.id === userId ? res.data.user : u)));
+    }, 'Role updated.');
+  };
+
+  const handleUpdateStatus = async (userId, isActive) => {
+    await runAction('update status', async () => {
+      const res = await api.patch(`/api/admin/registered-users/${userId}/status`, { is_active: isActive });
+      setRegisteredUsers((prev) => prev.map((u) => (u.id === userId ? res.data.user : u)));
+    }, isActive ? 'User activated.' : 'User deactivated.');
+  };
+
   const handleAddCourse = async (e) => {
     e.preventDefault();
     if (!newCourse.field.trim() || !newCourse.course_name.trim() || !newCourse.course_url.trim()) {
@@ -173,6 +203,35 @@ const Admin = () => {
       setCourses((prev) => prev.filter((c) => c.id !== id));
     }, 'Course deleted.'),
   });
+
+  const handleEditCourse = (course) => {
+    setEditingCourse({ ...course });
+  };
+
+  const handleSaveCourse = async () => {
+    if (!editingCourse.field.trim() || !editingCourse.course_name.trim() || !editingCourse.course_url.trim()) {
+      showToast('error', 'Please fill all three fields.');
+      return;
+    }
+    await runAction('update course', async () => {
+      await api.patch(`/api/admin/courses/${editingCourse.id}`, {
+        field: editingCourse.field,
+        course_name: editingCourse.course_name,
+        course_url: editingCourse.course_url,
+      });
+      setEditingCourse(null);
+      await fetchAdminData();
+    }, 'Course updated.');
+  };
+
+  const handleViewResume = async (id) => {
+    try {
+      const res = await api.get(`/api/admin/users/${id}`);
+      setResumeDetail(res.data.analysis);
+    } catch {
+      showToast('error', 'Failed to load resume details.');
+    }
+  };
 
   const handleTriggerScrape = () => {
     setScrapeStatus('Running simulation...');
@@ -216,39 +275,6 @@ const Admin = () => {
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', margin: 0 }}>
             Manage users, feedback, and course recommendations.
           </p>
-        </div>
-
-        <div className="card admin-tabs" style={{
-          padding: '6px', marginBottom: '20px', display: 'flex', gap: '4px',
-          flexWrap: 'wrap',
-        }} role="tablist" aria-label="Admin sections">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  height: '40px', padding: '0 14px',
-                  border: 'none', borderRadius: 'var(--radius-md)',
-                  background: active ? 'var(--indigo-50)' : 'transparent',
-                  color: active ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                  fontWeight: active ? 'var(--font-semibold)' : 'var(--font-medium)',
-                  fontSize: '13px', cursor: 'pointer',
-                  fontFamily: 'inherit', transition: 'background 150ms ease, color 150ms ease',
-                  minHeight: '40px',
-                }}
-              >
-                <Icon size={15} />
-                {tab.label}
-              </button>
-            );
-          })}
         </div>
 
         {activeTab === 'dashboard' && (
@@ -306,86 +332,236 @@ const Admin = () => {
                 )}
               </div>
             </div>
+
+            {/* Charts Section */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginTop: '20px' }}>
+              {/* Uploads Over Time */}
+              <div className="card" style={{ padding: '24px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text)', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Activity size={14} color="var(--color-primary)" /> Resume Uploads Over Time
+                </h3>
+                {uploadsOverTime.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={uploadsOverTime}>
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v?.slice(5) || v} />
+                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="count" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: 0 }}>No data yet.</p>
+                )}
+              </div>
+
+              {/* Skill Gaps */}
+              <div className="card" style={{ padding: '24px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text)', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <BarChart3 size={14} color="var(--color-secondary)" /> Top Missing Skills
+                </h3>
+                {skillGaps.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={skillGaps} layout="vertical">
+                      <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                      <YAxis type="category" dataKey="skill" tick={{ fontSize: 11 }} width={100} />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="var(--color-secondary)" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: 0 }}>No data yet.</p>
+                )}
+              </div>
+
+              {/* Role Distribution */}
+              <div className="card" style={{ padding: '24px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text)', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <TrendingUp size={14} color="var(--color-success)" /> Target Role Distribution
+                </h3>
+                {roleDistribution.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie data={roleDistribution} dataKey="count" nameKey="target_role" cx="50%" cy="50%" outerRadius={80} label={({ target_role, percent }) => `${target_role?.slice(0, 15) || ''} ${(percent * 100).toFixed(0)}%`} labelLine={false} style={{ fontSize: '11px' }}>
+                        {roleDistribution.map((_, index) => (
+                          <Cell key={index} fill={['#ff6b35', '#0a1628', '#22c55e', '#eab308', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'][index % 8]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: 0 }}>No data yet.</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
         {activeTab === 'resumes' && (
-          <DataTable
-            columns={[
-              { label: 'Name', render: (r) => r.Name },
-              { label: 'Email', render: (r) => r.Email_ID, mono: true },
-              { label: 'Role', render: (r) => r.target_role || r.Predicted_Field },
-              { label: 'Score', render: (r) => r.resume_score },
-              { label: 'When', render: (r) => r.Timestamp },
-            ]}
-            rows={resumes}
-            keyField="ID"
-            empty="No resume analyses yet."
-            onDelete={handleDeleteResume}
-            deleteLabel="Delete log"
-          />
+          <div>
+            <DataTable
+              columns={[
+                { label: 'Name', render: (r) => r.Name },
+                { label: 'Email', render: (r) => r.Email_ID, mono: true },
+                { label: 'Role', render: (r) => r.target_role || r.Predicted_Field },
+                { label: 'Score', render: (r) => r.resume_score },
+                { label: 'When', render: (r) => r.Timestamp },
+                {
+                  label: '',
+                  render: (r) => (
+                    <button type="button" onClick={() => handleViewResume(r.ID)} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: '12px', cursor: 'pointer' }}>
+                      View
+                    </button>
+                  ),
+                },
+              ]}
+              rows={resumes}
+              keyField="ID"
+              empty="No resume analyses yet."
+              onDelete={handleDeleteResume}
+              deleteLabel="Delete log"
+            />
+            {resumeTotal > PAGE_SIZE && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+                <button type="button" disabled={resumePage === 0} onClick={() => setResumePage((p) => p - 1)} style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: resumePage === 0 ? 'var(--color-text-muted)' : 'var(--color-text)', cursor: resumePage === 0 ? 'default' : 'pointer', fontSize: '13px' }}>Previous</button>
+                <span style={{ padding: '6px 14px', fontSize: '13px', color: 'var(--color-text-muted)' }}>Page {resumePage + 1} of {Math.ceil(resumeTotal / PAGE_SIZE)}</span>
+                <button type="button" disabled={(resumePage + 1) * PAGE_SIZE >= resumeTotal} onClick={() => setResumePage((p) => p + 1)} style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: (resumePage + 1) * PAGE_SIZE >= resumeTotal ? 'var(--color-text-muted)' : 'var(--color-text)', cursor: (resumePage + 1) * PAGE_SIZE >= resumeTotal ? 'default' : 'pointer', fontSize: '13px' }}>Next</button>
+              </div>
+            )}
+          </div>
         )}
 
         {activeTab === 'users' && (
-          <DataTable
-            columns={[
-              { label: 'Username', render: (u) => u.username, mono: true },
-              { label: 'Email', render: (u) => u.email, mono: true },
-              { label: 'Role', render: (u) => <span className={`badge ${u.role === 'admin' ? 'badge-primary' : ''}`}>{u.role}</span> },
-            ]}
-            rows={registeredUsers}
-            keyField="id"
-            empty="No registered users yet."
-            onDelete={handleDeleteRegisteredUser}
-            deleteLabel="Ban user"
-          />
+          <div>
+            <div style={{ marginBottom: '16px' }}>
+              <input
+                type="text"
+                placeholder="Search by username or email..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                style={{
+                  width: '100%', maxWidth: '400px', height: '40px', padding: '0 14px',
+                  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)',
+                  fontSize: '14px', color: 'var(--color-text)', background: 'var(--color-surface)',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <DataTable
+              columns={[
+                { label: 'Username', render: (u) => u.username, mono: true },
+                { label: 'Email', render: (u) => u.email, mono: true },
+                {
+                  label: 'Role',
+                  render: (u) => (
+                    <select
+                      value={u.role}
+                      onChange={(e) => handleUpdateRole(u.id, e.target.value)}
+                      style={{
+                        padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--color-border)',
+                        background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  ),
+                },
+                {
+                  label: 'Status',
+                  render: (u) => (
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(u.id, !u.is_active)}
+                      style={{
+                        padding: '4px 10px', borderRadius: '6px', border: 'none',
+                        background: u.is_active ? 'var(--color-success)' : 'var(--color-error)',
+                        color: 'white', fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+                      }}
+                    >
+                      {u.is_active ? 'Active' : 'Inactive'}
+                    </button>
+                  ),
+                },
+              ]}
+              rows={registeredUsers.filter((u) => {
+                if (!userSearch) return true;
+                const q = userSearch.toLowerCase();
+                return u.username?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
+              })}
+              keyField="id"
+              empty="No registered users yet."
+              onDelete={handleDeleteRegisteredUser}
+              deleteLabel="Ban user"
+            />
+          </div>
         )}
 
         {activeTab === 'feedback' && (
-          <DataTable
-            columns={[
-              { label: 'Name', render: (f) => f.feed_name },
-              { label: 'Email', render: (f) => f.feed_email, mono: true },
-              { label: 'Rating', render: (f) => '★'.repeat(Number(f.feed_score) || 0) },
-              { label: 'Comments', render: (f) => truncate(f.comments, 80), nowrap: true },
-              { label: 'When', render: (f) => f.Timestamp },
-            ]}
-            rows={feedback}
-            keyField="ID"
-            empty="No feedback yet."
-            onDelete={handleDeleteFeedback}
-            deleteLabel="Delete feedback"
-          />
+          <div>
+            <DataTable
+              columns={[
+                { label: 'Name', render: (f) => f.feed_name },
+                { label: 'Email', render: (f) => f.feed_email, mono: true },
+                { label: 'Rating', render: (f) => '★'.repeat(Number(f.feed_score) || 0) },
+                { label: 'Comments', render: (f) => truncate(f.comments, 80), nowrap: true },
+                { label: 'When', render: (f) => f.Timestamp },
+              ]}
+              rows={feedback}
+              keyField="ID"
+              empty="No feedback yet."
+              onDelete={handleDeleteFeedback}
+              deleteLabel="Delete feedback"
+            />
+            {feedbackTotal > PAGE_SIZE && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+                <button type="button" disabled={feedbackPage === 0} onClick={() => setFeedbackPage((p) => p - 1)} style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: feedbackPage === 0 ? 'var(--color-text-muted)' : 'var(--color-text)', cursor: feedbackPage === 0 ? 'default' : 'pointer', fontSize: '13px' }}>Previous</button>
+                <span style={{ padding: '6px 14px', fontSize: '13px', color: 'var(--color-text-muted)' }}>Page {feedbackPage + 1} of {Math.ceil(feedbackTotal / PAGE_SIZE)}</span>
+                <button type="button" disabled={(feedbackPage + 1) * PAGE_SIZE >= feedbackTotal} onClick={() => setFeedbackPage((p) => p + 1)} style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: (feedbackPage + 1) * PAGE_SIZE >= feedbackTotal ? 'var(--color-text-muted)' : 'var(--color-text)', cursor: (feedbackPage + 1) * PAGE_SIZE >= feedbackTotal ? 'default' : 'pointer', fontSize: '13px' }}>Next</button>
+              </div>
+            )}
+          </div>
         )}
 
         {activeTab === 'courses' && (
           <div>
             <div className="card" style={{ padding: '24px', marginBottom: '20px' }}>
               <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-bold)', color: 'var(--color-text)', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Plus size={16} color="var(--color-primary)" /> Add course recommendation
+                <Plus size={16} color="var(--color-primary)" /> {editingCourse ? 'Edit course' : 'Add course recommendation'}
               </h3>
-              <form onSubmit={handleAddCourse} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+              <form onSubmit={(e) => { e.preventDefault(); editingCourse ? handleSaveCourse() : handleAddCourse(e); }} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
                 <input
-                  type="text" placeholder="Field (e.g. Data Science)" value={newCourse.field}
-                  onChange={(e) => setNewCourse({ ...newCourse, field: e.target.value })}
+                  type="text" placeholder="Field (e.g. Data Science)"
+                  value={editingCourse ? editingCourse.field : newCourse.field}
+                  onChange={(e) => editingCourse ? setEditingCourse({ ...editingCourse, field: e.target.value }) : setNewCourse({ ...newCourse, field: e.target.value })}
                   aria-label="Field"
                   style={fieldStyle(false)}
                 />
                 <input
-                  type="text" placeholder="Course name" value={newCourse.course_name}
-                  onChange={(e) => setNewCourse({ ...newCourse, course_name: e.target.value })}
+                  type="text" placeholder="Course name"
+                  value={editingCourse ? editingCourse.course_name : newCourse.course_name}
+                  onChange={(e) => editingCourse ? setEditingCourse({ ...editingCourse, course_name: e.target.value }) : setNewCourse({ ...newCourse, course_name: e.target.value })}
                   aria-label="Course name"
                   style={fieldStyle(false)}
                 />
                 <input
-                  type="url" placeholder="https://..." value={newCourse.course_url}
-                  onChange={(e) => setNewCourse({ ...newCourse, course_url: e.target.value })}
+                  type="url" placeholder="https://..."
+                  value={editingCourse ? editingCourse.course_url : newCourse.course_url}
+                  onChange={(e) => editingCourse ? setEditingCourse({ ...editingCourse, course_url: e.target.value }) : setNewCourse({ ...newCourse, course_url: e.target.value })}
                   aria-label="Course URL"
                   style={fieldStyle(false)}
                 />
-                <button type="submit" className="btn btn-primary" style={{ height: '44px' }}>
-                  <Plus size={14} style={{ marginRight: '6px' }} /> Add
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="submit" className="btn btn-primary" style={{ height: '44px', flex: 1 }}>
+                    {editingCourse ? 'Save' : <><Plus size={14} style={{ marginRight: '6px' }} /> Add</>}
+                  </button>
+                  {editingCourse && (
+                    <button type="button" onClick={() => setEditingCourse(null)} style={{ height: '44px', padding: '0 16px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer' }}>
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
 
@@ -394,6 +570,14 @@ const Admin = () => {
                 { label: 'Field', render: (c) => c.field },
                 { label: 'Course', render: (c) => c.course_name, nowrap: true },
                 { label: 'URL', render: (c) => <a href={c.course_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>{truncate(c.course_url, 40)}</a>, mono: true, nowrap: true },
+                {
+                  label: '',
+                  render: (c) => (
+                    <button type="button" onClick={() => handleEditCourse(c)} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: '12px', cursor: 'pointer' }}>
+                      Edit
+                    </button>
+                  ),
+                },
               ]}
               rows={courses}
               keyField="id"
@@ -415,6 +599,79 @@ const Admin = () => {
             onCancel={() => setConfirm(null)}
             onConfirm={() => { confirm.onConfirm(); setConfirm(null); }}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {resumeDetail && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 50, padding: '20px',
+            }}
+            onClick={() => setResumeDetail(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'var(--color-surface)', borderRadius: 'var(--radius-xl)',
+                padding: '28px', maxWidth: '600px', width: '100%', maxHeight: '80vh',
+                overflow: 'auto', boxShadow: 'var(--shadow-xl)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text)', margin: 0 }}>Resume Analysis Detail</h2>
+                <button onClick={() => setResumeDetail(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '4px' }}>
+                  <X size={20} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <Row label="Name" value={resumeDetail.Name} />
+                <Row label="Email" value={resumeDetail.Email_ID} />
+                <Row label="File" value={resumeDetail.pdf_name} />
+                <Row label="Target Role" value={resumeDetail.target_role || resumeDetail.Predicted_Field} />
+                <Row label="Score" value={resumeDetail.resume_score} />
+                <Row label="Date" value={resumeDetail.Timestamp} />
+                {resumeDetail.Actual_skills && (
+                  <div>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '0 0 6px' }}>Current Skills</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {resumeDetail.Actual_skills.split(',').map((s, i) => (
+                        <span key={i} style={{ padding: '3px 10px', borderRadius: '12px', background: 'var(--color-bg)', fontSize: '12px', color: 'var(--color-text)' }}>{s.trim()}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {resumeDetail.missing_skills && (
+                  <div>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '0 0 6px' }}>Missing Skills</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {resumeDetail.missing_skills.split(',').map((s, i) => (
+                        <span key={i} style={{ padding: '3px 10px', borderRadius: '12px', background: 'var(--color-error-light)', fontSize: '12px', color: 'var(--color-error)' }}>{s.trim()}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {resumeDetail.Recommended_skills && (
+                  <div>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '0 0 6px' }}>Recommended Skills</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {resumeDetail.Recommended_skills.split(',').map((s, i) => (
+                        <span key={i} style={{ padding: '3px 10px', borderRadius: '12px', background: 'var(--color-success-light)', fontSize: '12px', color: 'var(--color-success)' }}>{s.trim()}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 

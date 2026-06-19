@@ -185,6 +185,13 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Resp
 
         user_dict = dict(user)
 
+        if "is_active" in user_dict and user_dict["is_active"] == 0:
+            conn.close()
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account has been deactivated. Contact an administrator.",
+            )
+
         cursor.execute("DELETE FROM login_attempts WHERE username = ?", (username,))
         cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_dict["id"],))
         conn.commit()

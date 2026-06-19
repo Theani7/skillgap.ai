@@ -60,7 +60,7 @@ def _load_user(username: str) -> Optional[dict]:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "SELECT id, username, email, full_name, role, created_at FROM users WHERE username = ?",
+                "SELECT id, username, email, full_name, role, created_at, is_active FROM users WHERE username = ?",
                 (username,),
             )
         except Exception:
@@ -103,6 +103,11 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
     user = _load_user(username)
     if user is None:
         raise _raise_401()
+    if user.get("is_active") == 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account has been deactivated. Contact an administrator.",
+        )
     return user
 
 

@@ -28,6 +28,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
   // Login state
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
@@ -281,7 +282,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
                 <div className="auth-input-wrap">
                   <input
                     id="modal-login-password"
-                    type="password"
+                    type={showLoginPassword ? 'text' : 'password'}
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
@@ -293,6 +294,18 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
                     position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
                     color: 'var(--color-text-light)', pointerEvents: 'none',
                   }} />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    style={{
+                      position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+                      color: 'var(--color-text-light)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                    tabIndex={-1}
+                  >
+                    {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
 
