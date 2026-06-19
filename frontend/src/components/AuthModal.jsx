@@ -29,6 +29,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   // Register state
   const [firstName, setFirstName] = useState('');
@@ -57,6 +58,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
       setConfirmPassword('');
       setRegError('');
       setUsernameStatus('idle');
+      setRegistrationSuccess(false);
     }
   }, [isOpen, initialTab]);
 
@@ -155,9 +157,10 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
       });
       const data = await res.json();
       if (res.ok) {
-        await login();
-        onClose();
-        navigate('/app');
+        setLoginUsername(regUsername);
+        setLoginPassword('');
+        setRegistrationSuccess(true);
+        setActiveTab('login');
       } else {
         let msg = data.error || data.detail;
         if (Array.isArray(msg)) {
@@ -219,6 +222,12 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
 
           {activeTab === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="auth-modal-form" noValidate>
+              {registrationSuccess && (
+                <div className="auth-modal-success" role="alert">
+                  <CheckCircle size={16} />
+                  <span>Account created! Please sign in.</span>
+                </div>
+              )}
               {loginError && (
                 <div className="auth-modal-error" role="alert">
                   <span className="auth-modal-error-icon" aria-hidden="true">!</span>

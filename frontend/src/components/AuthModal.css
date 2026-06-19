@@ -129,6 +129,18 @@
   flex-shrink: 0;
 }
 
+.auth-modal-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--green-50);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-lg);
+  color: var(--color-success);
+  font-size: 13px;
+}
+
 .auth-modal-submit {
   display: flex;
   align-items: center;
