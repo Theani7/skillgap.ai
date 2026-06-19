@@ -1099,10 +1099,13 @@ select.input {
 .analysis-page .card.analysis-impression,
 .analysis-page .card.analysis-match,
 .analysis-page .card.analysis-breakdown,
+.analysis-page .card.analysis-breakdown-redesigned,
 .analysis-page .card.analysis-roadmap-card,
 .analysis-page .card.analysis-market-card,
 .analysis-page .card.analysis-skills-card,
-.analysis-page .card.analysis-resources-card {
+.analysis-page .card.analysis-resources-card,
+.analysis-page .card.analysis-profile-card,
+.analysis-page .card.analysis-next-steps-card {
   padding: 24px;
 }
 
@@ -1608,15 +1611,9 @@ select.input {
 
 /* Overview tab */
 .analysis-overview-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
-}
-
-@media (min-width: 720px) {
-  .analysis-overview-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* Profile Card */
@@ -1625,13 +1622,13 @@ select.input {
 }
 
 .analysis-profile-grid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 20px;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
 }
 
 .analysis-profile-main {
+  flex: 1 1 300px;
   min-width: 0;
 }
 
@@ -1670,16 +1667,16 @@ select.input {
 }
 
 .analysis-profile-meta {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-self: center;
 }
 
 .analysis-profile-meta-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  text-align: right;
 }
 
 .analysis-profile-meta-label {
@@ -1694,6 +1691,7 @@ select.input {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
+  white-space: nowrap;
 }
 
 .analysis-profile-tags {
@@ -1703,6 +1701,7 @@ select.input {
   margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid var(--color-border);
+  width: 100%;
 }
 
 .analysis-profile-tag {
@@ -1716,19 +1715,6 @@ select.input {
   background: var(--color-bg);
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
-}
-
-@media (max-width: 600px) {
-  .analysis-profile-grid {
-    grid-template-columns: 1fr;
-  }
-  .analysis-profile-meta {
-    grid-template-columns: repeat(4, 1fr);
-    text-align: left;
-  }
-  .analysis-profile-meta-item {
-    text-align: left;
-  }
 }
 
 /* Card head shared */
@@ -1889,13 +1875,24 @@ select.input {
 
 /* Score Breakdown Redesigned */
 .analysis-breakdown-redesigned {
-  grid-column: 1 / -1;
 }
 
 .analysis-breakdown-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .analysis-breakdown-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .analysis-breakdown-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .analysis-breakdown-item {
@@ -1995,19 +1992,24 @@ select.input {
 
 /* Recommended Next Steps */
 .analysis-next-steps-card {
-  grid-column: 1 / -1;
 }
 
 .analysis-next-steps-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .analysis-next-steps-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .analysis-next-step-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
   padding: 14px 16px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
@@ -2036,27 +2038,28 @@ select.input {
 }
 
 .analysis-next-step-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-text);
   margin-bottom: 2px;
 }
 
 .analysis-next-step-desc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--color-text-muted);
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .analysis-next-step-priority {
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: var(--radius-full);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   flex-shrink: 0;
-  align-self: center;
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
 .analysis-next-step-priority-high {
