@@ -1284,6 +1284,7 @@ def parse_resume_fallback(
         "email": email_match.group(0) if email_match else "",
         "mobile_number": phone,
         "skills": found_skills,
+        "matched_role_skills": [s for s in target_skills if s in found_skills or s.title() in found_skills],
         "education": education_flat,
         "experience": experience_flat,
         "designation": designations,
