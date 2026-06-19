@@ -26,6 +26,13 @@ const PublicTopBar = ({ openAuthModal }) => {
     }
   };
 
+  const handleLogoClick = (e) => {
+    if (isLanding) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <header
       style={{
@@ -49,6 +56,7 @@ const PublicTopBar = ({ openAuthModal }) => {
       }}>
         <Link
           to="/"
+          onClick={handleLogoClick}
           style={{ textDecoration: 'none' }}
         >
           <span style={{
