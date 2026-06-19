@@ -963,7 +963,7 @@ const Landing = ({ openAuthModal }) => {
             flexWrap: 'wrap', gap: '12px',
           }}>
             <p style={{ fontSize: '12px', color: 'var(--color-text-light)', margin: 0 }}>
-              © {new Date().getFullYear()} SkillGap.ai - Built for serious job seekers.
+              © {new Date().getFullYear()} SkillGap.ai
             </p>
           </div>
         </div>
