@@ -2083,6 +2083,180 @@ select.input {
   gap: 16px;
 }
 
+/* Coverage overview */
+.analysis-skills-coverage {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 600px) {
+  .analysis-skills-coverage {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+.analysis-skills-donut-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+.analysis-skills-donut-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.analysis-skills-donut-pct {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.analysis-skills-donut-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.analysis-skills-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  flex: 1;
+}
+
+.analysis-skills-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.analysis-skills-stat-num {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.analysis-skills-stat-match .analysis-skills-stat-num {
+  color: var(--color-success);
+}
+
+.analysis-skills-stat-gap .analysis-skills-stat-num {
+  color: var(--color-error);
+}
+
+.analysis-skills-stat-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.analysis-skills-stat-divider {
+  width: 1px;
+  background: var(--color-border);
+  align-self: stretch;
+}
+
+/* Role skills checklist */
+.analysis-skills-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+}
+
+@media (max-width: 540px) {
+  .analysis-skills-checklist {
+    grid-template-columns: 1fr;
+  }
+}
+
+.analysis-skills-checkitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 150ms ease;
+}
+
+.analysis-skills-checkitem--matched {
+  background: var(--emerald-50);
+  color: var(--color-success);
+}
+
+.analysis-skills-checkitem--gap {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.analysis-skills-checkicon {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+
+.analysis-skills-checkname {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Legend */
+.analysis-skills-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.analysis-skills-legend-title {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.analysis-skills-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.analysis-skills-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.analysis-skills-legend-dot--core {
+  background: var(--color-secondary);
+}
+
+.analysis-skills-legend-dot--nice {
+  background: var(--color-primary);
+}
+
 .analysis-search {
   position: relative;
   display: flex;
