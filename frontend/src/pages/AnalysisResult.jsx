@@ -391,7 +391,7 @@ const OverviewTab = ({ analysis, resumeInfo, targetRole, predictedField, matchSc
   );
 };
 
-const RoadmapTab = ({ roadmap }) => {
+const RoadmapTab = ({ roadmap, analysisId }) => {
   if (!Array.isArray(roadmap) || roadmap.length === 0) {
     return (
       <div className="card analysis-empty">
@@ -412,7 +412,7 @@ const RoadmapTab = ({ roadmap }) => {
           <p className="analysis-card-sub">A step-by-step plan to close your skill gaps.</p>
         </div>
       </div>
-      <Roadmap path={roadmap} />
+      <Roadmap path={roadmap} analysisId={analysisId} />
     </div>
   );
 };
@@ -1142,7 +1142,7 @@ const AnalysisResult = () => {
               targetRole={targetRole}
             />
           )}
-          {activeTab === 'roadmap' && <RoadmapTab roadmap={roadmap} />}
+          {activeTab === 'roadmap' && <RoadmapTab roadmap={roadmap} analysisId={data?.id} />}
           {activeTab === 'market' && <MarketTab trends={trends} targetRole={targetRole} />}
           {activeTab === 'resources' && <ResourcesTab tutorials={tutorials} />}
         </motion.div>
