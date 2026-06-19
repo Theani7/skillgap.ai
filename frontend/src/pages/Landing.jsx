@@ -944,7 +944,6 @@ const Landing = ({ openAuthModal }) => {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <li><a href="#features" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>Features</a></li>
                 <li><a href="#how-it-works" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>How it works</a></li>
-                <li><a href="#faq" style={{ fontSize: '14px', color: 'var(--color-text-muted)', textDecoration: 'none' }}>FAQ</a></li>
               </ul>
             </div>
 
