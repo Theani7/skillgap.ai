@@ -32,18 +32,30 @@ const PublicTopBar = ({ openAuthModal }) => {
           </span>
         </Link>
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={() => openAuthModal('login')}
             className="btn btn-primary"
-            style={{ padding: '8px 16px', fontSize: '14px' }}
+            style={{
+              padding: '10px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+              borderRadius: '50px',
+            }}
           >
             Log in
           </button>
           <button
             onClick={() => openAuthModal('register')}
             className="btn btn-secondary"
-            style={{ padding: '8px 16px', fontSize: '14px' }}
+            style={{
+              padding: '10px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+              borderRadius: '50px',
+              background: 'var(--slate-100)',
+              border: '1px solid var(--slate-200)',
+            }}
           >
             Sign up
           </button>
