@@ -31,7 +31,7 @@ LOCAL_LLM_SKIP_THRESHOLD = int(os.getenv("LOCAL_LLM_SKIP_THRESHOLD", "70"))
 router = APIRouter(tags=["analysis"])
 
 # Bump this when scoring/parsing logic changes to auto-invalidate stale cache entries.
-_CACHE_VERSION = 2
+_CACHE_VERSION = 3
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -271,7 +271,7 @@ async def analyze_resume(
         recommended_courses = []
         cursor.execute("SELECT course_name, course_url FROM courses WHERE field = ?", ('General',))
         for row in cursor.fetchall():
-            recommended_courses.append([row['course_name'], row['course_url']])
+            recommended_courses.append({"name": row['course_name'], "url": row['course_url']})
         
         mapping_field = target_role if target_role else predicted_field
 
@@ -288,7 +288,7 @@ async def analyze_resume(
             cursor.execute("SELECT course_name, course_url FROM courses WHERE field = ?", (mapping_field,))
             field_courses = cursor.fetchall()
             if field_courses:
-                recommended_courses = [[row['course_name'], row['course_url']] for row in field_courses]
+                recommended_courses = [{"name": row['course_name'], "url": row['course_url']} for row in field_courses]
 
             # Fallback to static roadmap only if dynamic extraction failed
             if not resume_data.get('roadmap', []):
