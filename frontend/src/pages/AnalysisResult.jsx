@@ -157,6 +157,49 @@ const SkillsTab = ({ matched, gaps, filter, setFilter }) => {
   );
 };
 
+const PLATFORM_STYLES = {
+  udemy: {
+    gradient: 'linear-gradient(135deg, #a435f0, #6b21a8)',
+    label: 'Udemy',
+  },
+  coursera: {
+    gradient: 'linear-gradient(135deg, #0056d2, #1a365d)',
+    label: 'Coursera',
+  },
+  edx: {
+    gradient: 'linear-gradient(135deg, #c41230, #7f1d1d)',
+    label: 'edX',
+  },
+  pluralsight: {
+    gradient: 'linear-gradient(135deg, #e11d48, #9f1239)',
+    label: 'Pluralsight',
+  },
+  linkedin: {
+    gradient: 'linear-gradient(135deg, #0077b5, #004182)',
+    label: 'LinkedIn Learning',
+  },
+  youtube: {
+    gradient: 'linear-gradient(135deg, #ff0000, #991b1b)',
+    label: 'YouTube',
+  },
+  default: {
+    gradient: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+    label: 'Course',
+  },
+};
+
+const detectPlatform = (url) => {
+  if (!url) return 'default';
+  const lower = url.toLowerCase();
+  if (lower.includes('udemy.com')) return 'udemy';
+  if (lower.includes('coursera.org') || lower.includes('coursera.com')) return 'coursera';
+  if (lower.includes('edx.org')) return 'edx';
+  if (lower.includes('pluralsight.com')) return 'pluralsight';
+  if (lower.includes('linkedin.com/learning')) return 'linkedin';
+  if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'youtube';
+  return 'default';
+};
+
 const CoursesTab = ({ courses, recommendedSkills, targetRole }) => {
   if (!Array.isArray(courses) || courses.length === 0) {
     return (
@@ -202,27 +245,44 @@ const CoursesTab = ({ courses, recommendedSkills, targetRole }) => {
       )}
 
       <div className="analysis-resources-grid">
-        {courses.map((course, i) => (
-          <a
-            key={i}
-            href={course.url || course.course_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="analysis-resource-card"
-          >
-            <div className="analysis-resource-thumb" style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
-              <GraduationCap size={22} color="white" />
-            </div>
-            <div className="analysis-resource-meta">
-              <span className="analysis-resource-tag">Course</span>
-              <h4 className="analysis-resource-title">{course.name || course.course_name}</h4>
-              <div className="analysis-resource-foot">
-                View course
-                <ArrowRight size={12} />
+        {courses.map((course, i) => {
+          const url = course.url || course.course_url;
+          const platform = detectPlatform(url);
+          const style = PLATFORM_STYLES[platform];
+          return (
+            <a
+              key={i}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="analysis-resource-card"
+            >
+              <div className="analysis-resource-thumb" style={{ background: style.gradient }}>
+                <GraduationCap size={22} color="white" />
+                <span style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  left: '10px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.9)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  {style.label}
+                </span>
               </div>
-            </div>
-          </a>
-        ))}
+              <div className="analysis-resource-meta">
+                <span className="analysis-resource-tag">Course</span>
+                <h4 className="analysis-resource-title">{course.name || course.course_name}</h4>
+                <div className="analysis-resource-foot">
+                  View course
+                  <ArrowRight size={12} />
+                </div>
+              </div>
+            </a>
+          );
+        })}
       </div>
     </div>
   );
