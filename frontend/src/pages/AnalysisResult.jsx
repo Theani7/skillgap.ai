@@ -75,7 +75,10 @@ const pill = (bg, fg) => ({
 });
 
 const SkillsTab = ({ matched, gaps, filter, setFilter }) => {
-  const filterMatch = (s) => s.toLowerCase().includes(filter.toLowerCase());
+  const filterMatch = (s) => {
+    const name = typeof s === 'string' ? s : s.skill || s;
+    return name.toLowerCase().includes(filter.toLowerCase());
+  };
   const visibleMatched = filter ? matched.filter(filterMatch) : matched;
   const visibleGaps = filter ? gaps.filter(filterMatch) : gaps;
 
@@ -118,11 +121,16 @@ const SkillsTab = ({ matched, gaps, filter, setFilter }) => {
               </p>
             ) : (
               <div className="analysis-tags">
-                {visibleMatched.map((s) => (
-                  <span key={s} className="analysis-tag analysis-tag-match">
-                    <Check size={11} /> {s}
-                  </span>
-                ))}
+                {visibleMatched.map((s) => {
+                  const name = typeof s === 'string' ? s : s.skill;
+                  const isRequired = typeof s === 'object' && s.is_required;
+                  return (
+                    <span key={name} className={`analysis-tag analysis-tag-match${isRequired ? ' analysis-tag-core' : ''}`}>
+                      <Check size={11} /> {name}
+                      {isRequired && <span className="analysis-tag-badge">Core</span>}
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>

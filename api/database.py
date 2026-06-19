@@ -539,6 +539,26 @@ def init_db():
         if 'content_hash' not in ud_cols:
             cursor.execute("ALTER TABLE user_data ADD COLUMN content_hash VARCHAR(64) DEFAULT NULL")
 
+        # Fix is_required flags: mark core skills as required, others as nice-to-have
+        _core_skills_by_role = {
+            "Software Engineering": {"Python", "Java", "Git", "Data Structures", "Algorithms", "SQL"},
+            "Frontend Development": {"JavaScript", "React", "HTML", "CSS", "TypeScript", "Git"},
+            "Backend Development": {"Python", "Node.js", "SQL", "REST APIs", "Docker", "Git"},
+            "Data Science": {"Python", "SQL", "Machine Learning", "Pandas", "NumPy", "Statistics"},
+            "DevOps": {"Docker", "Kubernetes", "AWS", "CI/CD", "Linux", "Git"},
+            "Mobile Development": {"React Native", "Flutter", "Swift", "Kotlin", "Git", "REST APIs"},
+            "Full Stack Development": {"JavaScript", "React", "Node.js", "Python", "SQL", "Git"},
+            "Cybersecurity": {"Networking", "Linux", "Python", "SIEM", "Penetration Testing", "Encryption"},
+        }
+        cursor.execute("SELECT jr.id, jr.title, jrs.skill_name FROM job_role_skills jrs JOIN job_roles jr ON jrs.job_role_id = jr.id")
+        for role_id, role_title, skill_name in cursor.fetchall():
+            core = _core_skills_by_role.get(role_title, set())
+            desired = 1 if skill_name in core else 0
+            cursor.execute(
+                "UPDATE job_role_skills SET is_required = ? WHERE job_role_id = ? AND skill_name = ?",
+                (desired, role_id, skill_name)
+            )
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_shared_reports_token ON shared_reports(token)")
@@ -561,14 +581,38 @@ def init_db():
                 ("Cybersecurity", "Protect systems and networks from security threats", "Security"),
             ]
             default_role_skills = {
-                "Software Engineering": ["Python", "Java", "Git", "Data Structures", "Algorithms", "OOP", "SQL", "Testing"],
-                "Frontend Development": ["JavaScript", "React", "HTML", "CSS", "TypeScript", "Git", "REST APIs", "Responsive Design"],
-                "Backend Development": ["Python", "Node.js", "SQL", "REST APIs", "Docker", "Git", "PostgreSQL", "Linux"],
-                "Data Science": ["Python", "R", "SQL", "Machine Learning", "Pandas", "NumPy", "Statistics", "TensorFlow"],
-                "DevOps": ["Docker", "Kubernetes", "AWS", "CI/CD", "Terraform", "Linux", "Git", "Monitoring"],
-                "Mobile Development": ["React Native", "Flutter", "Swift", "Kotlin", "Git", "REST APIs", "Firebase", "UI/UX"],
-                "Full Stack Development": ["JavaScript", "React", "Node.js", "Python", "SQL", "Docker", "Git", "REST APIs"],
-                "Cybersecurity": ["Networking", "Linux", "Python", "SIEM", "Penetration Testing", "Encryption", "Firewalls", "Compliance"],
+                "Software Engineering": {
+                    "required": ["Python", "Java", "Git", "Data Structures", "Algorithms", "SQL"],
+                    "nice_to_have": ["OOP", "Testing", "CI/CD", "Docker", "REST APIs", "Linux", "Design Patterns", "Debugging", "Agile"],
+                },
+                "Frontend Development": {
+                    "required": ["JavaScript", "React", "HTML", "CSS", "TypeScript", "Git"],
+                    "nice_to_have": ["REST APIs", "Responsive Design", "Vue.js", "Next.js", "Redux", "Webpack", "Accessibility", "Figma", "Jest"],
+                },
+                "Backend Development": {
+                    "required": ["Python", "Node.js", "SQL", "REST APIs", "Docker", "Git"],
+                    "nice_to_have": ["PostgreSQL", "Linux", "Redis", "MongoDB", "FastAPI", "Flask", "Microservices", "Authentication", "Caching"],
+                },
+                "Data Science": {
+                    "required": ["Python", "SQL", "Machine Learning", "Pandas", "NumPy", "Statistics"],
+                    "nice_to_have": ["R", "TensorFlow", "PyTorch", "Scikit-learn", "Data Visualization", "NLP", "Jupyter", "Feature Engineering", "A/B Testing"],
+                },
+                "DevOps": {
+                    "required": ["Docker", "Kubernetes", "AWS", "CI/CD", "Linux", "Git"],
+                    "nice_to_have": ["Terraform", "Ansible", "Jenkins", "Prometheus", "Grafana", "Nginx", "Bash", "Monitoring", "Load Balancing"],
+                },
+                "Mobile Development": {
+                    "required": ["React Native", "Flutter", "Swift", "Kotlin", "Git", "REST APIs"],
+                    "nice_to_have": ["Firebase", "UI/UX", "iOS", "Android", "State Management", "Testing", "Push Notifications", "App Store", "Performance"],
+                },
+                "Full Stack Development": {
+                    "required": ["JavaScript", "React", "Node.js", "Python", "SQL", "Git"],
+                    "nice_to_have": ["Docker", "REST APIs", "PostgreSQL", "MongoDB", "Redis", "TypeScript", "Express", "Authentication", "Deployment"],
+                },
+                "Cybersecurity": {
+                    "required": ["Networking", "Linux", "Python", "SIEM", "Penetration Testing", "Encryption"],
+                    "nice_to_have": ["Firewalls", "Compliance", "Incident Response", "Vulnerability Assessment", "Nmap", "Wireshark", "Cryptography", "Forensics", "Active Directory"],
+                },
             }
             default_roadmaps = {
                 "Software Engineering": {
@@ -667,9 +711,15 @@ def init_db():
                 )
                 role_id = cursor.lastrowid
                 # Add default skills for each role
-                for skill in default_role_skills.get(title, []):
+                skills_for_role = default_role_skills.get(title, {})
+                for skill in skills_for_role.get("required", []):
                     cursor.execute(
                         "INSERT INTO job_role_skills (job_role_id, skill_name, is_required) VALUES (?, ?, 1)",
+                        (role_id, skill)
+                    )
+                for skill in skills_for_role.get("nice_to_have", []):
+                    cursor.execute(
+                        "INSERT INTO job_role_skills (job_role_id, skill_name, is_required) VALUES (?, ?, 0)",
                         (role_id, skill)
                     )
                 # Add default roadmap for each role

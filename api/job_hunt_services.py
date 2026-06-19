@@ -645,25 +645,51 @@ def _get_role_skills_from_db(target_role: str) -> List[str]:
         return []
 
 
+def _get_required_skills_from_db(target_role: str) -> List[str]:
+    """Get only required (core) skills for a role."""
+    if not target_role:
+        return []
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT js.skill_name FROM job_role_skills js "
+            "JOIN job_roles jr ON js.job_role_id = jr.id "
+            "WHERE jr.title = ? AND jr.is_active = 1 AND js.is_required = 1",
+            (target_role,)
+        )
+        skills = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return skills
+    except Exception as e:
+        logger.error(f"Failed to get required skills: {e}")
+        return []
+
+
 def _compute_local_match_score(
     found_skills: List[str], target_role: Optional[str]
 ) -> int:
-    """Compute match score based on admin-defined role skills."""
+    """Compute match score based on admin-defined role skills.
+
+    Required (core) skills count 2x toward the score vs nice-to-have.
+    Score formula: base 20 + required_matches * 12 + nice_matches * 5
+    Max 95, min 20.
+    """
     if not target_role:
         return 70
-    target_skills = _get_role_skills_from_db(target_role)
-    if not target_skills:
-        # Fallback to taxonomy if no admin skills defined
-        categories = _target_categories_for_role(target_role)
-        taxonomy = get_skills_taxonomy()
-        for cat in categories:
-            target_skills.extend(taxonomy.get(cat, []))
-    if not target_skills:
+    all_skills = _get_role_skills_from_db(target_role)
+    required_skills = _get_required_skills_from_db(target_role)
+    nice_to_have = [s for s in all_skills if s not in required_skills]
+
+    if not all_skills:
         return 50
+
     found_lower = {s.lower() for s in found_skills}
-    overlap = sum(1 for s in target_skills if s.lower() in found_lower)
-    # Score: 0 matches → 35, 5+ → 75, 8+ → 95
-    return max(25, min(95, 35 + overlap * 8))
+    required_matched = sum(1 for s in required_skills if s.lower() in found_lower)
+    nice_matched = sum(1 for s in nice_to_have if s.lower() in found_lower)
+
+    score = 20 + required_matched * 12 + nice_matched * 5
+    return max(20, min(95, score))
 
 
 # Difficulty ratings for skills (1=beginner, 2=intermediate, 3=advanced).
@@ -1234,6 +1260,8 @@ def parse_resume_fallback(
 
     # 7. Missing skills for target role (use admin-defined skills from job_role_skills)
     target_skills = _get_role_skills_from_db(target_role)
+    required_skills = _get_required_skills_from_db(target_role)
+    required_set = {s.lower() for s in required_skills}
     raw_missing = [s for s in target_skills if s.title() not in found_skills]
     prioritized = prioritize_missing_skills(raw_missing, target_role, found_skills)
     missing_skills = [p["skill"] for p in prioritized[:8]]
@@ -1284,7 +1312,10 @@ def parse_resume_fallback(
         "email": email_match.group(0) if email_match else "",
         "mobile_number": phone,
         "skills": found_skills,
-        "matched_role_skills": [s for s in target_skills if s in found_skills or s.title() in found_skills],
+        "matched_role_skills": [
+            {"skill": s, "is_required": s.lower() in required_set}
+            for s in target_skills if s in found_skills or s.title() in found_skills
+        ],
         "education": education_flat,
         "experience": experience_flat,
         "designation": designations,
