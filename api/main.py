@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,6 +104,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 def generate_roadmap_with_ai(role_title: str, role_description: str, skills: list) -> dict:
     """Generate a career roadmap using Gemini AI."""
     import json
+    skills_str = ", ".join(skills[:10]) if skills else "general skills"
     try:
         import google.generativeai as genai
         api_key = os.getenv("GEMINI_API_KEY", "").strip()
@@ -110,7 +114,6 @@ def generate_roadmap_with_ai(role_title: str, role_description: str, skills: lis
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.0-flash')
 
-        skills_str = ", ".join(skills[:10]) if skills else "general skills"
         prompt = f"""Generate a detailed career roadmap for a {role_title} position.
 
 Role Description: {role_description}
@@ -166,8 +169,8 @@ Be specific to {role_title} - don't use generic advice."""
         }
 
 
-app.include_router(mock_interview_router)
 app.include_router(mock_interview_ai_router)
+app.include_router(mock_interview_router)
 app.include_router(auth_router)
 app.include_router(analysis_router)
 app.include_router(admin_router)
@@ -192,6 +195,7 @@ from api.database import (
     seed_skill_clusters, load_clusters_cache,
     seed_video_resources, load_videos_cache,
     seed_role_configs, load_role_configs_cache,
+    seed_courses,
 )
 seed_skills_taxonomy()
 load_skills_cache()

@@ -127,7 +127,10 @@ async def get_current_optional_user(request: Request) -> Optional[dict]:
     token_type = payload.get("type")
     if not username or token_type != "access":
         return None
-    return _load_user(username)
+    user = _load_user(username)
+    if user is not None and user.get("is_active") == 0:
+        return None
+    return user
 
 
 async def get_current_admin(current_user: dict = Depends(get_current_user)) -> dict:
@@ -168,4 +171,9 @@ async def get_current_user_from_cookie(request: Request) -> dict:
     user = _load_user(username)
     if user is None:
         raise _raise_401()
+    if user.get("is_active") == 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account has been deactivated. Contact an administrator.",
+        )
     return user

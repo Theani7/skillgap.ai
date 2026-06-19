@@ -253,9 +253,12 @@ const Roadmap = ({ path, analysisId }) => {
 
   const handleToggle = useCallback(async (phaseIndex, taskIndex) => {
     const key = `${phaseIndex}:${taskIndex}`;
-    const newCompleted = !progress[key];
+    let newCompleted;
 
-    setProgress(prev => ({ ...prev, [key]: newCompleted }));
+    setProgress(prev => {
+      newCompleted = !prev[key];
+      return { ...prev, [key]: newCompleted };
+    });
 
     try {
       await api.put('/api/user/roadmap-progress', {
@@ -267,7 +270,7 @@ const Roadmap = ({ path, analysisId }) => {
     } catch {
       setProgress(prev => ({ ...prev, [key]: !newCompleted }));
     }
-  }, [analysisId, progress]);
+  }, [analysisId]);
 
   if (!Array.isArray(path) || path.length === 0) return null;
 

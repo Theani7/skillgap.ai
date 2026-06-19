@@ -448,13 +448,13 @@ def delete_account(payload: DeleteAccountRequest, current_user: dict = Depends(g
         cursor = conn.cursor()
 
         # Verify password
-        cursor.execute("SELECT password_hash FROM users WHERE id = ?", (current_user['id'],))
+        cursor.execute("SELECT hashed_password FROM users WHERE id = ?", (current_user['id'],))
         row = cursor.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="User not found")
 
         from api.security import verify_password
-        if not verify_password(payload.password, row['password_hash']):
+        if not verify_password(payload.password, row['hashed_password']):
             raise HTTPException(status_code=400, detail="Incorrect password")
 
         user_id = current_user['id']
@@ -465,7 +465,7 @@ def delete_account(payload: DeleteAccountRequest, current_user: dict = Depends(g
         cursor.execute("DELETE FROM user_preferences WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM user_roadmap_progress WHERE user_id = ?", (user_id,))
-        cursor.execute("DELETE FROM shared_reports WHERE owner_user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM shared_reports WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
 

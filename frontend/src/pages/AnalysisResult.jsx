@@ -5,7 +5,7 @@ import {
   Sparkles, Target, BookOpen, Briefcase, TrendingUp, CheckCircle, XCircle,
   Check, Star, Send, ArrowRight, UploadCloud, FileText, RefreshCw,
   Trash2, Share2, Search, Award, AlertTriangle, Lightbulb,
-  Calendar, Layers, Trophy, Compass, Quote,
+  Calendar, Layers, Trophy, Compass,
   Link2, Copy, Mail, Twitter, Linkedin, Clock, Lock, Globe, X,
   GraduationCap, User, Phone, Map, MessageSquare, Zap,
   ListChecks, Circle,
