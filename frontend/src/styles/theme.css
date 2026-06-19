@@ -1625,13 +1625,13 @@ select.input {
 }
 
 .analysis-profile-grid {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: start;
 }
 
 .analysis-profile-main {
-  flex: 1;
   min-width: 0;
 }
 
@@ -1640,13 +1640,13 @@ select.input {
   font-size: 20px;
   font-weight: 700;
   color: var(--color-text);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .analysis-profile-contact {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 10px;
 }
 
@@ -1670,17 +1670,16 @@ select.input {
 }
 
 .analysis-profile-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 16px;
 }
 
 .analysis-profile-meta-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 80px;
+  text-align: right;
 }
 
 .analysis-profile-meta-label {
@@ -1721,7 +1720,14 @@ select.input {
 
 @media (max-width: 600px) {
   .analysis-profile-grid {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+  .analysis-profile-meta {
+    grid-template-columns: repeat(4, 1fr);
+    text-align: left;
+  }
+  .analysis-profile-meta-item {
+    text-align: left;
   }
 }
 
