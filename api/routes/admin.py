@@ -164,6 +164,7 @@ def delete_admin_user(user_id: int, current_admin: dict = Depends(get_current_ad
         cursor.execute("DELETE FROM login_attempts WHERE username = (SELECT username FROM users WHERE id = ?)", (user_id,))
         cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     return {"status": "success", "message": f"User {user_id} deleted."}
@@ -176,6 +177,7 @@ def delete_admin_feedback(feedback_id: int, current_admin: dict = Depends(get_cu
         cursor = conn.cursor()
         cursor.execute("DELETE FROM user_feedback WHERE ID = ?", (feedback_id,))
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     return {"status": "success", "message": f"Feedback {feedback_id} deleted."}
@@ -224,6 +226,7 @@ def update_user_role(user_id: int, body: RoleUpdate, current_admin: dict = Depen
                 raise HTTPException(status_code=400, detail="Cannot remove the last admin")
         cursor.execute("UPDATE users SET role = ? WHERE id = ?", (body.role, user_id))
         conn.commit()
+        invalidate_all_caches()
         cursor.execute("SELECT id, username, email, role, is_active FROM users WHERE id = ?", (user_id,))
         updated = cursor.fetchone()
     finally:
@@ -247,6 +250,7 @@ def update_user_status(user_id: int, body: StatusUpdate, current_admin: dict = D
             raise HTTPException(status_code=404, detail="User not found")
         cursor.execute("UPDATE users SET is_active = ? WHERE id = ?", (1 if body.is_active else 0, user_id))
         conn.commit()
+        invalidate_all_caches()
         cursor.execute("SELECT id, username, email, role, is_active FROM users WHERE id = ?", (user_id,))
         updated = cursor.fetchone()
     finally:
@@ -286,6 +290,7 @@ def delete_registered_user(user_id: int, current_admin: dict = Depends(get_curre
         cursor.execute("DELETE FROM login_attempts WHERE username = (SELECT username FROM users WHERE id = ?)", (user_id,))
         cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     log_audit_action(current_admin, "delete_user", "user", user_id)
@@ -632,6 +637,7 @@ def delete_analysis_cache(content_hash: str, target_role: str, current_admin: di
         cursor = conn.cursor()
         cursor.execute("DELETE FROM analysis_cache WHERE content_hash = ? AND target_role = ?", (content_hash, target_role))
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     return {"status": "success", "message": "Cache entry deleted."}
