@@ -5,6 +5,19 @@ import json
 from contextlib import contextmanager
 from sqlalchemy import create_engine, event
 
+ALLOWED_TABLES = frozenset({
+    "user_data", "user_feedback", "users", "courses",
+    "refresh_tokens", "analysis_cache", "login_attempts",
+    "password_reset_tokens", "user_profiles", "user_preferences",
+    "shared_reports", "notifications", "subscriptions",
+    "request_logs", "rate_limits", "skill_categories", "skills",
+    "role_synonyms", "skill_aliases", "job_roles", "career_roadmaps",
+    "roadmap_steps", "market_field_keywords", "market_industry_trends",
+    "market_role_aliases", "skill_recommendations", "learning_actions",
+    "learning_resources", "skill_difficulty", "skill_clusters",
+    "video_resources", "role_configs",
+})
+
 DB_FILE = os.getenv("DB_FILE") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "cv.db"
 )
@@ -39,6 +52,8 @@ def get_db():
 
 
 def _ensure_column(cursor, table: str, col: str, typedef: str, default=None) -> None:
+    if table not in ALLOWED_TABLES:
+        raise ValueError(f"Table '{table}' is not in the allowed tables whitelist")
     cursor.execute(f"PRAGMA table_info({table})")
     existing = {row[1] for row in cursor.fetchall()}
     if col not in existing:
