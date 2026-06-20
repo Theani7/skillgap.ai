@@ -222,6 +222,8 @@ seed_courses()
 _validate_env()
 
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
+_last_rate_limit_cleanup = 0
+RATE_LIMIT_CLEANUP_INTERVAL = 300  # 5 minutes
 ENV = os.getenv("ENV", "development").lower()
 IS_PROD = ENV in ("production", "prod")
 
@@ -271,6 +273,7 @@ def _client_ip(request: Request) -> str:
 
 @app.middleware("http")
 async def request_logging_and_rate_limit(request: Request, call_next):
+    global _last_rate_limit_cleanup
     if request.method == "OPTIONS":
         return await call_next(request)
 
@@ -281,7 +284,11 @@ async def request_logging_and_rate_limit(request: Request, call_next):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM rate_limits WHERE updated_at < ?", (now_minute,))
+        # Periodic cleanup instead of per-request
+        now = int(time.time())
+        if now - _last_rate_limit_cleanup > RATE_LIMIT_CLEANUP_INTERVAL:
+            cursor.execute("DELETE FROM rate_limits WHERE updated_at < ?", (now_minute - 2,))
+            _last_rate_limit_cleanup = now
         cursor.execute(
             "INSERT INTO rate_limits (key, count, updated_at) VALUES (?, 1, ?) "
             "ON CONFLICT(key) DO UPDATE SET count = count + 1, updated_at = ?",
