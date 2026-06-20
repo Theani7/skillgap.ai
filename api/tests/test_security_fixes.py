@@ -7,20 +7,22 @@ from api.security import get_password_hash, verify_password
 
 class TestEnsureColumnWhitelist:
     def test_allowed_table_passes(self):
-        """Tables in whitelist should not raise."""
-        # This should not raise - just verifying the whitelist works
-        assert "users" in ALLOWED_TABLES
-        assert "user_data" in ALLOWED_TABLES
-        assert "courses" in ALLOWED_TABLES
+        """Tables in whitelist should not raise when calling _ensure_column."""
+        import sqlite3
+        conn = sqlite3.connect(":memory:")
+        cursor = conn.cursor()
+        cursor.execute("CREATE TABLE users (id INTEGER PRIMARY KEY)")
+        _ensure_column(cursor, "users", "new_col", "TEXT", "'some_default'")
+        conn.close()
 
     def test_unknown_table_raises(self):
         """Unknown table should raise ValueError."""
+        import sqlite3
+        conn = sqlite3.connect(":memory:")
+        cursor = conn.cursor()
         with pytest.raises(ValueError, match="not in the allowed tables whitelist"):
-            # We can't actually call _ensure_column without a cursor,
-            # but we can test the whitelist logic
-            table = "malicious_table"
-            if table not in ALLOWED_TABLES:
-                raise ValueError(f"Table '{table}' is not in the allowed tables whitelist")
+            _ensure_column(cursor, "malicious_table", "col", "TEXT")
+        conn.close()
 
 
 class TestFileTypeDetection:
