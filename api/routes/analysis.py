@@ -57,10 +57,6 @@ def _detect_filetype(contents: bytes, filename: str) -> Optional[str]:
         return "pdf"
     if contents.startswith(DOCX_MAGIC):
         return "docx"
-    if filename.lower().endswith(".pdf"):
-        return "pdf"
-    if filename.lower().endswith(".docx"):
-        return "docx"
     return None
 
 
