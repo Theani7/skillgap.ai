@@ -774,6 +774,13 @@ class RoadmapInput(BaseModel):
     steps: list[dict] = Field(default=[])
 
 
+class BulkRoadmapImport(BaseModel):
+    title: str = Field(default="Imported Roadmap", max_length=200)
+    description: str = Field(default="", max_length=2000)
+    duration_weeks: int = Field(default=12, ge=1, le=52)
+    steps_text: str = Field(..., min_length=1, max_length=10000)
+
+
 @router.get("/api/admin/job-roles/{role_id}/roadmaps")
 def get_roadmaps(role_id: int, current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
@@ -974,7 +981,7 @@ def get_roadmap_templates(current_admin: dict = Depends(get_current_admin)):
 
 
 @router.post("/api/admin/job-roles/{role_id}/roadmaps/bulk")
-def bulk_import_roadmap(role_id: int, body: dict, current_admin: dict = Depends(get_current_admin)):
+def bulk_import_roadmap(role_id: int, body: BulkRoadmapImport, current_admin: dict = Depends(get_current_admin)):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -982,10 +989,10 @@ def bulk_import_roadmap(role_id: int, body: dict, current_admin: dict = Depends(
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="Job role not found")
 
-        title = body.get("title", "Imported Roadmap")
-        description = body.get("description", "")
-        duration_weeks = body.get("duration_weeks", 12)
-        raw_text = body.get("steps_text", "")
+        title = body.title
+        description = body.description
+        duration_weeks = body.duration_weeks
+        raw_text = body.steps_text
 
         steps = []
         for line in raw_text.strip().split("\n"):
