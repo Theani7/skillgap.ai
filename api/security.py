@@ -1,10 +1,21 @@
 import bcrypt
+import logging
+
+logger = logging.getLogger("resume-analyzer")
 
 
 def _truncate_for_bcrypt(password: str) -> bytes:
     if isinstance(password, str):
-        password = password.encode('utf-8')
-    return password[:72]
+        password_bytes = password.encode('utf-8')
+    else:
+        password_bytes = password
+    if len(password_bytes) > 72:
+        logger.warning(
+            "Password exceeds 72 bytes (%d bytes). "
+            "Only the first 72 bytes will be used for hashing.",
+            len(password_bytes)
+        )
+    return password_bytes[:72]
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
