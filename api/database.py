@@ -12,10 +12,12 @@ ALLOWED_TABLES = frozenset({
     "shared_reports", "notifications", "subscriptions",
     "request_logs", "rate_limits", "skill_categories", "skills",
     "role_synonyms", "skill_aliases", "job_roles", "career_roadmaps",
-    "roadmap_steps", "market_field_keywords", "market_industry_trends",
+    "roadmap_steps", "field_keywords", "industry_trends",
     "market_role_aliases", "skill_recommendations", "learning_actions",
     "learning_resources", "skill_difficulty", "skill_clusters",
-    "video_resources", "role_configs",
+    "video_resources", "role_configs", "market_trends_cache",
+    "job_role_skills", "audit_logs", "user_roadmap_progress",
+    "roadmap_templates",
 })
 
 DB_FILE = os.getenv("DB_FILE") or os.path.join(
