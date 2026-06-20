@@ -2165,6 +2165,84 @@ def get_role_config(role: str) -> dict:
     }
 
 
+# ============================================================
+# Cache invalidation functions
+# ============================================================
+
+def invalidate_skills_cache():
+    """Force reload of skills taxonomy cache on next access."""
+    global _SKILLS_CACHE
+    _SKILLS_CACHE["loaded"] = False
+
+
+def invalidate_market_cache():
+    """Force reload of market data cache on next access."""
+    global _MARKET_CACHE
+    _MARKET_CACHE["loaded"] = False
+
+
+def invalidate_skill_recs_cache():
+    """Force reload of skill recommendations cache on next access."""
+    global _SKILL_RECS_CACHE
+    _SKILL_RECS_CACHE["loaded"] = False
+
+
+def invalidate_roadmaps_cache():
+    """Force reload of roadmaps cache on next access."""
+    global _ROADMAPS_CACHE
+    _ROADMAPS_CACHE["loaded"] = False
+
+
+def invalidate_actions_cache():
+    """Force reload of learning actions cache on next access."""
+    global _ACTIONS_CACHE
+    _ACTIONS_CACHE["loaded"] = False
+
+
+def invalidate_resources_cache():
+    """Force reload of learning resources cache on next access."""
+    global _RESOURCES_CACHE
+    _RESOURCES_CACHE["loaded"] = False
+
+
+def invalidate_difficulty_cache():
+    """Force reload of skill difficulty cache on next access."""
+    global _DIFFICULTY_CACHE
+    _DIFFICULTY_CACHE["loaded"] = False
+
+
+def invalidate_clusters_cache():
+    """Force reload of skill clusters cache on next access."""
+    global _CLUSTERS_CACHE
+    _CLUSTERS_CACHE["loaded"] = False
+
+
+def invalidate_videos_cache():
+    """Force reload of video resources cache on next access."""
+    global _VIDEOS_CACHE
+    _VIDEOS_CACHE["loaded"] = False
+
+
+def invalidate_role_configs_cache():
+    """Force reload of role configs cache on next access."""
+    global _ROLE_CONFIGS_CACHE
+    _ROLE_CONFIGS_CACHE["loaded"] = False
+
+
+def invalidate_all_caches():
+    """Invalidate all in-memory caches. Call after admin mutations."""
+    invalidate_skills_cache()
+    invalidate_market_cache()
+    invalidate_skill_recs_cache()
+    invalidate_roadmaps_cache()
+    invalidate_actions_cache()
+    invalidate_resources_cache()
+    invalidate_difficulty_cache()
+    invalidate_clusters_cache()
+    invalidate_videos_cache()
+    invalidate_role_configs_cache()
+
+
 def seed_courses():
     """Auto-seed courses from COURSE_MAP if the courses table is empty."""
     from api.courses import COURSE_MAP
