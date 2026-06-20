@@ -9,7 +9,7 @@ import time
 import uuid
 import logging
 
-from api.database import get_db_connection
+from api.database import get_db_connection, get_db
 from api.exceptions import SkillGapException
 from api.mock_interview import router as mock_interview_router
 from api.mock_interview_ai import router as mock_interview_ai_router
@@ -281,32 +281,29 @@ async def request_logging_and_rate_limit(request: Request, call_next):
     now_minute = int(time.time() // 60)
     bucket_key = f"{client_ip}:{now_minute}"
 
-    conn = get_db_connection()
     try:
-        cursor = conn.cursor()
-        # Periodic cleanup instead of per-request
-        now = int(time.time())
-        if now - _last_rate_limit_cleanup > RATE_LIMIT_CLEANUP_INTERVAL:
-            cursor.execute("DELETE FROM rate_limits WHERE updated_at < ?", (now_minute - 2,))
-            _last_rate_limit_cleanup = now
-        cursor.execute(
-            "INSERT INTO rate_limits (key, count, updated_at) VALUES (?, 1, ?) "
-            "ON CONFLICT(key) DO UPDATE SET count = count + 1, updated_at = ?",
-            (bucket_key, now_minute, now_minute),
-        )
-        cursor.execute("SELECT count FROM rate_limits WHERE key = ?", (bucket_key,))
-        row = cursor.fetchone()
-        count = row["count"] if row else 1
-        conn.commit()
-        if count > RATE_LIMIT_PER_MINUTE:
-            raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in a minute.")
+        with get_db() as conn:
+            cursor = conn.cursor()
+            # Periodic cleanup instead of per-request
+            now = int(time.time())
+            if now - _last_rate_limit_cleanup > RATE_LIMIT_CLEANUP_INTERVAL:
+                cursor.execute("DELETE FROM rate_limits WHERE updated_at < ?", (now_minute - 2,))
+                _last_rate_limit_cleanup = now
+            cursor.execute(
+                "INSERT INTO rate_limits (key, count, updated_at) VALUES (?, 1, ?) "
+                "ON CONFLICT(key) DO UPDATE SET count = count + 1, updated_at = ?",
+                (bucket_key, now_minute, now_minute),
+            )
+            cursor.execute("SELECT count FROM rate_limits WHERE key = ?", (bucket_key,))
+            row = cursor.fetchone()
+            count = row["count"] if row else 1
+            conn.commit()
+            if count > RATE_LIMIT_PER_MINUTE:
+                raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in a minute.")
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Rate limit error: {e}")
-        conn.rollback()
-    finally:
-        conn.close()
 
     start = time.perf_counter()
     request_id = str(uuid.uuid4())
@@ -325,20 +322,15 @@ async def request_logging_and_rate_limit(request: Request, call_next):
         )
     )
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO request_logs(request_id, method, path, status_code, elapsed_ms) VALUES (?, ?, ?, ?, ?)",
-            (request_id, request.method, request.url.path, response.status_code, elapsed_ms),
-        )
-        conn.commit()
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO request_logs(request_id, method, path, status_code, elapsed_ms) VALUES (?, ?, ?, ?, ?)",
+                (request_id, request.method, request.url.path, response.status_code, elapsed_ms),
+            )
+            conn.commit()
     except Exception as log_err:
         logger.warning(f"Failed to log request: {log_err}")
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
     if request.url.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store"
         response.headers["Pragma"] = "no-cache"
