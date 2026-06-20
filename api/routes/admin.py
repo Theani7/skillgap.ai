@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from api.auth import get_current_admin
-from api.database import get_db_connection
+from api.database import get_db_connection, invalidate_all_caches
 from api.scraper import simulate_trend_update
 from api.course_scraper import scrape_courses_for_field, FIELD_SEARCH_QUERIES
 
@@ -316,6 +316,7 @@ def add_course(course: CourseInput, current_admin: dict = Depends(get_current_ad
             (course.field, course.course_name, course.course_url)
         )
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     return {"status": "success", "message": "Course added successfully."}
@@ -328,6 +329,7 @@ def delete_course(course_id: int, current_admin: dict = Depends(get_current_admi
         cursor = conn.cursor()
         cursor.execute("DELETE FROM courses WHERE id = ?", (course_id,))
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     return {"status": "success", "message": "Course deleted."}
@@ -346,6 +348,7 @@ def update_course(course_id: int, course: CourseInput, current_admin: dict = Dep
             (course.field, course.course_name, course.course_url, course_id)
         )
         conn.commit()
+        invalidate_all_caches()
         cursor.execute("SELECT id, field, course_name, course_url, created_at FROM courses WHERE id = ?", (course_id,))
         updated = cursor.fetchone()
     finally:
@@ -428,6 +431,7 @@ def scrape_courses(body: ScrapeRequest, current_admin: dict = Depends(get_curren
     finally:
         conn.close()
 
+    invalidate_all_caches()
     _scrape_jobs[job_id]["status"] = "completed"
     _scrape_jobs[job_id]["summary"] = {"total_added": total_added, "total_updated": total_updated}
 
@@ -695,6 +699,7 @@ def create_job_role(body: JobRoleInput, current_admin: dict = Depends(get_curren
                 (role_id, skill)
             )
         conn.commit()
+        invalidate_all_caches()
         cursor.execute("SELECT id, title, description, category, is_active, created_at FROM job_roles WHERE id = ?", (role_id,))
         role = dict(cursor.fetchone())
         cursor.execute("SELECT id, skill_name, is_required FROM job_role_skills WHERE job_role_id = ?", (role_id,))
@@ -724,6 +729,7 @@ def update_job_role(role_id: int, body: JobRoleInput, current_admin: dict = Depe
                 (role_id, skill)
             )
         conn.commit()
+        invalidate_all_caches()
         cursor.execute("SELECT id, title, description, category, is_active, created_at FROM job_roles WHERE id = ?", (role_id,))
         role = dict(cursor.fetchone())
         cursor.execute("SELECT id, skill_name, is_required FROM job_role_skills WHERE job_role_id = ?", (role_id,))
@@ -747,6 +753,7 @@ def toggle_job_role_status(role_id: int, current_admin: dict = Depends(get_curre
         new_status = 0 if role["is_active"] else 1
         cursor.execute("UPDATE job_roles SET is_active = ? WHERE id = ?", (new_status, role_id))
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     return {"status": "success", "is_active": new_status}
@@ -762,6 +769,7 @@ def delete_job_role(role_id: int, current_admin: dict = Depends(get_current_admi
             raise HTTPException(status_code=404, detail="Job role not found")
         cursor.execute("DELETE FROM job_roles WHERE id = ?", (role_id,))
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     return {"status": "success", "message": "Job role deleted."}
@@ -828,6 +836,7 @@ def create_roadmap(role_id: int, body: RoadmapInput, current_admin: dict = Depen
                 (roadmap_id, i, step.get("title", ""), step.get("description", ""), step.get("duration_weeks", 2), step.get("skills", ""), step.get("resources", ""))
             )
         conn.commit()
+        invalidate_all_caches()
         cursor.execute("SELECT id, job_role_id, title, description, duration_weeks, sort_order, created_at FROM career_roadmaps WHERE id = ?", (roadmap_id,))
         rm = dict(cursor.fetchone())
         cursor.execute("SELECT id, step_number, title, description, duration_weeks, skills, resources FROM roadmap_steps WHERE roadmap_id = ? ORDER BY step_number", (roadmap_id,))
@@ -844,6 +853,7 @@ def delete_roadmap(roadmap_id: int, current_admin: dict = Depends(get_current_ad
         cursor = conn.cursor()
         cursor.execute("DELETE FROM career_roadmaps WHERE id = ?", (roadmap_id,))
         conn.commit()
+        invalidate_all_caches()
     finally:
         conn.close()
     return {"status": "success", "message": "Roadmap deleted."}
@@ -1026,6 +1036,7 @@ def bulk_import_roadmap(role_id: int, body: BulkRoadmapImport, current_admin: di
                 (roadmap_id, i, step["title"], step["description"], step["duration_weeks"], step["skills"], step["resources"])
             )
         conn.commit()
+        invalidate_all_caches()
         cursor.execute("SELECT id, job_role_id, title, description, duration_weeks, sort_order, created_at FROM career_roadmaps WHERE id = ?", (roadmap_id,))
         rm = dict(cursor.fetchone())
         cursor.execute("SELECT id, step_number, title, description, duration_weeks, skills, resources FROM roadmap_steps WHERE roadmap_id = ? ORDER BY step_number", (roadmap_id,))
@@ -1075,6 +1086,7 @@ def ai_generate_roadmap(role_id: int, current_admin: dict = Depends(get_current_
                 (roadmap_id, i, step.get("title", ""), step.get("description", ""), step.get("duration_weeks", 2), step.get("skills", ""), step.get("resources", ""))
             )
         conn.commit()
+        invalidate_all_caches()
         cursor.execute("SELECT id, job_role_id, title, description, duration_weeks, sort_order, created_at FROM career_roadmaps WHERE id = ?", (roadmap_id,))
         rm = dict(cursor.fetchone())
         cursor.execute("SELECT id, step_number, title, description, duration_weeks, skills, resources FROM roadmap_steps WHERE roadmap_id = ? ORDER BY step_number", (roadmap_id,))
