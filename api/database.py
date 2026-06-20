@@ -2,8 +2,11 @@ import sqlite3
 import os
 import time
 import json
+import logging
 from contextlib import contextmanager
 from sqlalchemy import create_engine, event
+
+logger = logging.getLogger("resume-analyzer")
 
 ALLOWED_TABLES = frozenset({
     "user_data", "user_feedback", "users", "courses",
@@ -1093,7 +1096,8 @@ def load_skills_cache():
             "skill_aliases": skill_aliases,
             "loaded": True,
         }
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load skills cache: {e}")
         _SKILLS_CACHE["loaded"] = False
     finally:
         if conn:
@@ -1274,7 +1278,8 @@ def load_market_cache():
             "role_aliases": role_aliases,
             "loaded": True,
         }
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load market cache: {e}")
         _MARKET_CACHE["loaded"] = False
     finally:
         if conn:
@@ -1355,7 +1360,8 @@ def load_skill_recs_cache():
             "recommendations": recommendations,
             "loaded": True,
         }
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load skill recommendations cache: {e}")
         _SKILL_RECS_CACHE["loaded"] = False
     finally:
         if conn:
@@ -1802,7 +1808,8 @@ def load_roadmaps_cache():
             })
 
         _ROADMAPS_CACHE = {"data": roadmaps, "loaded": True}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load roadmaps cache: {e}")
         _ROADMAPS_CACHE["loaded"] = False
     finally:
         if conn:
@@ -1825,7 +1832,8 @@ def load_actions_cache():
             actions[row["skill_name"]].append(row["action_text"])
 
         _ACTIONS_CACHE = {"data": actions, "loaded": True}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load actions cache: {e}")
         _ACTIONS_CACHE["loaded"] = False
     finally:
         if conn:
@@ -1852,7 +1860,8 @@ def load_resources_cache():
             })
 
         _RESOURCES_CACHE = {"data": resources, "loaded": True}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load resources cache: {e}")
         _RESOURCES_CACHE["loaded"] = False
     finally:
         if conn:
@@ -1873,7 +1882,8 @@ def load_difficulty_cache():
             difficulty[row["skill_name"]] = row["difficulty_level"]
 
         _DIFFICULTY_CACHE = {"data": difficulty, "loaded": True}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load difficulty cache: {e}")
         _DIFFICULTY_CACHE["loaded"] = False
     finally:
         if conn:
@@ -1896,7 +1906,8 @@ def load_clusters_cache():
             clusters[row["cluster_name"]].add(row["skill_name"])
 
         _CLUSTERS_CACHE = {"data": clusters, "loaded": True}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load clusters cache: {e}")
         _CLUSTERS_CACHE["loaded"] = False
     finally:
         if conn:
@@ -2086,7 +2097,8 @@ def load_videos_cache():
             videos[field][vtype].append(row["url"])
 
         _VIDEOS_CACHE = {"data": videos, "loaded": True}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load videos cache: {e}")
         _VIDEOS_CACHE["loaded"] = False
     finally:
         if conn:
@@ -2112,7 +2124,8 @@ def load_role_configs_cache():
             }
 
         _ROLE_CONFIGS_CACHE = {"data": configs, "loaded": True}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load role configs cache: {e}")
         _ROLE_CONFIGS_CACHE["loaded"] = False
     finally:
         if conn:
