@@ -542,14 +542,32 @@ def init_db():
         admin_user = os.getenv("ADMIN_USERNAME", "")
         admin_pass = os.getenv("ADMIN_PASSWORD", "")
         if admin_user and admin_pass:
-            cursor.execute("SELECT id FROM users WHERE username = ?", (admin_user,))
-            if cursor.fetchone() is None:
-                from api.security import get_password_hash
-                hashed = get_password_hash(admin_pass)
+            from api.security import get_password_hash
+            hashed = get_password_hash(admin_pass)
+
+            cursor.execute("SELECT id, role FROM users WHERE username = ?", (admin_user,))
+            existing = cursor.fetchone()
+
+            cursor.execute("SELECT id, username FROM users WHERE role = 'admin' LIMIT 1")
+            any_admin = cursor.fetchone()
+
+            if existing:
+                cursor.execute('''
+                    UPDATE users SET email = ?, full_name = ?, hashed_password = ?, role = ?
+                    WHERE username = ?
+                ''', (f"{admin_user}@skillpath.ai", "System Admin", hashed, "admin", admin_user))
+            elif not any_admin:
                 cursor.execute('''
                     INSERT INTO users (username, email, full_name, hashed_password, role)
                     VALUES (?, ?, ?, ?, ?)
                 ''', (admin_user, f"{admin_user}@skillpath.ai", "System Admin", hashed, "admin"))
+            else:
+                logger.warning(
+                    f"Admin account already exists as '{any_admin['username']}'. "
+                    f"Configured admin '{admin_user}' was not created to avoid duplicates."
+                )
+
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_single_admin ON users(role) WHERE role = 'admin'")
 
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_user_id ON user_data(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_timestamp ON user_data(Timestamp)")
