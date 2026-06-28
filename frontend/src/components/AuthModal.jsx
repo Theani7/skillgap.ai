@@ -222,7 +222,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
               letterSpacing: 'var(--tracking-tight)',
               color: 'var(--color-text)',
             }}>
-              Skill<span className="mc-gradient">Gap.ai</span>
+              Skill<span className="mc-gradient">Path</span>
             </span>
           </div>
           

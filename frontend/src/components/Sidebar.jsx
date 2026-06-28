@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const STORAGE_KEY = 'skillgap_sidebar_collapsed';
+const STORAGE_KEY = 'skillpath_sidebar_collapsed';
 
 const SECTIONS = [
   {
@@ -126,7 +126,7 @@ const Sidebar = () => {
                 fontWeight: '800', fontSize: '18px',
                 letterSpacing: '-0.02em', color: 'var(--color-text)',
               }}>
-                Skill<span style={{ color: 'var(--color-secondary)' }}>Gap.ai</span>
+                Skill<span style={{ color: 'var(--color-secondary)' }}>Path</span>
               </span>
             )}
           </Link>

@@ -10,7 +10,7 @@ export const useAuth = () => {
   return ctx;
 };
 
-const PROFILE_CACHE_KEY = 'skillgap_profile';
+const PROFILE_CACHE_KEY = 'skillpath_profile';
 
 const writeProfile = (profile) => {
   try { localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile)); } catch (_) { /* noop */ }

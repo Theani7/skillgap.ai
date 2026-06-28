@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Setting up SkillGap.ai..."
+echo "Setting up SkillPath..."
 
 # Create Python virtual environment if it doesn't exist
 if [ ! -d "venvapp" ]; then

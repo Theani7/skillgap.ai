@@ -479,7 +479,7 @@ const Landing = ({ openAuthModal }) => {
                   marginBottom: '32px',
                 }}
               >
-                SkillGap.ai reads your resume, compares it to a target role, and
+                SkillPath reads your resume, compares it to a target role, and
                 hands you a clear, personalized plan to close the gap.
               </motion.p>
 
@@ -527,7 +527,7 @@ const Landing = ({ openAuthModal }) => {
                   <div className="mc-header-dots">
                     <span /><span /><span />
                   </div>
-                  <span className="mc-header-title">skillgap.ai / analyzer</span>
+                   <span className="mc-header-title">skillpath.ai / analyzer</span>
                   <span className="mc-header-status">LIVE</span>
                 </div>
                 <div style={{ padding: '28px' }}>
@@ -817,8 +817,8 @@ const Landing = ({ openAuthModal }) => {
         </div>
       </section>
 
-      {/* WHY SKILLGAP.AI */}
-      <section id="why-skillgap" className="section">
+      {/* WHY SKILLPATH.AI */}
+      <section id="why-skillpath" className="section">
         <div className="container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={VIEW} variants={stagger}
@@ -931,7 +931,7 @@ const Landing = ({ openAuthModal }) => {
                   <Zap size={16} color="var(--color-secondary)" />
                 </div>
                 <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.02em', fontFamily: 'var(--font-display)' }}>
-                  Skill<span className="mc-gradient">Gap.ai</span>
+                  Skill<span className="mc-gradient">Path</span>
                 </span>
               </Link>
               <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: 0, maxWidth: '260px' }}>
@@ -963,7 +963,7 @@ const Landing = ({ openAuthModal }) => {
             flexWrap: 'wrap', gap: '12px',
           }}>
             <p style={{ fontSize: '12px', color: 'var(--color-text-light)', margin: 0 }}>
-              © {new Date().getFullYear()} SkillGap.ai
+              © {new Date().getFullYear()} SkillPath
             </p>
           </div>
         </div>

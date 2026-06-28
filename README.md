@@ -1,4 +1,4 @@
-# SkillGap.ai
+# SkillPath
 
 > AI-powered resume analysis, career coaching, and skill gap identification platform.
 
@@ -11,7 +11,7 @@
 
 ## Overview
 
-SkillGap.ai is a full-stack SaaS platform that transforms static resume reviews into data-driven career coaching. It parses PDF/DOCX resumes, evaluates skills against real-time industry demands, and generates personalized learning roadmaps using NLP and Generative AI.
+SkillPath is a full-stack SaaS platform that transforms static resume reviews into data-driven career coaching. It parses PDF/DOCX resumes, evaluates skills against real-time industry demands, and generates personalized learning roadmaps using NLP and Generative AI.
 
 ### Who It's For
 
@@ -117,7 +117,7 @@ SkillGap.ai is a full-stack SaaS platform that transforms static resume reviews 
 ## Project Structure
 
 ```
-skillgap.ai/
+skillpath.ai/
 ├── api/                            # Backend (FastAPI)
 │   ├── main.py                     # App entry, routes, middleware, CORS
 │   ├── database.py                 # Schema, migrations, seeding, caching
@@ -200,8 +200,8 @@ skillgap.ai/
 
 ```bash
 # Clone the repository
-git clone https://github.com/Theani7/skillgap.ai.git
-cd skillgap.ai
+git clone https://github.com/Theani7/skillpath.ai.git
+cd skillpath.ai
 
 # One-time setup (creates venv, installs all dependencies, creates .env)
 npm run setup
@@ -412,7 +412,7 @@ On first boot, the database is automatically seeded with:
 
 | Feature | Implementation |
 |---------|---------------|
-| **Authentication** | httpOnly cookies (`skillgap_access`, `skillgap_refresh`) with `SameSite=Strict` |
+| **Authentication** | httpOnly cookies (`skillpath_access`, `skillpath_refresh`) with `SameSite=Strict` |
 | **JWT** | HS256, 30-min access + 30-day refresh tokens |
 | **Token Rotation** | Refresh tokens are SHA-256 hashed in DB, rotated on every refresh |
 | **Password Hashing** | bcrypt (direct usage, no passlib) |

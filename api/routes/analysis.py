@@ -33,7 +33,8 @@ router = APIRouter(tags=["analysis"])
 # Bump this when scoring/parsing logic changes to auto-invalidate stale cache entries.
 _CACHE_VERSION = 3
 
-MAX_FILE_SIZE = 10 * 1024 * 1024
+# Limit upload size to 5 MiB to mitigate DoS attacks
+MAX_FILE_SIZE = 5 * 1024 * 1024
 
 PDF_MAGIC = b"%PDF"
 DOCX_MAGIC = b"PK\x03\x04"

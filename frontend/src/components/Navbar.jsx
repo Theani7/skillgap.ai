@@ -14,7 +14,7 @@ const PublicTopBar = ({ openAuthModal }) => {
   const navLinks = [
     { label: 'Features', id: 'features' },
     { label: 'How it works', id: 'how-it-works' },
-    { label: 'Why SkillGap.ai', id: 'why-skillgap' },
+    { label: 'Why SkillPath', id: 'why-skillpath' },
   ];
 
   const handleNavClick = (e, id) => {
@@ -64,7 +64,7 @@ const PublicTopBar = ({ openAuthModal }) => {
             letterSpacing: 'var(--tracking-tight)',
             color: 'var(--color-text)',
           }}>
-            Skill<span className="mc-gradient">Gap.ai</span>
+            Skill<span className="mc-gradient">Path</span>
           </span>
         </Link>
 
