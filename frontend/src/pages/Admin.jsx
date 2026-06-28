@@ -72,7 +72,7 @@ const Admin = () => {
   const [feedbackTotal, setFeedbackTotal] = useState(0);
   const [feedbackStats, setFeedbackStats] = useState(null);
   const [uploadsOverTime, setUploadsOverTime] = useState([]);
-  const [skillGaps, setSkillGaps] = useState([]);
+  const [skillPathGaps, setSkillPathGaps] = useState([]);
   const [roleDistribution, setRoleDistribution] = useState([]);
   const PAGE_SIZE = 20;
   const toastTimerRef = useRef(null);
@@ -88,7 +88,7 @@ const Admin = () => {
   const fetchAdminData = useCallback(async (signal) => {
     setLoading(true);
     try {
-      const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes, uploadsRes, skillGapsRes, roleDistRes, jobRolesRes, feedbackStatsRes] = await Promise.all([
+      const [usersRes, feedbackRes, regUsersRes, coursesRes, analyticsRes, qualityRes, uploadsRes, skillPathGapsRes, roleDistRes, jobRolesRes, feedbackStatsRes] = await Promise.all([
         api.get(`/api/admin/users?limit=${PAGE_SIZE}&offset=${resumePage * PAGE_SIZE}`, { signal }),
         api.get(`/api/admin/feedback?limit=${PAGE_SIZE}&offset=${feedbackPage * PAGE_SIZE}`, { signal }),
         api.get('/api/admin/registered-users', { signal }),
@@ -110,7 +110,7 @@ const Admin = () => {
       setAnalytics(analyticsRes.data);
       setQualityMetrics(qualityRes.data);
       setUploadsOverTime(uploadsRes.data.data || []);
-      setSkillGaps(skillGapsRes.data.data || []);
+      setSkillPathGaps(skillPathGapsRes.data.data || []);
       setRoleDistribution(roleDistRes.data.data || []);
       setJobRoles(jobRolesRes.data.job_roles || []);
       setFeedbackStats(feedbackStatsRes.data);
@@ -363,9 +363,9 @@ const Admin = () => {
                 <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text)', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <BarChart3 size={14} color="var(--color-secondary)" /> Top Missing Skills
                 </h3>
-                {skillGaps.length > 0 ? (
+                {skillPathGaps.length > 0 ? (
                   <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={skillGaps} layout="vertical">
+                    <BarChart data={skillPathGaps} layout="vertical">
                       <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                       <YAxis type="category" dataKey="skill" tick={{ fontSize: 11 }} width={100} />
                       <Tooltip />

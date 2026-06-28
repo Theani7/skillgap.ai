@@ -10,7 +10,7 @@ import uuid
 import logging
 
 from api.database import get_db_connection, get_db
-from api.exceptions import SkillGapException
+from api.exceptions import SkillPathException
 from api.mock_interview import router as mock_interview_router
 from api.mock_interview_ai import router as mock_interview_ai_router
 from api.routes.auth import router as auth_router
@@ -66,8 +66,8 @@ def _validate_env():
 
 app = FastAPI(title="AI Resume Analyzer API")
 
-@app.exception_handler(SkillGapException)
-async def skillgap_exception_handler(request: Request, exc: SkillGapException):
+@app.exception_handler(SkillPathException)
+async def skillpath_exception_handler(request: Request, exc: SkillPathException):
     return JSONResponse(
         status_code=exc.status_code,
         content={

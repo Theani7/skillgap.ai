@@ -549,7 +549,7 @@ def init_db():
                 cursor.execute('''
                     INSERT INTO users (username, email, full_name, hashed_password, role)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (admin_user, f"{admin_user}@skillgap.ai", "System Admin", hashed, "admin"))
+                ''', (admin_user, f"{admin_user}@skillpath.ai", "System Admin", hashed, "admin"))
 
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_user_id ON user_data(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_data_timestamp ON user_data(Timestamp)")

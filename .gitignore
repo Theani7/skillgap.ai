@@ -10,7 +10,7 @@ backend.log
 # Node.js
 node_modules/
 npm-debug.log*
-yarn-error.log
+yarn-error.log*
 
 # Database
 cv.db
@@ -40,6 +40,7 @@ build/
 *.swp
 
 # Agent config files
+AGENTS.md
 CLAUDE.md
 claude.md
 GEMINI.md
@@ -47,8 +48,17 @@ gemini.md
 docs/superpowers
 .agents/
 .claude/
+.kilo/
+.kilocode/
+.codex/
+.local/
+.cache/
+.kilo
 .mavis/
-.opencode/skills/
+.opencode/
+opencode.json
+skills-lock.json
+.github/
 .github/workflows/
 
 # LLM models

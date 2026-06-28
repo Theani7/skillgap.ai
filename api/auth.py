@@ -24,8 +24,8 @@ SECRET_KEY = _SECRET_FROM_ENV
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 30
-COOKIE_NAME = "skillgap_access"
-REFRESH_COOKIE_NAME = "skillgap_refresh"
+COOKIE_NAME = "skillpath_access"
+REFRESH_COOKIE_NAME = "skillpath_refresh"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
