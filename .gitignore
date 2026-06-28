@@ -63,3 +63,6 @@ skills-lock.json
 
 # LLM models
 api/llm/*.gguf
+
+# Scratch / notes files
+frontend-bugs-found.md
