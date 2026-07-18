@@ -78,6 +78,8 @@ SkillPath is a full-stack SaaS platform that transforms static resume reviews in
 
 ### Frontend
 
+Managed with **Bun** (install, dev server, build, lint).
+
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | React | 19.x | UI framework |
@@ -110,7 +112,7 @@ SkillPath is a full-stack SaaS platform that transforms static resume reviews in
 | Model | Size | Usage |
 |-------|------|-------|
 | **Google Gemini 2.0 Flash** | Cloud | Primary analysis, roadmap generation, interview questions |
-| **Qwen2-0.5B-Instruct** (Q4_K_M) | 379MB | Offline fallback for resume parsing |
+| **Qwen2-0.5B-Instruct** (Q4_K_M) | 379MB | Offline fallback for resume parsing (tracked via Git LFS) |
 
 ---
 
@@ -180,8 +182,9 @@ skillpath.ai/
 │   └── package.json
 │
 ├── setup.sh                        # Cross-platform setup script
-├── run.js                          # Cross-platform npm script helper
-├── package.json                    # Root scripts (setup, dev, build)
+├── run.js                          # Cross-platform helper to run venv Python commands
+├── bun.lock                        # Bun lockfile (committed, used with --frozen-lockfile)
+├── package.json                    # Root scripts (setup, dev, build) — run with Bun
 ├── .env.example                    # Environment variable template
 └── venvapp/                        # Python virtual environment
 ```
@@ -192,22 +195,24 @@ skillpath.ai/
 
 ### Prerequisites
 
-- **Node.js** v18+ (v22 recommended)
-- **Python** v3.9+
+- **Bun** v1.3+ ([install](https://bun.sh)) — used for all frontend install/dev/build/lint
+- **Python** v3.9+ (a venv is created at `venvapp/`)
+- **Git LFS** — the local LLM model is tracked via Git LFS; run `git lfs install` after cloning
 - **Google Gemini API key** (optional — app works without it using local Qwen2-0.5B model)
 
 ### Quick Start
 
 ```bash
-# Clone the repository
+# Clone the repository (Git LFS fetches the local model automatically)
 git clone https://github.com/Theani7/skillpath.ai.git
 cd skillpath.ai
+git lfs install
 
-# One-time setup (creates venv, installs all dependencies, creates .env)
-npm run setup
+# One-time setup (creates venv, installs Python + frontend dependencies, creates .env)
+bun run setup
 
 # Start both backend and frontend
-npm run dev
+bun run dev
 ```
 
 The application will be available at:
@@ -215,16 +220,16 @@ The application will be available at:
 - **Backend API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
 
-### NPM Scripts
+### Bun Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run setup` | One-time setup: creates venv, installs Python + Node dependencies |
-| `npm run dev` | Starts backend + frontend in parallel |
-| `npm run dev:backend` | Starts only the backend server |
-| `npm run dev:frontend` | Starts only the frontend dev server |
-| `npm run build` | Production build of the frontend |
-| `npm run lint` | Run ESLint on frontend code |
+| `bun run setup` | One-time setup: creates venv, installs Python + frontend dependencies |
+| `bun run dev` | Starts backend + frontend in parallel |
+| `bun run dev:backend` | Starts only the backend server |
+| `bun run dev:frontend` | Starts only the frontend dev server |
+| `bun run build` | Production build of the frontend |
+| `bun run lint` | Run ESLint on frontend code |
 
 ### Environment Variables
 
@@ -277,15 +282,24 @@ uvicorn api.main:app --reload --port 8000
 
 ```bash
 cd frontend
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 </details>
 
 ---
 
-## API Reference
+## CI/CD
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR:
+
+- **Frontend** — installs with `bun install --frozen-lockfile`, then `bun run lint` and `bun run build`.
+- **Backend** — `python -m pytest api/tests` against Python 3.11.
+
+The 379MB local LLM model is fetched via Git LFS during checkout, so CI clones stay fast.
+
+---
 
 ### Authentication
 
@@ -436,7 +450,9 @@ On first boot, the database is automatically seeded with:
 | Magic-byte file validation | Prevents malicious file uploads via renamed extensions |
 | In-memory cache for market data | Avoids repeated Gemini/DB calls |
 | Required vs nice-to-have skill weighting | Required skills weighted 2.4x in match score |
-| `run.js` cross-platform helper | npm scripts don't support `source` on Windows |
+| `run.js` cross-platform helper | Resolves the venv Python binary across macOS/Windows/Linux so `bun run dev:backend` works everywhere |
+| Bun for frontend tooling | `bun install` / `bun run dev` / `bun run build` replace npm for speed and a single lockfile |
+| Git LFS for the local LLM | The 379MB Qwen2 model is stored in Git LFS so it clones on demand without bloating git history |
 
 ---
 
