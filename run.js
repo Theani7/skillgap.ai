@@ -13,7 +13,7 @@ const python = isWin
   : path.join(venvBin, "python");
 
 if (!fs.existsSync(python)) {
-  console.error(`Python not found at ${python}. Run npm run setup first.`);
+  console.error(`Python not found at ${python}. Run 'bun run setup' first.`);
   process.exit(1);
 }
 

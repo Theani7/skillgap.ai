@@ -55,6 +55,7 @@ docs/superpowers
 .cache/
 .kilo
 .mavis/
+.crush/
 .opencode/
 opencode.json
 skills-lock.json
