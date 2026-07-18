@@ -67,9 +67,6 @@ skills-lock.json
 # Bun (binary lockfile format only; bun.lock is committed)
 bun.lockb
 
-
-# LLM models
-api/llm/*.gguf
-
+# LLM models are tracked via Git LFS (see .gitattributes), so they are not ignored.
 # Scratch / notes files
 frontend-bugs-found.md
