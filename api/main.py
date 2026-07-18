@@ -10,6 +10,7 @@ import uuid
 import logging
 
 from api.database import get_db_connection, get_db
+from api.auth import client_ip
 from api.exceptions import SkillPathException
 from api.mock_interview import router as mock_interview_router
 from api.mock_interview_ai import router as mock_interview_ai_router
@@ -265,21 +266,15 @@ async def add_security_headers(request, call_next):
 
 
 
-def _client_ip(request: Request) -> str:
-    if request.client and request.client.host:
-        return request.client.host
-    return "unknown"
-
-
 @app.middleware("http")
 async def request_logging_and_rate_limit(request: Request, call_next):
     global _last_rate_limit_cleanup
     if request.method == "OPTIONS":
         return await call_next(request)
 
-    client_ip = _client_ip(request)
+    request_ip = client_ip(request)
     now_minute = int(time.time() // 60)
-    bucket_key = f"{client_ip}:{now_minute}"
+    bucket_key = f"{request_ip}:{now_minute}"
 
     try:
         with get_db() as conn:

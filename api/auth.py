@@ -177,3 +177,9 @@ async def get_current_user_from_cookie(request: Request) -> dict:
             detail="Account has been deactivated. Contact an administrator.",
         )
     return user
+
+
+def client_ip(request: Request) -> str:
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"

@@ -13,6 +13,7 @@ from pydantic import BaseModel, EmailStr, Field
 from api.auth import (
     COOKIE_NAME,
     REFRESH_COOKIE_NAME,
+    client_ip,
     create_access_token,
     create_refresh_token,
     decode_token,
@@ -44,12 +45,6 @@ class UserRegister(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: Optional[str] = None
-
-
-def _client_ip(request: Request) -> str:
-    if request.client and request.client.host:
-        return request.client.host
-    return "unknown"
 
 
 def _check_strict_rate_limit(key: str, limit: int = AUTH_RATE_LIMIT_PER_MINUTE):
@@ -92,7 +87,7 @@ async def _extract_refresh_from_request(request: Request) -> Optional[str]:
 
 @router.get("/check-username/{username}")
 def check_username(username: str, request: Request):
-    _check_strict_rate_limit(f"username-check:{_client_ip(request)}")
+    _check_strict_rate_limit(f"username-check:{client_ip(request)}")
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -105,7 +100,7 @@ def check_username(username: str, request: Request):
 
 @router.post("/register")
 def register_user(user: UserRegister, request: Request):
-    _check_strict_rate_limit(f"register:{_client_ip(request)}")
+    _check_strict_rate_limit(f"register:{client_ip(request)}")
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -138,7 +133,7 @@ def register_user(user: UserRegister, request: Request):
 
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Response = None, request: Request = None):
-    _check_strict_rate_limit(f"login:{_client_ip(request) if request else 'unknown'}")
+    _check_strict_rate_limit(f"login:{client_ip(request) if request else 'unknown'}")
     username = form_data.username
     now = int(time.time())
 
@@ -371,7 +366,7 @@ RESET_COOLDOWN_SECONDS = 5 * 60
 
 @router.post("/request-password-reset")
 def request_password_reset(payload: PasswordResetRequest, request: Request):
-    _check_strict_rate_limit(f"pwd-reset:{_client_ip(request)}")
+    _check_strict_rate_limit(f"pwd-reset:{client_ip(request)}")
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -432,7 +427,7 @@ def reset_password(payload: PasswordResetConfirm):
 
 @router.post("/change-password")
 def change_password(payload: ChangePassword, request: Request, current_user: dict = Depends(get_current_user)):
-    _check_strict_rate_limit(f"change-pwd:{_client_ip(request)}")
+    _check_strict_rate_limit(f"change-pwd:{client_ip(request)}")
 
     if payload.current_password == payload.new_password:
         raise HTTPException(status_code=400, detail="New password must be different from current password")
