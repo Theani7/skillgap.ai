@@ -12,9 +12,21 @@ const python = isWin
   ? path.join(venvBin, "python.exe")
   : path.join(venvBin, "python");
 
+// Create the virtual environment if it doesn't exist (cross-platform setup).
+// This is what makes `bun run setup` work on Windows without the bash setup.sh.
 if (!fs.existsSync(python)) {
-  console.error(`Python not found at ${python}. Run 'bun run setup' first.`);
-  process.exit(1);
+  console.error(`Python venv not found at ${python} — creating it now...`);
+  const created = spawnSync(
+    isWin ? "py" : "python3",
+    ["-m", "venv", "venvapp"],
+    { stdio: "inherit", shell: true }
+  );
+  if (created.status !== 0 || !fs.existsSync(python)) {
+    console.error(
+      "Failed to create venv. Install Python 3.9+ (and 'py' launcher on Windows) and retry 'bun run setup'."
+    );
+    process.exit(1);
+  }
 }
 
 const args = process.argv.slice(2);

@@ -196,7 +196,7 @@ skillpath.ai/
 ### Prerequisites
 
 - **Bun** v1.3+ ([install](https://bun.sh)) — used for all frontend install/dev/build/lint
-- **Python** v3.9+ (a venv is created at `venvapp/`)
+- **Python** v3.9+ — `bun run setup` auto-creates a venv at `venvapp/` (Windows needs the `py` launcher from the official Python installer)
 - **Git LFS** — the local LLM model is tracked via Git LFS; run `git lfs install` after cloning
 - **Google Gemini API key** (optional — app works without it using local Qwen2-0.5B model)
 
