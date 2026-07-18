@@ -60,6 +60,13 @@ opencode.json
 skills-lock.json
 .github/
 .github/workflows/
+!.github/
+!.github/workflows/
+!.github/workflows/ci.yml
+
+# Bun (binary lockfile format only; bun.lock is committed)
+bun.lockb
+
 
 # LLM models
 api/llm/*.gguf

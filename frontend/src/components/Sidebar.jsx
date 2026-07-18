@@ -43,7 +43,7 @@ const Sidebar = () => {
   const userMenuRef = useRef(null);
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch { /* storage may be unavailable (private mode) */ }
   }, [collapsed]);
 
   useEffect(() => {

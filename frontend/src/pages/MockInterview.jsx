@@ -278,7 +278,7 @@ function AIInterviewMode({ selectedRole }) {
       setFeedback(res.data.feedback);
       setCurrentQuestion(res.data.next_question);
       setQuestionNumber(res.data.question_number);
-    } catch (err) {
+    } catch (_err) {
       setFeedback('Failed to get feedback. Please try again.');
     } finally {
       setLoading(false);

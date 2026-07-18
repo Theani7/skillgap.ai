@@ -538,7 +538,7 @@ const NextStep = ({ analysis, gaps }) => {
 };
 
 const OverviewTab = ({ analysis, resumeInfo, targetRole, predictedField, matchScore, scoreBreakdown, feedbackMsgs, missingSkills }) => {
-  const overallImpression = feedbackMsgs[0] ||
+  const _overallImpression = feedbackMsgs[0] ||
     'Your resume shows potential but has some key areas to improve to better align with industry standards.';
   const roleSkills = Array.isArray(analysis?.data?.matched_role_skills) ? analysis.data.matched_role_skills : [];
   const requiredMatched = roleSkills.filter(s => (typeof s === 'object' ? s.is_required : false)).length;

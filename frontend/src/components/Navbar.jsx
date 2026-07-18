@@ -22,7 +22,7 @@ const PublicTopBar = ({ openAuthModal }) => {
     if (isLanding) {
       scrollToSection(id);
     } else {
-      window.location.href = `/#${id}`;
+      window.location.assign(`/#${id}`);
     }
   };
 

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, ChevronDown, ChevronUp, Check, Square, ExternalLink, BookOpen, Video, FileText, Award } from 'lucide-react';
 import api from '../services/api';
 
-const RoadmapStep = ({ step, index, isLast, analysisId, progress, onToggle }) => {
+const RoadmapStep = ({ step, index, isLast, _analysisId, progress, onToggle }) => {
   const [isExpanded, setIsExpanded] = useState(index === 0);
 
   const getTaskDone = (taskIndex) => {

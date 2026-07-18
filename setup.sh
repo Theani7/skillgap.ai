@@ -16,7 +16,7 @@ pip install -r api/requirements.txt -q
 
 # Install frontend dependencies
 echo "Installing frontend dependencies..."
-cd frontend && npm install && cd ..
+cd frontend && bun install && cd ..
 
 # Create .env if it doesn't exist
 if [ ! -f ".env" ]; then

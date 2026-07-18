@@ -211,28 +211,28 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), response: Resp
     finally:
         conn.close()
 
-        # Use a less restrictive SameSite policy for development environments to allow
-        # the frontend (running on a different port) to receive the auth cookies.
-        # In production the Secure flag will enforce HTTPS and SameSite=Strict remains safe.
-        same_site_policy = "lax" if not IS_PROD else "strict"
-        response.set_cookie(
-            key=COOKIE_NAME,
-            value=access_token,
-            httponly=True,
-            secure=IS_PROD,
-            samesite=same_site_policy,
-            max_age=60 * 30,
-            path="/",
-        )
-        response.set_cookie(
-            key=REFRESH_COOKIE_NAME,
-            value=refresh_token,
-            httponly=True,
-            secure=IS_PROD,
-            samesite=same_site_policy,
-            max_age=60 * 60 * 24 * 30,
-            path="/api/auth",
-        )
+    # Use a less restrictive SameSite policy for development environments to allow
+    # the frontend (running on a different port) to receive the auth cookies.
+    # In production the Secure flag will enforce HTTPS and SameSite=Strict remains safe.
+    same_site_policy = "lax" if not IS_PROD else "strict"
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=IS_PROD,
+        samesite=same_site_policy,
+        max_age=60 * 30,
+        path="/",
+    )
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=IS_PROD,
+        samesite=same_site_policy,
+        max_age=60 * 60 * 24 * 30,
+        path="/api/auth",
+    )
 
     return {
         "role": user_dict["role"],

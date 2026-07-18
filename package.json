@@ -2,16 +2,17 @@
   "name": "skillpath",
   "private": true,
   "version": "1.0.0",
+  "packageManager": "bun@1.3.14",
   "description": "AI-powered career coaching platform",
   "scripts": {
-    "setup": "npm run setup:python && npm run setup:frontend",
+    "setup": "bun run setup:python && bun run setup:frontend",
     "setup:python": "node run.js pip install -r api/requirements.txt",
-    "setup:frontend": "cd frontend && npm install && cd ..",
-    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "setup:frontend": "cd frontend && bun install && cd ..",
+    "dev": "concurrently -n backend,frontend -c blue,green \"bun run dev:backend\" \"bun run dev:frontend\"",
     "dev:backend": "node run.js uvicorn api.main:app --reload --port 8000",
-    "dev:frontend": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "lint": "cd frontend && npm run lint"
+    "dev:frontend": "cd frontend && bun run dev",
+    "build": "cd frontend && bun run build",
+    "lint": "cd frontend && bun run lint"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
