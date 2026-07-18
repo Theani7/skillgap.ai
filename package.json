@@ -8,13 +8,11 @@
     "setup": "bun run setup:python && bun run setup:frontend",
     "setup:python": "node run.js pip install -r api/requirements.txt",
     "setup:frontend": "cd frontend && bun install && cd ..",
-    "dev": "concurrently -n backend,frontend -c blue,green \"bun run dev:backend\" \"bun run dev:frontend\"",
+    "dev": "bun run dev.js",
     "dev:backend": "node run.js uvicorn api.main:app --reload --port 8000",
     "dev:frontend": "cd frontend && bun run dev",
     "build": "cd frontend && bun run build",
     "lint": "cd frontend && bun run lint"
   },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
-  }
+  "devDependencies": {}
 }
