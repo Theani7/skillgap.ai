@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from api.local_llm import get_model
+from api.ai_provider import chat
 
 logger = logging.getLogger("resume-analyzer")
 
@@ -107,7 +107,6 @@ async def finish_interview(session_id: str):
 
 
 async def _generate_first_question(role: str, resume_text: Optional[str]) -> str:
-    model = get_model()
     resume_context = f"\nCandidate resume:\n{resume_text[:2000]}" if resume_text else ""
 
     prompt = f"""You are an experienced technical interviewer for a {role} position.
@@ -121,12 +120,7 @@ Return ONLY the question text, no explanation."""
     ]
 
     try:
-        response = model.create_chat_completion(
-            messages=messages,
-            temperature=0.7,
-            max_tokens=256,
-        )
-        question = response["choices"][0]["message"]["content"].strip()
+        question = chat(messages, temperature=0.7).strip()
         return question if question else f"Tell me about your experience as a {role}."
     except Exception as e:
         logger.error(f"Failed to generate first question: {e}")
@@ -134,7 +128,6 @@ Return ONLY the question text, no explanation."""
 
 
 async def _evaluate_answer(role: str, question: str, answer: str, chat_history: list) -> str:
-    model = get_model()
     history_str = "\n".join([f"Q: {h.get('question', '')}\nA: {h.get('answer', '')}" for h in chat_history[-4:]])
 
     prompt = f"""You are interviewing a candidate for a {role} position.
@@ -153,19 +146,13 @@ Provide brief feedback (2-3 sentences) on their answer. Be constructive and prof
     ]
 
     try:
-        response = model.create_chat_completion(
-            messages=messages,
-            temperature=0.5,
-            max_tokens=256,
-        )
-        return response["choices"][0]["message"]["content"].strip()
+        return chat(messages, temperature=0.5).strip()
     except Exception as e:
         logger.error(f"Failed to evaluate answer: {e}")
         return "Thank you for your answer. Let me ask the next question."
 
 
 async def _generate_followup(role: str, question: str, answer: str, chat_history: list) -> str:
-    model = get_model()
     history_str = "\n".join([f"Q: {h.get('question', '')}\nA: {h.get('answer', '')}" for h in chat_history[-4:]])
 
     prompt = f"""You are interviewing a candidate for a {role} position.
@@ -189,12 +176,7 @@ Return ONLY the question text, no explanation."""
     ]
 
     try:
-        response = model.create_chat_completion(
-            messages=messages,
-            temperature=0.7,
-            max_tokens=256,
-        )
-        question = response["choices"][0]["message"]["content"].strip()
+        question = chat(messages, temperature=0.7).strip()
         return question if question else "Can you tell me more about that?"
     except Exception as e:
         logger.error(f"Failed to generate follow-up: {e}")
@@ -202,7 +184,6 @@ Return ONLY the question text, no explanation."""
 
 
 async def _evaluate_overall(session: InterviewSession) -> dict:
-    model = get_model()
     qa_summary = "\n".join([
         f"Q: {a['question']}\nA: {a['answer']}\nFeedback: {a['feedback']}"
         for a in session.answers
@@ -230,13 +211,7 @@ Return ONLY the JSON, no explanation."""
     ]
 
     try:
-        response = model.create_chat_completion(
-            messages=messages,
-            temperature=0.3,
-            max_tokens=512,
-            response_format={"type": "json_object"},
-        )
-        content = response["choices"][0]["message"]["content"]
+        content = chat(messages, temperature=0.3, json_mode=True)
         return json.loads(content)
     except Exception as e:
         logger.error(f"Failed to evaluate overall: {e}")

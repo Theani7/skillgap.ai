@@ -103,19 +103,11 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 
 def generate_roadmap_with_ai(role_title: str, role_description: str, skills: list) -> dict:
-    """Generate a career roadmap using Gemini AI."""
+    """Generate a career roadmap using the configured AI provider chain."""
     import json
+    from api.ai_provider import generate_json
     skills_str = ", ".join(skills[:10]) if skills else "general skills"
-    try:
-        import google.generativeai as genai
-        api_key = os.getenv("GEMINI_API_KEY", "").strip()
-        if not api_key or api_key == "test-key":
-            raise RuntimeError("GEMINI_API_KEY not configured")
-
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash')
-
-        prompt = f"""Generate a detailed career roadmap for a {role_title} position.
+    prompt = f"""Generate a detailed career roadmap for a {role_title} position.
 
 Role Description: {role_description}
 Key Skills: {skills_str}
@@ -140,24 +132,13 @@ Create 5-8 progressive steps from fundamentals to advanced topics. Each step sho
 Include relevant YouTube search URLs as resources.
 Be specific to {role_title} - don't use generic advice."""
 
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.7,
-                max_output_tokens=2000,
-            )
-        )
-
-        text = response.text.strip()
-        if text.startswith("```"):
-            text = text.split("```")[1]
-            if text.startswith("json"):
-                text = text[4:]
-        return json.loads(text)
-
+    try:
+        data = generate_json(prompt, temperature=0.7)
+        if data:
+            return data
     except Exception as e:
         logger.error(f"AI roadmap generation failed: {e}")
-        return {
+    return {
             "title": f"{role_title} Roadmap",
             "description": role_description or f"Career path for {role_title}",
             "duration_weeks": 16,

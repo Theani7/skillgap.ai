@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
 import fitz
 import docx
 from defusedxml import ElementTree as DET
@@ -10,16 +9,7 @@ import logging
 logger = logging.getLogger("resume-analyzer")
 load_dotenv()
 
-api_key = os.getenv("GEMINI_API_KEY", "").strip()
-if api_key:
-    logger.info("GEMINI_API_KEY is configured.")
-else:
-    logger.warning("GEMINI_API_KEY is not set. Gemini-powered features will be disabled, falling back to local hybrid parser.")
-if not api_key:
-    model = None
-else:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash')
+from api.ai_provider import generate_json
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Extracts raw text from a PDF file."""
@@ -191,48 +181,22 @@ def parse_resume_with_gemini(file_path: str, target_role: str = None) -> dict:
         "required": ["name", "email", "skills", "education", "experience", "experience_blocks", "education_blocks", "roadmap"]
     }
 
-    try:
-        if model is None:
-            logger.error("Gemini model not available - GEMINI_API_KEY not configured")
-            return {}
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=response_schema,
-                temperature=0.1,
-            ),
-        )
-        
-        if not response or not response.text:
-            logger.error("Gemini returned empty response")
-            return {}
-        
-        parsed_data = json.loads(response.text)
-        
-        if not isinstance(parsed_data, dict):
-            logger.error("Gemini response is not a valid JSON object")
-            return {}
-        
-        try:
-            if file_path.lower().endswith('.pdf'):
-                doc = fitz.open(file_path)
-                parsed_data["no_of_pages"] = len(doc)
-                doc.close()
-            else:
-                parsed_data["no_of_pages"] = 1
-        except Exception as page_error:
-            logger.warning(f"Could not determine page count: {page_error}")
-            parsed_data["no_of_pages"] = 1
-            
-        return parsed_data
+    parsed_data = generate_json(prompt, schema=response_schema, temperature=0.1)
+    if not parsed_data:
+        return {}
 
-    except json.JSONDecodeError as json_err:
-        logger.error(f"Failed to parse Gemini JSON response: {json_err}")
-        return {}
-    except Exception as e:
-        logger.error(f"Error during Gemini extraction: {e}")
-        return {}
+    try:
+        if file_path.lower().endswith('.pdf'):
+            doc = fitz.open(file_path)
+            parsed_data["no_of_pages"] = len(doc)
+            doc.close()
+        else:
+            parsed_data["no_of_pages"] = 1
+    except Exception as page_error:
+        logger.warning(f"Could not determine page count: {page_error}")
+        parsed_data["no_of_pages"] = 1
+
+    return parsed_data
 
 
 def rewrite_resume_with_gemini(resume_data: dict, target_role: str = None) -> dict:
@@ -269,28 +233,11 @@ def rewrite_resume_with_gemini(resume_data: dict, target_role: str = None) -> di
         },
         "required": ["target_role", "rewritten_bullets"]
     }
-    try:
-        if model is None:
-            logger.error("Gemini model not available - GEMINI_API_KEY not configured")
-            return {}
-        response = model.generate_content(
-            contents=prompt,
-            generation_config=genai.types.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=response_schema,
-                temperature=0.2,
-            ),
-        )
-        if not response or not response.text:
-            logger.error("Gemini returned empty response for resume rewrite")
-            return {}
-        return json.loads(response.text)
-    except json.JSONDecodeError as json_err:
-        logger.error(f"Failed to parse Gemini resume rewrite response: {json_err}")
+    data = generate_json(prompt, schema=response_schema, temperature=0.2)
+    if not data:
+        logger.error("Resume rewrite returned no data from any AI provider")
         return {}
-    except Exception as e:
-        logger.error(f"Error during Gemini resume rewrite: {e}")
-        return {}
+    return data
 
 
 def simulate_interview_turn(resume_data: dict, target_role: str, chat_history: list) -> dict:
@@ -298,24 +245,16 @@ def simulate_interview_turn(resume_data: dict, target_role: str, chat_history: l
     Simulates a turn in an AI-driven interview.
     Generates a follow-up question based on resume data and history.
     """
-    if model is None:
-        logger.warning("simulate_interview_turn called but Gemini model is not available")
-        return {
-            "feedback": "Thanks for your answer.",
-            "question": "Can you elaborate on your experience with key projects?",
-            "is_finished": False
-        }
-
     history_str = "\n".join([f"{m['role']}: {m['content']}" for m in chat_history])
-    
+
     prompt = f"""
     You are an expert Technical Interviewer for the role of {target_role}.
     You are interviewing a candidate with the following resume details:
     {json.dumps(resume_data)}
-    
+
     Current Interview History:
     {history_str}
-    
+
     RULES:
     1. If this is the start (history is empty), introduce yourself briefly and ask the first question.
     2. Ask deep, behavioral or technical questions based on the candidate's actual projects or skills.
@@ -328,20 +267,13 @@ def simulate_interview_turn(resume_data: dict, target_role: str, chat_history: l
     }}
     5. After 3-4 turns, wrap up the interview and set is_finished to true.
     """
-    
-    try:
-        response = model.generate_content(
-            contents=prompt,
-            generation_config=genai.types.GenerationConfig(
-                response_mime_type="application/json",
-                temperature=0.7,
-            ),
-        )
-        return json.loads(response.text)
-    except Exception as e:
-        logger.error(f"Interview simulation failed: {e}")
+
+    data = generate_json(prompt, temperature=0.7)
+    if not data:
+        logger.warning("Interview simulation failed on all AI providers; using fallback")
         return {
             "feedback": "Interesting perspective.",
             "question": "Can you tell me more about your most challenging technical project?",
             "is_finished": False
         }
+    return data
